@@ -1,0 +1,125 @@
+openapi: 3.0.0
+info:
+  title: NutriFlow API
+  version: 1.0.0
+  description: API for retrieving and caching food nutrition data.
+servers:
+  - url: http://localhost:8080
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+      security: []
+  /v1/foods/search:
+    get:
+      summary: Search for foods
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: List of foods
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FoodSummary'
+  /v1/foods/{foodId}:
+    get:
+      summary: Get food details by ID
+      parameters:
+        - name: foodId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Food details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodDetail'
+  /v1/foods/barcode/{barcode}:
+    get:
+      summary: Get food details by barcode
+      parameters:
+        - name: barcode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Food details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodDetail'
+components:
+  schemas:
+    FoodSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        brand:
+          type: string
+        barcode:
+          type: string
+    FoodDetail:
+      allOf:
+        - $ref: '#/components/schemas/FoodSummary'
+        - type: object
+          properties:
+            servings:
+              type: array
+              items:
+                $ref: '#/components/schemas/Serving'
+            best_serving:
+              $ref: '#/components/schemas/Serving'
+    Serving:
+      type: object
+      properties:
+        description:
+          type: string
+        metric_amount:
+          type: number
+        metric_unit:
+          type: string
+        calories:
+          type: number
+        protein_g:
+          type: number
+        carbs_g:
+          type: number
+        fat_g:
+          type: number
+    securitySchemes:
+      ApiKeyAuth:
+        type: apiKey
+        in: header
+        name: X-API-Key
+security:
+  - ApiKeyAuth: []
