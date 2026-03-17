@@ -1,0 +1,29 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    firebase_credentials_path: '%kernel.project_dir%/config/firebase_credentials.json'
+    firebase_project_id: 'gymapp-401c0'
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    Kreait\Firebase\Contract\Auth:
+        factory: ['App\Factory\FirebaseAuthFactory', 'create']
+        arguments:
+            - '%env(default:firebase_credentials_path:FIREBASE_CREDENTIALS_PATH)%'
+            - '%env(default:firebase_project_id:FIREBASE_PROJECT_ID)%'
