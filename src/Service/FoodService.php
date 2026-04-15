@@ -51,6 +51,8 @@ class FoodService
                     continue;
                 }
 
+                $this->em->flush(); // Save immediately so the ID is valid in the DB
+
                 $externalId = $food->getExternalId();
                 if ($externalId === null || isset($foodsByExternalId[$externalId])) {
                     continue;
@@ -63,8 +65,6 @@ class FoodService
                     break;
                 }
             }
-
-            $this->em->flush();
         }
 
         return array_map(fn (Food $food) => $this->formatFoodArray($food), $resultFoods);
@@ -72,7 +72,19 @@ class FoodService
 
     public function getFoodDetails(string $id): ?array
     {
-        $food = $this->foodRepo->findOneBy(['id' => $id]);
+        try {
+            // Attempt to find by Uuid object first (recommended for Binary storage)
+            $uuid = \Symfony\Component\Uid\Uuid::fromString($id);
+            $food = $this->foodRepo->find($uuid);
+            
+            // Fallback: search by string directly in case the mapping is different
+            if (!$food) {
+                $food = $this->foodRepo->findOneBy(['id' => $id]);
+            }
+        } catch (\Exception $e) {
+            return null;
+        }
+
         if (!$food) {
             return null;
         }
