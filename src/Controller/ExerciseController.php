@@ -8,6 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Uid\Uuid;
 
 #[Route('/v1/exercises', name: 'api_exercises_')]
 class ExerciseController extends AbstractController
@@ -106,7 +107,10 @@ class ExerciseController extends AbstractController
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]
     public function getOne(string $id, EntityManagerInterface $em): JsonResponse
     {
-        $exercise = $em->getRepository(Exercise::class)->find($id);
+        if (!Uuid::isValid($id)) {
+            return $this->json(['error' => 'Invalid exercise ID format'], 400);
+        }
+        $exercise = $em->getRepository(Exercise::class)->find(Uuid::fromString($id));
         if (!$exercise) {
             return $this->json(['error' => 'Exercise not found'], 404);
         }

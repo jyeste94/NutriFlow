@@ -72,11 +72,12 @@ class SeedExercisesCommand extends Command
         $progress = $io->createProgressBar(count($exercises));
         $progress->start();
 
+        $conn = $this->em->getConnection();
         $added = 0;
         foreach ($exercises as $data) {
             try {
                 $name = $data['name'] ?? null;
-                if (!$name) { $progress->advance(); continue; }
+                if (!$name) { if ($progress) $progress->advance(); continue; }
 
                 $primaryMuscle = $data['primaryMuscles'][0] ?? null;
                 $muscleGroup = self::MUSCLE_MAP[strtolower($primaryMuscle ?? '')] ?? ucfirst($primaryMuscle ?? 'General');
@@ -87,32 +88,21 @@ class SeedExercisesCommand extends Command
                 $instructions = $data['instructions'] ?? [];
                 $description = $instructions ? implode(' ', array_slice($instructions, 0, 2)) : '';
 
-                $imageId = $data['id'] ?? str_replace(' ', '_', $name);
                 $images = $data['images'] ?? [];
                 $gifUrl = !empty($images) ? self::BASE_IMAGE_URL . $images[0] : null;
 
-                $exercise = new Exercise();
-                $exercise->setName(substr($name, 0, 255));
-                $exercise->setMuscleGroup($muscleGroup);
-                $exercise->setEquipment($equipment);
-                $exercise->setDescription(substr($description, 0, 2000));
-                if ($gifUrl) $exercise->setGifUrl($gifUrl);
-
-                $this->em->persist($exercise);
+                $conn->executeStatement(
+                    'INSERT INTO exercises (id, name, muscle_group, equipment, description, gif_url, video_url) VALUES (UUID(), ?, ?, ?, ?, ?, NULL)',
+                    [substr($name, 0, 255), $muscleGroup, $equipment, substr($description, 0, 2000), $gifUrl]
+                );
                 $added++;
-
-                if ($added % 50 === 0) {
-                    $this->em->flush();
-                }
 
                 if ($progress) $progress->advance();
             } catch (\Exception) {
-                // Skip individual failures
                 if ($progress) $progress->advance();
             }
         }
 
-        $this->em->flush();
         if ($progress) $progress->finish();
 
         $io->newLine(2);
