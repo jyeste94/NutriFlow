@@ -15,7 +15,7 @@ use Symfony\Component\Uid\Uuid;
 #[Route('/v1/diaries', name: 'api_diaries_')]
 class DiaryController extends AbstractController
 {
-    private const ALLOWED_MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
+    private const ALLOWED_MEAL_TYPES = ['breakfast', 'almuerzo', 'lunch', 'merienda', 'dinner', 'snack'];
 
     public function __construct(
         private EntityManagerInterface $em
