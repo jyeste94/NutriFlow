@@ -110,19 +110,24 @@ class ExerciseController extends AbstractController
         if (!Uuid::isValid($id)) {
             return $this->json(['error' => 'Invalid exercise ID format'], 400);
         }
-        $exercise = $em->getRepository(Exercise::class)->find(Uuid::fromString($id));
-        if (!$exercise) {
+
+        $row = $em->getConnection()->fetchAssociative(
+            'SELECT id, name, muscle_group, equipment, description, gif_url, video_url FROM exercises WHERE id = ?',
+            [$id]
+        );
+
+        if (!$row) {
             return $this->json(['error' => 'Exercise not found'], 404);
         }
 
         return $this->json([
-            'id' => $exercise->getId()->toRfc4122(),
-            'name' => $exercise->getName(),
-            'muscleGroup' => $exercise->getMuscleGroup(),
-            'equipment' => $exercise->getEquipment(),
-            'description' => $exercise->getDescription(),
-            'gifUrl' => $exercise->getGifUrl(),
-            'videoUrl' => $exercise->getVideoUrl(),
+            'id' => $row['id'],
+            'name' => $row['name'],
+            'muscleGroup' => $row['muscle_group'],
+            'equipment' => $row['equipment'],
+            'description' => $row['description'],
+            'gifUrl' => $row['gif_url'],
+            'videoUrl' => $row['video_url'],
         ]);
     }
 }
