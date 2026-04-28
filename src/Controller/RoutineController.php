@@ -196,6 +196,7 @@ class RoutineController extends AbstractController
         }
 
         $this->em->persist($routine);
+        $this->em->flush(); // Necesario para generar el ID antes de insertar ejercicios
 
         // Optional: add exercises on creation
         if (array_key_exists('exercises', $data)) {
