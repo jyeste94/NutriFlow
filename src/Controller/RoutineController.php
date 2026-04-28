@@ -224,7 +224,7 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid restSeconds at index $index (0-3600)"], 400);
                 }
 
-                $exercise = $this->em->getRepository(Exercise::class)->find($exerciseId);
+                $exercise = $this->em->getRepository(Exercise::class)->createQueryBuilder('e')->where('e.id = :id')->setParameter('id', Uuid::fromString($exerciseId))->getQuery()->getOneOrNullResult();
                 if (!$exercise instanceof Exercise) {
                     return $this->json(['error' => "Exercise not found at index $index (exercise_id: $exerciseId)"], 400);
                 }
@@ -342,7 +342,7 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid restSeconds at index $index (0-3600)"], 400);
                 }
 
-                $exercise = $this->em->getRepository(Exercise::class)->find($exerciseId);
+                $exercise = $this->em->getRepository(Exercise::class)->createQueryBuilder('e')->where('e.id = :id')->setParameter('id', Uuid::fromString($exerciseId))->getQuery()->getOneOrNullResult();
                 if (!$exercise instanceof Exercise) {
                     return $this->json(['error' => "Exercise not found at index $index (exercise_id: $exerciseId)"], 400);
                 }
