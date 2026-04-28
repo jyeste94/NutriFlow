@@ -257,11 +257,11 @@ class RoutineController extends AbstractController
 
             $this->em->flush();
             $conn->commit();
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             if ($conn->isTransactionActive()) {
                 $conn->rollBack();
             }
-            return $this->json(['error' => 'Could not create routine'], 500);
+            return $this->json(['error' => 'Could not create routine: ' . $e->getMessage()], 500);
         }
 
         return $this->json(['message' => 'Routine created successfully', 'id' => $routine->getId()->toRfc4122()], 201);
