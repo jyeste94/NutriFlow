@@ -377,31 +377,42 @@ class RoutineController extends AbstractController
         return $this->json(['message' => 'Routine deleted successfully']);
     }
 
+    private const DAY_TOKEN_PREFIX = 'athlos-json:';
+
     /**
      * @param array<mixed> $days
-     * @return array<int>|null
+     * @return array<mixed>|null
      */
     private function normalizeDaysOfWeek(array $days): ?array
     {
-        if (count($days) > 7) {
-            return null;
-        }
+        if (count($days) > 7) return null;
 
-        $normalized = [];
+        // Check if all values are integers (simple day numbers)
+        $allInts = true;
+        $allStrings = true;
         foreach ($days as $day) {
-            $parsed = filter_var($day, FILTER_VALIDATE_INT);
-            if ($parsed === false || $parsed < 1 || $parsed > 7) {
-                return null;
+            if (!is_int($day)) $allInts = false;
+            if (!is_string($day)) $allStrings = false;
+        }
+
+        if ($allInts) {
+            $normalized = [];
+            foreach ($days as $day) {
+                $parsed = filter_var($day, FILTER_VALIDATE_INT);
+                if ($parsed === false || $parsed < 1 || $parsed > 7) return null;
+                $normalized[] = $parsed;
             }
-            $normalized[] = $parsed;
+            $unique = array_values(array_unique($normalized));
+            if (count($unique) !== count($normalized)) return null;
+            sort($unique);
+            return $unique;
         }
 
-        $unique = array_values(array_unique($normalized));
-        if (count($unique) !== count($normalized)) {
-            return null;
+        if ($allStrings) {
+            // Pass through athlos-json descriptors as-is (already structured)
+            return $days;
         }
 
-        sort($unique);
-        return $unique;
+        return null; // Mixed types not allowed
     }
 }
