@@ -213,6 +213,14 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
                 }
 
+                // Verificar que el ejercicio existe con una consulta directa
+                $exists = $this->em->getConnection()->fetchOne(
+                    'SELECT id FROM exercises WHERE id = ?', [$exerciseId]
+                );
+                if (!$exists) {
+                    return $this->json(['error' => "Exercise not found at index $index: $exerciseId"], 404);
+                }
+
                 $exercise = $this->em->getReference(Exercise::class, Uuid::fromString($exerciseId));
 
                 $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
@@ -312,6 +320,14 @@ class RoutineController extends AbstractController
                 $exerciseId = (string) ($exData['exercise_id'] ?? '');
                 if (!Uuid::isValid($exerciseId)) {
                     return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
+                }
+
+                // Verificar que el ejercicio existe con una consulta directa
+                $exists = $this->em->getConnection()->fetchOne(
+                    'SELECT id FROM exercises WHERE id = ?', [$exerciseId]
+                );
+                if (!$exists) {
+                    return $this->json(['error' => "Exercise not found at index $index: $exerciseId"], 404);
                 }
 
                 $exercise = $this->em->getReference(Exercise::class, Uuid::fromString($exerciseId));
