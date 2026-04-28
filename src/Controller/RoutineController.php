@@ -198,9 +198,18 @@ class RoutineController extends AbstractController
         $this->em->persist($routine);
         $this->em->flush();
 
-        // Añadir ejercicios usando SQL directo con el mismo formato UUID
+        // Verificar que la rutina se guardó correctamente
+        $routineId = $this->em->getConnection()->fetchOne(
+            'SELECT id FROM routines WHERE id = ?',
+            [$routine->getId()->toRfc4122()]
+        );
+
+        if (!$routineId) {
+            throw new \RuntimeException('Failed to save routine - ID not found in DB');
+        }
+
+        // Añadir ejercicios
         if (array_key_exists('exercises', $data) && is_array($data['exercises'])) {
-            $routineId = (string) $routine->getId()->toRfc4122();
             $conn = $this->em->getConnection();
 
             foreach ($data['exercises'] as $index => $exData) {
@@ -216,17 +225,10 @@ class RoutineController extends AbstractController
                 if ($reps === false || $reps < 1 || $reps > 1000) continue;
                 if ($restSeconds === false || $restSeconds < 0 || $restSeconds > 3600) continue;
 
-                try {
-                    $conn->executeStatement(
-                        'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index) VALUES (UUID(), ?, ?, ?, ?, ?, ?)',
-                        [$routineId, $exerciseId, $sets, $reps, $restSeconds, $index]
-                    );
-                } catch (\Exception $e) {
-                    throw new \RuntimeException(sprintf(
-                        "FK Error - routine_id=%s, exercise_id=%s: %s",
-                        $routineId, $exerciseId, $e->getMessage()
-                    ), 0, $e);
-                }
+                $conn->executeStatement(
+                    'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index) VALUES (UUID(), ?, ?, ?, ?, ?, ?)',
+                    [$routineId, $exerciseId, $sets, $reps, $restSeconds, $index]
+                );
             }
         }
 
