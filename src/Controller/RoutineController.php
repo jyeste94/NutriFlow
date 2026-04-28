@@ -213,9 +213,13 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
                 }
 
-                $exercise = $this->em->getRepository(Exercise::class)->find($exerciseId);
+                $exercise = $this->em->getRepository(Exercise::class)->findOneBy(['id' => $exerciseId]);
                 if (!$exercise) {
-                    return $this->json(['error' => "Exercise not found at index $index"], 404);
+                    $row = $this->em->getConnection()->fetchAssociative('SELECT id FROM exercises WHERE id = ?', [$exerciseId]);
+                    if (!$row) {
+                        return $this->json(['error' => "Exercise not found at index $index"], 404);
+                    }
+                    $exercise = $this->em->getRepository(Exercise::class)->find($row['id']);
                 }
 
                 $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
@@ -317,9 +321,13 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
                 }
 
-                $exercise = $this->em->getRepository(Exercise::class)->find($exerciseId);
+                $exercise = $this->em->getRepository(Exercise::class)->findOneBy(['id' => $exerciseId]);
                 if (!$exercise) {
-                    return $this->json(['error' => "Exercise not found at index $index"], 404);
+                    $row = $this->em->getConnection()->fetchAssociative('SELECT id FROM exercises WHERE id = ?', [$exerciseId]);
+                    if (!$row) {
+                        return $this->json(['error' => "Exercise not found at index $index"], 404);
+                    }
+                    $exercise = $this->em->getRepository(Exercise::class)->find($row['id']);
                 }
 
                 $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
