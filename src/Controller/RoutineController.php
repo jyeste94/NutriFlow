@@ -196,46 +196,41 @@ class RoutineController extends AbstractController
         }
 
         $this->em->persist($routine);
-        $this->em->flush(); // Necesario para generar el ID antes de insertar ejercicios
+        $this->em->flush();
 
-        // Optional: add exercises on creation
-        if (array_key_exists('exercises', $data)) {
-            if (!is_array($data['exercises'])) {
-                return $this->json(['error' => 'exercises must be an array'], 400);
-            }
-
+        // Añadir ejercicios usando SQL directo con el mismo formato UUID
+        if (array_key_exists('exercises', $data) && is_array($data['exercises'])) {
+            $routineId = (string) $routine->getId()->toRfc4122();
             $conn = $this->em->getConnection();
-            $routineId = $routine->getId()->toRfc4122();
 
             foreach ($data['exercises'] as $index => $exData) {
-                if (!is_array($exData)) {
-                    return $this->json(['error' => "Invalid exercise payload at index $index"], 400);
-                }
+                if (!is_array($exData)) continue;
 
                 $exerciseId = (string) ($exData['exercise_id'] ?? '');
                 $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
                 $reps = filter_var($exData['reps'] ?? 10, FILTER_VALIDATE_INT);
                 $restSeconds = filter_var($exData['restSeconds'] ?? 60, FILTER_VALIDATE_INT);
 
-                if (!Uuid::isValid($exerciseId)) {
-                    return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
-                }
-                if ($sets === false || $sets < 1 || $sets > 20) {
-                    return $this->json(['error' => "Invalid sets at index $index (1-20)"], 400);
-                }
-                if ($reps === false || $reps < 1 || $reps > 1000) {
-                    return $this->json(['error' => "Invalid reps at index $index (1-1000)"], 400);
-                }
-                if ($restSeconds === false || $restSeconds < 0 || $restSeconds > 3600) {
-                    return $this->json(['error' => "Invalid restSeconds at index $index (0-3600)"], 400);
-                }
+                if (!Uuid::isValid($exerciseId)) continue;
+                if ($sets === false || $sets < 1 || $sets > 20) continue;
+                if ($reps === false || $reps < 1 || $reps > 1000) continue;
+                if ($restSeconds === false || $restSeconds < 0 || $restSeconds > 3600) continue;
 
-                $conn->executeStatement(
-                    'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index) VALUES (UUID(), ?, ?, ?, ?, ?, ?)',
-                    [$routineId, $exerciseId, $sets, $reps, $restSeconds, $index]
-                );
+                try {
+                    $conn->executeStatement(
+                        'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index) VALUES (UUID(), ?, ?, ?, ?, ?, ?)',
+                        [$routineId, $exerciseId, $sets, $reps, $restSeconds, $index]
+                    );
+                } catch (\Exception $e) {
+                    throw new \RuntimeException(sprintf(
+                        "FK Error - routine_id=%s, exercise_id=%s: %s",
+                        $routineId, $exerciseId, $e->getMessage()
+                    ), 0, $e);
+                }
             }
         }
+
+        return $this->json(['message' => 'Routine created successfully', 'id' => $routine->getId()->toRfc4122()], 201);
 
         $this->em->flush();
 
