@@ -32,6 +32,10 @@ class FirebaseAuthenticator extends AbstractAuthenticator
             return false;
         }
 
+        if ($request->isMethod('OPTIONS')) {
+            return false;
+        }
+
         return str_starts_with($request->getPathInfo(), '/v1');
     }
 

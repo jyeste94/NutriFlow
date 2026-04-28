@@ -23,6 +23,10 @@ class TestHeaderAuthenticator extends AbstractAuthenticator
 
     public function supports(Request $request): ?bool
     {
+        if ($request->isMethod('OPTIONS')) {
+            return false;
+        }
+
         return str_starts_with($request->getPathInfo(), '/v1');
     }
 
