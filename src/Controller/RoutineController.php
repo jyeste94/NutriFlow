@@ -203,30 +203,22 @@ class RoutineController extends AbstractController
                 return $this->json(['error' => 'exercises must be an array'], 400);
             }
 
+            $conn = $this->em->getConnection();
+            $routineId = $routine->getId()->toRfc4122();
+
             foreach ($data['exercises'] as $index => $exData) {
                 if (!is_array($exData)) {
                     return $this->json(['error' => "Invalid exercise payload at index $index"], 400);
                 }
 
                 $exerciseId = (string) ($exData['exercise_id'] ?? '');
-                if (!Uuid::isValid($exerciseId)) {
-                    return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
-                }
-
-                // Verificar que el ejercicio existe con una consulta directa
-                $exists = $this->em->getConnection()->fetchOne(
-                    'SELECT id FROM exercises WHERE id = ?', [$exerciseId]
-                );
-                if (!$exists) {
-                    return $this->json(['error' => "Exercise not found at index $index: $exerciseId"], 404);
-                }
-
-                $exercise = $this->em->getReference(Exercise::class, Uuid::fromString($exerciseId));
-
                 $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
                 $reps = filter_var($exData['reps'] ?? 10, FILTER_VALIDATE_INT);
                 $restSeconds = filter_var($exData['restSeconds'] ?? 60, FILTER_VALIDATE_INT);
 
+                if (!Uuid::isValid($exerciseId)) {
+                    return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
+                }
                 if ($sets === false || $sets < 1 || $sets > 20) {
                     return $this->json(['error' => "Invalid sets at index $index (1-20)"], 400);
                 }
@@ -237,15 +229,10 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid restSeconds at index $index (0-3600)"], 400);
                 }
 
-                $re = new RoutineExercise();
-                $re->setExercise($exercise);
-                $re->setSets($sets);
-                $re->setReps($reps);
-                $re->setRestSeconds($restSeconds);
-                $re->setOrderIndex($index);
-
-                $routine->addRoutineExercise($re);
-                $this->em->persist($re);
+                $conn->executeStatement(
+                    'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index) VALUES (UUID(), ?, ?, ?, ?, ?, ?)',
+                    [$routineId, $exerciseId, $sets, $reps, $restSeconds, $index]
+                );
             }
         }
 
@@ -312,30 +299,22 @@ class RoutineController extends AbstractController
             $routine->getRoutineExercises()->clear();
 
             // Add new exercises
+            $conn = $this->em->getConnection();
+            $routineId = $routine->getId()->toRfc4122();
+
             foreach ($data['exercises'] as $index => $exData) {
                 if (!is_array($exData)) {
                     return $this->json(['error' => "Invalid exercise payload at index $index"], 400);
                 }
 
                 $exerciseId = (string) ($exData['exercise_id'] ?? '');
-                if (!Uuid::isValid($exerciseId)) {
-                    return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
-                }
-
-                // Verificar que el ejercicio existe con una consulta directa
-                $exists = $this->em->getConnection()->fetchOne(
-                    'SELECT id FROM exercises WHERE id = ?', [$exerciseId]
-                );
-                if (!$exists) {
-                    return $this->json(['error' => "Exercise not found at index $index: $exerciseId"], 404);
-                }
-
-                $exercise = $this->em->getReference(Exercise::class, Uuid::fromString($exerciseId));
-
                 $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
                 $reps = filter_var($exData['reps'] ?? 10, FILTER_VALIDATE_INT);
                 $restSeconds = filter_var($exData['restSeconds'] ?? 60, FILTER_VALIDATE_INT);
 
+                if (!Uuid::isValid($exerciseId)) {
+                    return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
+                }
                 if ($sets === false || $sets < 1 || $sets > 20) {
                     return $this->json(['error' => "Invalid sets at index $index (1-20)"], 400);
                 }
@@ -346,15 +325,10 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid restSeconds at index $index (0-3600)"], 400);
                 }
 
-                $re = new RoutineExercise();
-                $re->setExercise($exercise);
-                $re->setSets($sets);
-                $re->setReps($reps);
-                $re->setRestSeconds($restSeconds);
-                $re->setOrderIndex($index);
-
-                $routine->addRoutineExercise($re);
-                $this->em->persist($re);
+                $conn->executeStatement(
+                    'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index) VALUES (UUID(), ?, ?, ?, ?, ?, ?)',
+                    [$routineId, $exerciseId, $sets, $reps, $restSeconds, $index]
+                );
             }
         }
 
