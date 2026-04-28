@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Exercise;
 use App\Entity\Routine;
 use App\Entity\RoutineExercise;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -26,96 +27,11 @@ class RoutineController extends AbstractController
         if (!$user) {
             return $this->json(['error' => 'Unauthorized'], 401);
         }
-        $userIdentifier = $user->getUserIdentifier();
-        if (!is_string($userIdentifier) || $userIdentifier === '') {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
 
-        $page = max(1, $request->query->getInt('page', 1));
-        $limit = min(100, max(1, $request->query->getInt('limit', 25)));
-        $offset = ($page - 1) * $limit;
-
-        $total = (int) $this->em->createQueryBuilder()
-            ->select('COUNT(r.id)')
-            ->from(Routine::class, 'r')
-            ->join('r.user', 'u')
-            ->where('u.firebaseUid = :firebaseUid')
-            ->setParameter('firebaseUid', $userIdentifier)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $routineIdRows = $this->em->createQueryBuilder()
-            ->select('r.id')
-            ->from(Routine::class, 'r')
-            ->join('r.user', 'u')
-            ->where('u.firebaseUid = :firebaseUid')
-            ->setParameter('firebaseUid', $userIdentifier)
-            ->orderBy('r.name', 'ASC')
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getScalarResult();
-
-        $routineIds = array_map(
-            static fn (array $row): string => (string) ($row['id'] ?? ''),
-            $routineIdRows
-        );
-
-        $routines = [];
-        if ($routineIds !== []) {
-            $routines = $this->em->createQueryBuilder()
-                ->select('r', 're', 'e')
-                ->from(Routine::class, 'r')
-                ->leftJoin('r.routineExercises', 're')
-                ->leftJoin('re.exercise', 'e')
-                ->where('r.id IN (:ids)')
-                ->setParameter('ids', $routineIds)
-                ->orderBy('r.name', 'ASC')
-                ->addOrderBy('re.orderIndex', 'ASC')
-                ->getQuery()
-                ->getResult();
-        }
-
-        $result = [];
-        foreach ($routines as $routine) {
-            $exercises = [];
-            foreach ($routine->getRoutineExercises() as $re) {
-                $exercises[] = [
-                    'id' => $re->getId()->toRfc4122(),
-                    'exercise' => [
-                        'id' => $re->getExercise()->getId()->toRfc4122(),
-                        'name' => $re->getExercise()->getName(),
-                        'muscleGroup' => $re->getExercise()->getMuscleGroup(),
-                    ],
-                    'sets' => $re->getSets(),
-                    'reps' => $re->getReps(),
-                    'restSeconds' => $re->getRestSeconds(),
-                    'orderIndex' => $re->getOrderIndex(),
-                ];
-            }
-
-            $result[] = [
-                'id' => $routine->getId()->toRfc4122(),
-                'name' => $routine->getName(),
-                'daysOfWeek' => $routine->getDaysOfWeek(),
-                'exercises' => $exercises
-            ];
-        }
-
-        $response = $this->json($result);
-        $response->headers->set('X-Total-Count', (string) $total);
-        $response->headers->set('X-Page', (string) $page);
-        $response->headers->set('X-Per-Page', (string) $limit);
-
-        return $response;
-    }
-
-    #[Route('/{id}', name: 'get_one', methods: ['GET'])]
-    public function getRoutine(string $id): JsonResponse
-    {
-        $user = $this->getUser();
+        $firebaseUid = $user->getUserIdentifier();
+        $user = $this->em->getRepository(User::class)->findOneBy(['firebaseUid' => $firebaseUid]);
         if (!$user) {
-            return $this->json(['error' => 'Unauthorized'], 401);
+            return $this->json(['error' => 'User not found'], 401);
         }
 
         $routine = $this->em->getRepository(Routine::class)->find($id);
@@ -161,6 +77,13 @@ class RoutineController extends AbstractController
         $user = $this->getUser();
         if (!$user) {
             return $this->json(['error' => 'Unauthorized'], 401);
+        }
+
+        // Refrescar usuario para asegurar que está gestionado por Doctrine
+        $firebaseUid = $user->getUserIdentifier();
+        $user = $this->em->getRepository(User::class)->findOneBy(['firebaseUid' => $firebaseUid]);
+        if (!$user) {
+            return $this->json(['error' => 'User not found'], 401);
         }
 
         try {
