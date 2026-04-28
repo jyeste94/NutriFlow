@@ -195,46 +195,74 @@ class RoutineController extends AbstractController
             $routine->setDaysOfWeek($normalizedDays);
         }
 
-        $this->em->persist($routine);
-        $this->em->flush();
-
-        // Verificar que la rutina se guardó correctamente
-        $routineId = $this->em->getConnection()->fetchOne(
-            'SELECT id FROM routines WHERE id = ?',
-            [$routine->getId()->toRfc4122()]
-        );
-
-        if (!$routineId) {
-            throw new \RuntimeException('Failed to save routine - ID not found in DB');
-        }
-
-        // Añadir ejercicios
-        if (array_key_exists('exercises', $data) && is_array($data['exercises'])) {
-            $conn = $this->em->getConnection();
+        $preparedExercises = [];
+        if (array_key_exists('exercises', $data)) {
+            if (!is_array($data['exercises'])) {
+                return $this->json(['error' => 'exercises must be an array'], 400);
+            }
 
             foreach ($data['exercises'] as $index => $exData) {
-                if (!is_array($exData)) continue;
+                if (!is_array($exData)) {
+                    return $this->json(['error' => "Invalid exercise payload at index $index"], 400);
+                }
 
                 $exerciseId = (string) ($exData['exercise_id'] ?? '');
                 $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
                 $reps = filter_var($exData['reps'] ?? 10, FILTER_VALIDATE_INT);
                 $restSeconds = filter_var($exData['restSeconds'] ?? 60, FILTER_VALIDATE_INT);
 
-                if (!Uuid::isValid($exerciseId)) continue;
-                if ($sets === false || $sets < 1 || $sets > 20) continue;
-                if ($reps === false || $reps < 1 || $reps > 1000) continue;
-                if ($restSeconds === false || $restSeconds < 0 || $restSeconds > 3600) continue;
+                if (!Uuid::isValid($exerciseId)) {
+                    return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
+                }
+                if ($sets === false || $sets < 1 || $sets > 20) {
+                    return $this->json(['error' => "Invalid sets at index $index (1-20)"], 400);
+                }
+                if ($reps === false || $reps < 1 || $reps > 1000) {
+                    return $this->json(['error' => "Invalid reps at index $index (1-1000)"], 400);
+                }
+                if ($restSeconds === false || $restSeconds < 0 || $restSeconds > 3600) {
+                    return $this->json(['error' => "Invalid restSeconds at index $index (0-3600)"], 400);
+                }
 
-                $conn->executeStatement(
-                    'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index) VALUES (UUID(), ?, ?, ?, ?, ?, ?)',
-                    [$routineId, $exerciseId, $sets, $reps, $restSeconds, $index]
-                );
+                $exercise = $this->em->getRepository(Exercise::class)->find($exerciseId);
+                if (!$exercise instanceof Exercise) {
+                    return $this->json(['error' => "Exercise not found at index $index"], 400);
+                }
+
+                $preparedExercises[] = [
+                    'exercise' => $exercise,
+                    'sets' => (int) $sets,
+                    'reps' => (int) $reps,
+                    'restSeconds' => (int) $restSeconds,
+                    'orderIndex' => (int) $index,
+                ];
             }
         }
 
-        return $this->json(['message' => 'Routine created successfully', 'id' => $routine->getId()->toRfc4122()], 201);
+        $conn = $this->em->getConnection();
+        $conn->beginTransaction();
+        try {
+            $this->em->persist($routine);
 
-        $this->em->flush();
+            foreach ($preparedExercises as $preparedExercise) {
+                $routineExercise = new RoutineExercise();
+                $routineExercise->setRoutine($routine);
+                $routineExercise->setExercise($preparedExercise['exercise']);
+                $routineExercise->setSets($preparedExercise['sets']);
+                $routineExercise->setReps($preparedExercise['reps']);
+                $routineExercise->setRestSeconds($preparedExercise['restSeconds']);
+                $routineExercise->setOrderIndex($preparedExercise['orderIndex']);
+                $this->em->persist($routineExercise);
+            }
+
+            $this->em->flush();
+            $conn->commit();
+        } catch (\Throwable) {
+            if ($conn->isTransactionActive()) {
+                $conn->rollBack();
+            }
+            return $this->json(['error' => 'Could not create routine'], 500);
+        }
 
         return $this->json(['message' => 'Routine created successfully', 'id' => $routine->getId()->toRfc4122()], 201);
     }
@@ -284,22 +312,13 @@ class RoutineController extends AbstractController
             $routine->setDaysOfWeek($normalizedDays);
         }
 
-        // Replace exercises if provided
+        $preparedExercises = null;
         if (array_key_exists('exercises', $data)) {
             if (!is_array($data['exercises'])) {
                 return $this->json(['error' => 'exercises must be an array'], 400);
             }
 
-            // Remove existing exercises
-            foreach ($routine->getRoutineExercises() as $existing) {
-                $this->em->remove($existing);
-            }
-            $routine->getRoutineExercises()->clear();
-
-            // Add new exercises
-            $conn = $this->em->getConnection();
-            $routineId = $routine->getId()->toRfc4122();
-
+            $preparedExercises = [];
             foreach ($data['exercises'] as $index => $exData) {
                 if (!is_array($exData)) {
                     return $this->json(['error' => "Invalid exercise payload at index $index"], 400);
@@ -323,14 +342,50 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid restSeconds at index $index (0-3600)"], 400);
                 }
 
-                $conn->executeStatement(
-                    'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index) VALUES (UUID(), ?, ?, ?, ?, ?, ?)',
-                    [$routineId, $exerciseId, $sets, $reps, $restSeconds, $index]
-                );
+                $exercise = $this->em->getRepository(Exercise::class)->find($exerciseId);
+                if (!$exercise instanceof Exercise) {
+                    return $this->json(['error' => "Exercise not found at index $index"], 400);
+                }
+
+                $preparedExercises[] = [
+                    'exercise' => $exercise,
+                    'sets' => (int) $sets,
+                    'reps' => (int) $reps,
+                    'restSeconds' => (int) $restSeconds,
+                    'orderIndex' => (int) $index,
+                ];
             }
         }
 
-        $this->em->flush();
+        $conn = $this->em->getConnection();
+        $conn->beginTransaction();
+        try {
+            if (is_array($preparedExercises)) {
+                foreach ($routine->getRoutineExercises() as $existing) {
+                    $this->em->remove($existing);
+                }
+                $routine->getRoutineExercises()->clear();
+
+                foreach ($preparedExercises as $preparedExercise) {
+                    $routineExercise = new RoutineExercise();
+                    $routineExercise->setRoutine($routine);
+                    $routineExercise->setExercise($preparedExercise['exercise']);
+                    $routineExercise->setSets($preparedExercise['sets']);
+                    $routineExercise->setReps($preparedExercise['reps']);
+                    $routineExercise->setRestSeconds($preparedExercise['restSeconds']);
+                    $routineExercise->setOrderIndex($preparedExercise['orderIndex']);
+                    $this->em->persist($routineExercise);
+                }
+            }
+
+            $this->em->flush();
+            $conn->commit();
+        } catch (\Throwable) {
+            if ($conn->isTransactionActive()) {
+                $conn->rollBack();
+            }
+            return $this->json(['error' => 'Could not update routine'], 500);
+        }
 
         return $this->json(['message' => 'Routine updated successfully', 'id' => $routine->getId()->toRfc4122()]);
     }

@@ -53,4 +53,63 @@ final class RoutineApiTest extends ApiTestCase
         $data = $this->jsonResponse();
         $this->assertCount(1, $data);
     }
+
+    public function testCreateRoutineWithExercisesPersistsChildren(): void
+    {
+        $headers = $this->authHeaders('routine-ex-user');
+        $exercise = $this->createExerciseFixture('Bench Press');
+        $exerciseId = $exercise->getId()?->toRfc4122();
+        $this->assertNotNull($exerciseId);
+
+        $this->client->jsonRequest(
+            'POST',
+            '/v1/routines',
+            [
+                'name' => 'Routine with exercise',
+                'daysOfWeek' => [1, 3, 5],
+                'exercises' => [
+                    [
+                        'exercise_id' => $exerciseId,
+                        'sets' => 3,
+                        'reps' => 10,
+                        'restSeconds' => 90,
+                    ],
+                ],
+            ],
+            $headers
+        );
+        $this->assertResponseStatusCodeSame(201);
+        $routineId = (string) ($this->jsonResponse()['id'] ?? '');
+        $this->assertNotSame('', $routineId);
+
+        $this->client->request('GET', '/v1/routines/' . $routineId, [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $routine = $this->jsonResponse();
+        $this->assertCount(1, $routine['exercises'] ?? []);
+        $this->assertSame($exerciseId, $routine['exercises'][0]['exercise']['id'] ?? null);
+    }
+
+    public function testCreateRoutineRejectsUnknownExerciseId(): void
+    {
+        $headers = $this->authHeaders('routine-ex-user-2');
+
+        $this->client->jsonRequest(
+            'POST',
+            '/v1/routines',
+            [
+                'name' => 'Routine invalid exercise',
+                'exercises' => [
+                    [
+                        'exercise_id' => '11111111-1111-1111-1111-111111111111',
+                        'sets' => 3,
+                        'reps' => 10,
+                        'restSeconds' => 90,
+                    ],
+                ],
+            ],
+            $headers
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+    }
 }
