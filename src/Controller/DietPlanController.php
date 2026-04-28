@@ -19,6 +19,7 @@ use Symfony\Component\Uid\Uuid;
 class DietPlanController extends AbstractController
 {
     private const ALLOWED_MEAL_TYPES = ['breakfast', 'almuerzo', 'lunch', 'merienda', 'dinner', 'snack'];
+    private const ALLOWED_DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
     public function __construct(
         private EntityManagerInterface $em
@@ -79,41 +80,33 @@ class DietPlanController extends AbstractController
         $plan->setSupplementProtocol(isset($data['supplement_protocol']) ? trim((string) $data['supplement_protocol']) : null);
         $plan->setIsDefault(!empty($data['is_default']));
 
-        if (!empty($data['days']) && is_array($data['days'])) {
-            foreach ($data['days'] as $dayIndex => $dayData) {
-                $day = new DietPlanDay();
-                $day->setDayOfWeek((string) ($dayData['day_of_week'] ?? 'mon'));
-                $day->setSortOrder($dayIndex);
-                $plan->addDay($day);
-
-                if (!empty($dayData['meals']) && is_array($dayData['meals'])) {
-                    foreach ($dayData['meals'] as $mealIndex => $mealData) {
-                        $servingId = (string) ($mealData['serving_id'] ?? '');
-                        $mealType = strtolower((string) ($mealData['meal_type'] ?? ''));
-                        $multiplier = filter_var($mealData['multiplier'] ?? 1, FILTER_VALIDATE_FLOAT);
-
-                        if (!Uuid::isValid($servingId)) continue;
-                        if (!in_array($mealType, self::ALLOWED_MEAL_TYPES, true)) continue;
-                        if ($multiplier === false || $multiplier <= 0) continue;
-
-                        $serving = $this->em->getRepository(Serving::class)->find($servingId);
-                        if (!$serving) continue;
-
-                        $meal = new DietPlanMeal();
-                        $meal->setServing($serving);
-                        $meal->setMealType($mealType);
-                        $meal->setMultiplier((float) $multiplier);
-                        $meal->setSortOrder($mealIndex);
-                        $meal->setOptionGroup(isset($mealData['option_group']) ? strtoupper(trim((string) $mealData['option_group'])) : null);
-                        $meal->setNotes(isset($mealData['notes']) ? trim((string) $mealData['notes']) : null);
-                        $day->addMeal($meal);
-                    }
-                }
-            }
+        if (array_key_exists('days', $data) && !is_array($data['days'])) {
+            return $this->json(['error' => 'days must be an array'], 400);
         }
 
-        $this->em->persist($plan);
-        $this->em->flush();
+        $normalizedDays = $this->normalizePlanDays(is_array($data['days'] ?? null) ? $data['days'] : []);
+        if ($normalizedDays instanceof JsonResponse) {
+            return $normalizedDays;
+        }
+
+        if ($plan->isDefault()) {
+            $this->unsetDefaultPlansForUser($user);
+        }
+
+        $conn = $this->em->getConnection();
+        $conn->beginTransaction();
+        try {
+            $this->em->persist($plan);
+            $this->replacePlanDays($plan, $normalizedDays);
+            $this->em->flush();
+            $conn->commit();
+        } catch (\Throwable) {
+            if ($conn->isTransactionActive()) {
+                $conn->rollBack();
+            }
+
+            return $this->json(['error' => 'Could not create diet plan'], 500);
+        }
 
         return $this->json(['message' => 'Diet plan created', 'id' => $plan->getId()->toRfc4122()], 201);
     }
@@ -138,61 +131,52 @@ class DietPlanController extends AbstractController
         }
 
         if (array_key_exists('description', $data)) {
-            $plan->setDescription($data['description'] ? trim((string) $data['description']) : null);
+            $description = trim((string) $data['description']);
+            $plan->setDescription($description !== '' ? $description : null);
+        }
+
+        if (array_key_exists('supplement_protocol', $data)) {
+            $supplementProtocol = trim((string) $data['supplement_protocol']);
+            $plan->setSupplementProtocol($supplementProtocol !== '' ? $supplementProtocol : null);
         }
 
         if (array_key_exists('is_default', $data)) {
-            // Unset default on all other plans if setting this one as default
             if (!empty($data['is_default'])) {
-                $qb = $this->em->createQueryBuilder();
-                $qb->update(DietPlan::class, 'p')
-                    ->set('p.isDefault', ':false')
-                    ->where('p.user = :user')
-                    ->setParameter('false', false)
-                    ->setParameter('user', $user)
-                    ->getQuery()->execute();
+                $this->unsetDefaultPlansForUser($user);
             }
             $plan->setIsDefault(!empty($data['is_default']));
         }
 
-        // Replace days if provided
+        $normalizedDays = null;
         if (array_key_exists('days', $data)) {
-            foreach ($plan->getDays() as $day) $this->em->remove($day);
-            $plan->getDays()->clear();
+            if (!is_array($data['days'])) {
+                return $this->json(['error' => 'days must be an array'], 400);
+            }
 
-            if (is_array($data['days'])) {
-                foreach ($data['days'] as $dayIndex => $dayData) {
-                    $day = new DietPlanDay();
-                    $day->setDayOfWeek((string) ($dayData['day_of_week'] ?? 'mon'));
-                    $day->setSortOrder($dayIndex);
-                    $plan->addDay($day);
-
-                    if (!empty($dayData['meals']) && is_array($dayData['meals'])) {
-                        foreach ($dayData['meals'] as $mealIndex => $mealData) {
-                            $servingId = (string) ($mealData['serving_id'] ?? '');
-                            $mealType = strtolower((string) ($mealData['meal_type'] ?? ''));
-                            $multiplier = filter_var($mealData['multiplier'] ?? 1, FILTER_VALIDATE_FLOAT);
-                            if (!Uuid::isValid($servingId)) continue;
-                            if (!in_array($mealType, self::ALLOWED_MEAL_TYPES, true)) continue;
-                            if ($multiplier === false || $multiplier <= 0) continue;
-                            $serving = $this->em->getRepository(Serving::class)->find($servingId);
-                            if (!$serving) continue;
-                            $meal = new DietPlanMeal();
-                            $meal->setServing($serving);
-                            $meal->setMealType($mealType);
-                            $meal->setMultiplier((float) $multiplier);
-                            $meal->setSortOrder($mealIndex);
-                            $meal->setOptionGroup(isset($mealData['option_group']) ? strtoupper(trim((string) $mealData['option_group'])) : null);
-                            $meal->setNotes(isset($mealData['notes']) ? trim((string) $mealData['notes']) : null);
-                            $day->addMeal($meal);
-                        }
-                    }
-                }
+            $normalizedDays = $this->normalizePlanDays($data['days']);
+            if ($normalizedDays instanceof JsonResponse) {
+                return $normalizedDays;
             }
         }
 
         $plan->setUpdatedAt(new \DateTimeImmutable());
-        $this->em->flush();
+
+        $conn = $this->em->getConnection();
+        $conn->beginTransaction();
+        try {
+            if (is_array($normalizedDays)) {
+                $this->replacePlanDays($plan, $normalizedDays);
+            }
+
+            $this->em->flush();
+            $conn->commit();
+        } catch (\Throwable) {
+            if ($conn->isTransactionActive()) {
+                $conn->rollBack();
+            }
+
+            return $this->json(['error' => 'Could not update diet plan'], 500);
+        }
 
         return $this->json(['message' => 'Diet plan updated']);
     }
@@ -324,6 +308,140 @@ class DietPlanController extends AbstractController
         if (!$parsed) return null;
         if (is_array($errors) && (($errors['warning_count'] ?? 0) > 0 || ($errors['error_count'] ?? 0) > 0)) return null;
         return $parsed->format('Y-m-d') === $date ? $parsed : null;
+    }
+
+    /**
+     * @param array<mixed> $days
+     * @return array<int, array{day_of_week:string, meals:array<int, array{serving:Serving, meal_type:string, multiplier:float, option_group:?string, notes:?string}>}>|JsonResponse
+     */
+    private function normalizePlanDays(array $days): array|JsonResponse
+    {
+        if (count($days) > 7) {
+            return $this->json(['error' => 'days cannot contain more than 7 entries'], 400);
+        }
+
+        $normalizedDays = [];
+        $seenDayKeys = [];
+
+        foreach ($days as $dayIndex => $dayData) {
+            if (!is_array($dayData)) {
+                return $this->json(['error' => "Invalid day payload at index $dayIndex"], 400);
+            }
+
+            $dayKey = strtolower(trim((string) ($dayData['day_of_week'] ?? '')));
+            if ($dayKey === '' || !in_array($dayKey, self::ALLOWED_DAY_KEYS, true)) {
+                return $this->json(['error' => "Invalid day_of_week at index $dayIndex"], 400);
+            }
+            if (isset($seenDayKeys[$dayKey])) {
+                return $this->json(['error' => 'days cannot contain duplicate day_of_week values'], 400);
+            }
+            $seenDayKeys[$dayKey] = true;
+
+            $meals = $dayData['meals'] ?? [];
+            if (!is_array($meals)) {
+                return $this->json(['error' => "meals must be an array at day index $dayIndex"], 400);
+            }
+
+            $normalizedMeals = [];
+            foreach ($meals as $mealIndex => $mealData) {
+                if (!is_array($mealData)) {
+                    return $this->json(['error' => "Invalid meal payload at day $dayIndex index $mealIndex"], 400);
+                }
+
+                $servingId = trim((string) ($mealData['serving_id'] ?? ''));
+                $mealType = strtolower(trim((string) ($mealData['meal_type'] ?? '')));
+                $multiplier = filter_var($mealData['multiplier'] ?? 1, FILTER_VALIDATE_FLOAT);
+
+                if (!Uuid::isValid($servingId)) {
+                    return $this->json(['error' => "Invalid serving_id at day $dayIndex index $mealIndex"], 400);
+                }
+                if (!in_array($mealType, self::ALLOWED_MEAL_TYPES, true)) {
+                    return $this->json(['error' => "Invalid meal_type at day $dayIndex index $mealIndex"], 400);
+                }
+                if ($multiplier === false || $multiplier <= 0 || $multiplier > 100) {
+                    return $this->json(['error' => "Invalid multiplier at day $dayIndex index $mealIndex"], 400);
+                }
+
+                $serving = $this->em->getRepository(Serving::class)->find($servingId);
+                if (!$serving instanceof Serving) {
+                    return $this->json(['error' => "Serving not found at day $dayIndex index $mealIndex"], 400);
+                }
+
+                $optionGroup = null;
+                if (array_key_exists('option_group', $mealData)) {
+                    $optionGroup = strtoupper(trim((string) $mealData['option_group']));
+                    if ($optionGroup === '') {
+                        $optionGroup = null;
+                    } elseif (mb_strlen($optionGroup) > 10) {
+                        return $this->json(['error' => "option_group is too long at day $dayIndex index $mealIndex"], 400);
+                    }
+                }
+
+                $notes = null;
+                if (array_key_exists('notes', $mealData)) {
+                    $notes = trim((string) $mealData['notes']);
+                    if ($notes === '') {
+                        $notes = null;
+                    }
+                }
+
+                $normalizedMeals[] = [
+                    'serving' => $serving,
+                    'meal_type' => $mealType,
+                    'multiplier' => (float) $multiplier,
+                    'option_group' => $optionGroup,
+                    'notes' => $notes,
+                ];
+            }
+
+            $normalizedDays[] = [
+                'day_of_week' => $dayKey,
+                'meals' => $normalizedMeals,
+            ];
+        }
+
+        return $normalizedDays;
+    }
+
+    /**
+     * @param array<int, array{day_of_week:string, meals:array<int, array{serving:Serving, meal_type:string, multiplier:float, option_group:?string, notes:?string}>}> $days
+     */
+    private function replacePlanDays(DietPlan $plan, array $days): void
+    {
+        foreach ($plan->getDays() as $day) {
+            $this->em->remove($day);
+        }
+        $plan->getDays()->clear();
+
+        foreach ($days as $dayIndex => $dayData) {
+            $day = new DietPlanDay();
+            $day->setDayOfWeek($dayData['day_of_week']);
+            $day->setSortOrder($dayIndex);
+            $plan->addDay($day);
+
+            foreach ($dayData['meals'] as $mealIndex => $mealData) {
+                $meal = new DietPlanMeal();
+                $meal->setServing($mealData['serving']);
+                $meal->setMealType($mealData['meal_type']);
+                $meal->setMultiplier($mealData['multiplier']);
+                $meal->setSortOrder($mealIndex);
+                $meal->setOptionGroup($mealData['option_group']);
+                $meal->setNotes($mealData['notes']);
+                $day->addMeal($meal);
+            }
+        }
+    }
+
+    private function unsetDefaultPlansForUser(object $user): void
+    {
+        $this->em->createQueryBuilder()
+            ->update(DietPlan::class, 'p')
+            ->set('p.isDefault', ':false')
+            ->where('p.user = :user')
+            ->setParameter('false', false)
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->execute();
     }
 
     /**

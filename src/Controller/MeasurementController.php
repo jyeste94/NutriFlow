@@ -99,25 +99,29 @@ class MeasurementController extends AbstractController
         $measurement->setWeightKg((float) $weightKg);
 
         if (isset($data['date'])) {
-            $parsed = \DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s', $data['date'])
-                ?: \DateTimeImmutable::createFromFormat('Y-m-d', $data['date']);
-            if ($parsed) {
-                $measurement->setDate($parsed);
+            $parsed = $this->parseMeasurementDate((string) $data['date']);
+            if ($parsed === null) {
+                return $this->json(['error' => 'date must be a valid ISO-8601 datetime or YYYY-MM-DD'], 400);
             }
+            $measurement->setDate($parsed);
         }
 
         if (isset($data['body_fat_pct'])) {
             $bf = filter_var($data['body_fat_pct'], FILTER_VALIDATE_FLOAT);
-            if ($bf !== false) $measurement->setBodyFatPct((float) $bf);
+            if ($bf === false || $bf < 0 || $bf > 100) {
+                return $this->json(['error' => 'body_fat_pct must be between 0 and 100'], 400);
+            }
+            $measurement->setBodyFatPct((float) $bf);
         }
 
         foreach (['chest_cm', 'waist_cm', 'hips_cm', 'arm_cm', 'thigh_cm', 'calf_cm'] as $field) {
             if (isset($data[$field])) {
                 $val = filter_var($data[$field], FILTER_VALIDATE_FLOAT);
-                if ($val !== false) {
-                    $setter = 'set' . str_replace('_', '', ucwords($field, '_'));
-                    $measurement->$setter((float) $val);
+                if ($val === false || $val < 0 || $val > 500) {
+                    return $this->json(['error' => "$field must be between 0 and 500"], 400);
                 }
+                $setter = 'set' . str_replace('_', '', ucwords($field, '_'));
+                $measurement->$setter((float) $val);
             }
         }
 
@@ -156,33 +160,46 @@ class MeasurementController extends AbstractController
         }
 
         if (isset($data['date'])) {
-            $parsed = \DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s', $data['date'])
-                ?: \DateTimeImmutable::createFromFormat('Y-m-d', $data['date']);
-            if ($parsed) {
-                $measurement->setDate($parsed);
+            $parsed = $this->parseMeasurementDate((string) $data['date']);
+            if ($parsed === null) {
+                return $this->json(['error' => 'date must be a valid ISO-8601 datetime or YYYY-MM-DD'], 400);
             }
+            $measurement->setDate($parsed);
         }
 
         if (isset($data['weight_kg'])) {
             $weightKg = filter_var($data['weight_kg'], FILTER_VALIDATE_FLOAT);
-            if ($weightKg !== false) $measurement->setWeightKg((float) $weightKg);
+            if ($weightKg === false || $weightKg <= 0 || $weightKg > 500) {
+                return $this->json(['error' => 'weight_kg must be between 0 and 500'], 400);
+            }
+            $measurement->setWeightKg((float) $weightKg);
         }
 
-        if (isset($data['body_fat_pct'])) {
+        if (array_key_exists('body_fat_pct', $data)) {
+            if ($data['body_fat_pct'] === null || $data['body_fat_pct'] === '') {
+                $measurement->setBodyFatPct(null);
+            } else {
             $bf = filter_var($data['body_fat_pct'], FILTER_VALIDATE_FLOAT);
-            if ($bf !== false) $measurement->setBodyFatPct((float) $bf);
+                if ($bf === false || $bf < 0 || $bf > 100) {
+                    return $this->json(['error' => 'body_fat_pct must be between 0 and 100'], 400);
+                }
+                $measurement->setBodyFatPct((float) $bf);
+            }
         }
 
         foreach (['chest_cm', 'waist_cm', 'hips_cm', 'arm_cm', 'thigh_cm', 'calf_cm'] as $field) {
-            if (isset($data[$field])) {
-                $val = filter_var($data[$field], FILTER_VALIDATE_FLOAT);
-                if ($val !== false) {
-                    $setter = 'set' . str_replace('_', '', ucwords($field, '_'));
-                    $measurement->$setter((float) $val);
-                } else {
-                    $setter = 'set' . str_replace('_', '', ucwords($field, '_'));
+            if (array_key_exists($field, $data)) {
+                $setter = 'set' . str_replace('_', '', ucwords($field, '_'));
+                if ($data[$field] === null || $data[$field] === '') {
                     $measurement->$setter(null);
+                    continue;
                 }
+
+                $val = filter_var($data[$field], FILTER_VALIDATE_FLOAT);
+                if ($val === false || $val < 0 || $val > 500) {
+                    return $this->json(['error' => "$field must be between 0 and 500"], 400);
+                }
+                $measurement->$setter((float) $val);
             }
         }
 
@@ -237,5 +254,25 @@ class MeasurementController extends AbstractController
         }
 
         return $data;
+    }
+
+    private function parseMeasurementDate(string $value): ?\DateTimeImmutable
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+
+        $dateOnly = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        $dateErrors = \DateTimeImmutable::getLastErrors();
+        if ($dateOnly instanceof \DateTimeImmutable && (!$dateErrors || (($dateErrors['warning_count'] ?? 0) === 0 && ($dateErrors['error_count'] ?? 0) === 0)) && $dateOnly->format('Y-m-d') === $value) {
+            return $dateOnly;
+        }
+
+        try {
+            return new \DateTimeImmutable($value);
+        } catch (\Exception) {
+            return null;
+        }
     }
 }

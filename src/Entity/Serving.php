@@ -25,22 +25,22 @@ class Serving
     private ?string $description = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
-    private ?float $amount = null;
+    private ?string $amount = null;
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $unit = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?float $calories = null;
+    private ?string $calories = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
-    private ?float $proteins = null;
+    private ?string $proteins = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
-    private ?float $carbs = null;
+    private ?string $carbs = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
-    private ?float $fats = null;
+    private ?string $fats = null;
 
     public function getId(): ?Uuid
     {
@@ -71,12 +71,12 @@ class Serving
 
     public function getAmount(): ?float
     {
-        return $this->amount;
+        return $this->amount === null ? null : (float) $this->amount;
     }
 
     public function setAmount(?float $amount): static
     {
-        $this->amount = $amount;
+        $this->amount = $this->formatDecimal($amount);
         return $this;
     }
 
@@ -93,45 +93,50 @@ class Serving
 
     public function getCalories(): ?float
     {
-        return $this->calories;
+        return $this->calories === null ? null : (float) $this->calories;
     }
 
     public function setCalories(float $calories): static
     {
-        $this->calories = $calories;
+        $this->calories = $this->formatDecimal($calories);
         return $this;
     }
 
     public function getProteins(): ?float
     {
-        return $this->proteins;
+        return $this->proteins === null ? null : (float) $this->proteins;
     }
 
     public function setProteins(?float $proteins): static
     {
-        $this->proteins = $proteins;
+        $this->proteins = $this->formatDecimal($proteins);
         return $this;
     }
 
     public function getCarbs(): ?float
     {
-        return $this->carbs;
+        return $this->carbs === null ? null : (float) $this->carbs;
     }
 
     public function setCarbs(?float $carbs): static
     {
-        $this->carbs = $carbs;
+        $this->carbs = $this->formatDecimal($carbs);
         return $this;
     }
 
     public function getFats(): ?float
     {
-        return $this->fats;
+        return $this->fats === null ? null : (float) $this->fats;
     }
 
     public function setFats(?float $fats): static
     {
-        $this->fats = $fats;
+        $this->fats = $this->formatDecimal($fats);
         return $this;
+    }
+
+    private function formatDecimal(?float $value): ?string
+    {
+        return $value === null ? null : number_format($value, 2, '.', '');
     }
 }

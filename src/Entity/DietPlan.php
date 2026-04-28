@@ -10,6 +10,7 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'diet_plans')]
+#[ORM\Index(name: 'idx_diet_plans_user', columns: ['user_id'])]
 class DietPlan
 {
     #[ORM\Id]

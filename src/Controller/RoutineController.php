@@ -206,7 +206,7 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid exercise payload at index $index"], 400);
                 }
 
-                $exerciseId = (string) ($exData['exercise_id'] ?? '');
+                $exerciseId = trim((string) ($exData['exercise_id'] ?? ''));
                 $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
                 $reps = filter_var($exData['reps'] ?? 10, FILTER_VALIDATE_INT);
                 $restSeconds = filter_var($exData['restSeconds'] ?? 60, FILTER_VALIDATE_INT);
@@ -226,7 +226,7 @@ class RoutineController extends AbstractController
 
                 $exercise = $this->em->getRepository(Exercise::class)->find($exerciseId);
                 if (!$exercise instanceof Exercise) {
-                    return $this->json(['error' => "Exercise not found at index $index"], 400);
+                    return $this->json(['error' => "Exercise not found at index $index (exercise_id: $exerciseId)"], 400);
                 }
 
                 $preparedExercises[] = [
@@ -324,7 +324,7 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid exercise payload at index $index"], 400);
                 }
 
-                $exerciseId = (string) ($exData['exercise_id'] ?? '');
+                $exerciseId = trim((string) ($exData['exercise_id'] ?? ''));
                 $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
                 $reps = filter_var($exData['reps'] ?? 10, FILTER_VALIDATE_INT);
                 $restSeconds = filter_var($exData['restSeconds'] ?? 60, FILTER_VALIDATE_INT);
@@ -344,7 +344,7 @@ class RoutineController extends AbstractController
 
                 $exercise = $this->em->getRepository(Exercise::class)->find($exerciseId);
                 if (!$exercise instanceof Exercise) {
-                    return $this->json(['error' => "Exercise not found at index $index"], 400);
+                    return $this->json(['error' => "Exercise not found at index $index (exercise_id: $exerciseId)"], 400);
                 }
 
                 $preparedExercises[] = [

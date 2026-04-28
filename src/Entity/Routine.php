@@ -10,6 +10,7 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'routines')]
+#[ORM\Index(name: 'idx_routines_user_name', columns: ['user_id', 'name'])]
 class Routine
 {
     #[ORM\Id]

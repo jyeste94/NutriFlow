@@ -16,6 +16,66 @@ final class RoutineApiTest extends ApiTestCase
         $this->assertResponseStatusCodeSame(400);
     }
 
+    public function testGetAndUpdateRoutineWithExercises(): void
+    {
+        $headers = $this->authHeaders('routine-user-2');
+        $exercise = $this->createExerciseFixture('Pull Up');
+        $exerciseId = $exercise->getId()?->toRfc4122();
+        $this->assertNotNull($exerciseId);
+
+        $this->client->jsonRequest(
+            'POST',
+            '/v1/routines',
+            [
+                'name' => 'Initial routine',
+                'daysOfWeek' => [2, 4],
+                'exercises' => [
+                    [
+                        'exercise_id' => $exerciseId,
+                        'sets' => 4,
+                        'reps' => 8,
+                        'restSeconds' => 75,
+                    ],
+                ],
+            ],
+            $headers
+        );
+        $this->assertResponseStatusCodeSame(201);
+        $routineId = (string) ($this->jsonResponse()['id'] ?? '');
+        $this->assertNotSame('', $routineId);
+
+        $this->client->request('GET', '/v1/routines/' . $routineId, [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $routine = $this->jsonResponse();
+        $this->assertSame('Initial routine', $routine['name']);
+        $this->assertCount(1, $routine['exercises']);
+
+        $this->client->jsonRequest(
+            'PUT',
+            '/v1/routines/' . $routineId,
+            [
+                'name' => 'Updated routine',
+                'daysOfWeek' => [1, 3, 5],
+                'exercises' => [
+                    [
+                        'exercise_id' => $exerciseId,
+                        'sets' => 5,
+                        'reps' => 5,
+                        'restSeconds' => 120,
+                    ],
+                ],
+            ],
+            $headers
+        );
+        $this->assertResponseIsSuccessful();
+
+        $this->client->request('GET', '/v1/routines/' . $routineId, [], [], $headers);
+        $updated = $this->jsonResponse();
+        $this->assertSame('Updated routine', $updated['name']);
+        $this->assertSame([1, 3, 5], $updated['daysOfWeek']);
+        $this->assertSame(5, $updated['exercises'][0]['sets']);
+    }
+
     public function testDeleteRoutineIsForbiddenForOtherUser(): void
     {
         $ownerHeaders = $this->authHeaders('routine-owner-1');

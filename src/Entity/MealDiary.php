@@ -27,16 +27,16 @@ class MealDiary
     private ?\DateTimeImmutable $date = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private float $totalCalories = 0.0;
+    private string $totalCalories = '0.00';
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private float $totalProteins = 0.0;
+    private string $totalProteins = '0.00';
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private float $totalCarbs = 0.0;
+    private string $totalCarbs = '0.00';
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private float $totalFats = 0.0;
+    private string $totalFats = '0.00';
 
     #[ORM\OneToMany(mappedBy: 'diary', targetEntity: MealEntry::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $entries;
@@ -75,45 +75,45 @@ class MealDiary
 
     public function getTotalCalories(): float
     {
-        return $this->totalCalories;
+        return (float) $this->totalCalories;
     }
 
     public function setTotalCalories(float $totalCalories): static
     {
-        $this->totalCalories = $totalCalories;
+        $this->totalCalories = $this->formatDecimal($totalCalories);
         return $this;
     }
 
     public function getTotalProteins(): float
     {
-        return $this->totalProteins;
+        return (float) $this->totalProteins;
     }
 
     public function setTotalProteins(float $totalProteins): static
     {
-        $this->totalProteins = $totalProteins;
+        $this->totalProteins = $this->formatDecimal($totalProteins);
         return $this;
     }
 
     public function getTotalCarbs(): float
     {
-        return $this->totalCarbs;
+        return (float) $this->totalCarbs;
     }
 
     public function setTotalCarbs(float $totalCarbs): static
     {
-        $this->totalCarbs = $totalCarbs;
+        $this->totalCarbs = $this->formatDecimal($totalCarbs);
         return $this;
     }
 
     public function getTotalFats(): float
     {
-        return $this->totalFats;
+        return (float) $this->totalFats;
     }
 
     public function setTotalFats(float $totalFats): static
     {
-        $this->totalFats = $totalFats;
+        $this->totalFats = $this->formatDecimal($totalFats);
         return $this;
     }
 
@@ -150,21 +150,31 @@ class MealDiary
 
     public function recalculateTotals(): void
     {
-        $this->totalCalories = 0.0;
-        $this->totalProteins = 0.0;
-        $this->totalCarbs = 0.0;
-        $this->totalFats = 0.0;
+        $totalCalories = 0.0;
+        $totalProteins = 0.0;
+        $totalCarbs = 0.0;
+        $totalFats = 0.0;
 
         foreach ($this->entries as $entry) {
             $serving = $entry->getServing();
             $multiplier = $entry->getMultiplier();
             
             if ($serving && $multiplier > 0) {
-                $this->totalCalories += ($serving->getCalories() * $multiplier);
-                $this->totalProteins += ($serving->getProteins() * $multiplier);
-                $this->totalCarbs += ($serving->getCarbs() * $multiplier);
-                $this->totalFats += ($serving->getFats() * $multiplier);
+                $totalCalories += (($serving->getCalories() ?? 0.0) * $multiplier);
+                $totalProteins += (($serving->getProteins() ?? 0.0) * $multiplier);
+                $totalCarbs += (($serving->getCarbs() ?? 0.0) * $multiplier);
+                $totalFats += (($serving->getFats() ?? 0.0) * $multiplier);
             }
         }
+
+        $this->totalCalories = $this->formatDecimal($totalCalories);
+        $this->totalProteins = $this->formatDecimal($totalProteins);
+        $this->totalCarbs = $this->formatDecimal($totalCarbs);
+        $this->totalFats = $this->formatDecimal($totalFats);
+    }
+
+    private function formatDecimal(float $value): string
+    {
+        return number_format($value, 2, '.', '');
     }
 }

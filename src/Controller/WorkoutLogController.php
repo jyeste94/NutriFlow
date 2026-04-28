@@ -228,7 +228,7 @@ class WorkoutLogController extends AbstractController
         $session->setUser($user);
 
         if (isset($data['routine_id'])) {
-            $routineId = (string) $data['routine_id'];
+            $routineId = trim((string) $data['routine_id']);
             if (!Uuid::isValid($routineId)) {
                 return $this->json(['error' => 'Invalid routine_id format'], 400);
             }
@@ -275,7 +275,7 @@ class WorkoutLogController extends AbstractController
             return $data;
         }
 
-        $exerciseId = (string) ($data['exercise_id'] ?? '');
+        $exerciseId = trim((string) ($data['exercise_id'] ?? ''));
         $reps = filter_var($data['reps'] ?? null, FILTER_VALIDATE_INT);
         $weight = filter_var($data['weight'] ?? null, FILTER_VALIDATE_FLOAT);
 

@@ -8,6 +8,7 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'exercises')]
+#[ORM\Index(name: 'idx_exercises_name', columns: ['name'])]
 class Exercise
 {
     #[ORM\Id]
