@@ -215,7 +215,7 @@ class RoutineController extends AbstractController
 
                 $exercise = $this->em->getRepository(Exercise::class)->createQueryBuilder('e')
                     ->where('e.id = :id')
-                    ->setParameter('id', $exerciseId)
+                    ->setParameter('id', Uuid::fromString($exerciseId))
                     ->getQuery()
                     ->getOneOrNullResult();
 
@@ -324,7 +324,7 @@ class RoutineController extends AbstractController
 
                 $exercise = $this->em->getRepository(Exercise::class)->createQueryBuilder('e')
                     ->where('e.id = :id')
-                    ->setParameter('id', $exerciseId)
+                    ->setParameter('id', Uuid::fromString($exerciseId))
                     ->getQuery()
                     ->getOneOrNullResult();
 
