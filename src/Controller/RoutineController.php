@@ -79,12 +79,15 @@ class RoutineController extends AbstractController
             return $this->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Refrescar usuario para asegurar que está gestionado por Doctrine
+        // Refrescar usuario por firebaseUid
         $firebaseUid = $user->getUserIdentifier();
-        $user = $this->em->getRepository(User::class)->findOneBy(['firebaseUid' => $firebaseUid]);
-        if (!$user) {
-            return $this->json(['error' => 'User not found'], 401);
+        $userRow = $this->em->getConnection()->fetchAssociative(
+            'SELECT id FROM users WHERE firebase_uid = ?', [$firebaseUid]
+        );
+        if (!$userRow) {
+            return $this->json(['error' => 'User not found in database'], 401);
         }
+        $userId = $userRow['id'];
 
         try {
             $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
@@ -147,13 +150,8 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid restSeconds at index $index (0-3600)"], 400);
                 }
 
-                $exercise = $this->em->getRepository(Exercise::class)->createQueryBuilder('e')->where('e.id = :id')->setParameter('id', Uuid::fromString($exerciseId))->getQuery()->getOneOrNullResult();
-                if (!$exercise instanceof Exercise) {
-                    return $this->json(['error' => "Exercise not found at index $index (exercise_id: $exerciseId)"], 400);
-                }
-
                 $preparedExercises[] = [
-                    'exercise' => $exercise,
+                    'exercise_id' => $exerciseId,
                     'sets' => (int) $sets,
                     'reps' => (int) $reps,
                     'restSeconds' => (int) $restSeconds,
@@ -162,26 +160,30 @@ class RoutineController extends AbstractController
             }
         }
 
-        $this->em->persist($routine);
-
-        foreach ($preparedExercises as $preparedExercise) {
-            $routineExercise = new RoutineExercise();
-            $routineExercise->setRoutine($routine);
-            $routineExercise->setExercise($preparedExercise['exercise']);
-            $routineExercise->setSets($preparedExercise['sets']);
-            $routineExercise->setReps($preparedExercise['reps']);
-            $routineExercise->setRestSeconds($preparedExercise['restSeconds']);
-            $routineExercise->setOrderIndex($preparedExercise['orderIndex']);
-            $this->em->persist($routineExercise);
-        }
+        $conn = $this->em->getConnection();
 
         try {
-            $this->em->flush();
+            // Insertar rutina con SQL directo
+            $routineId = $conn->fetchOne('SELECT UUID()');
+            $daysJson = isset($data['daysOfWeek']) ? json_encode($data['daysOfWeek']) : null;
+
+            $conn->executeStatement(
+                'INSERT INTO routines (id, user_id, name, days_of_week) VALUES (?, ?, ?, ?)',
+                [$routineId, $userId, $name, $daysJson]
+            );
+
+            // Insertar ejercicios
+            foreach ($preparedExercises as $ex) {
+                $conn->executeStatement(
+                    'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index) VALUES (UUID(), ?, ?, ?, ?, ?, ?)',
+                    [$routineId, $ex['exercise_id'], $ex['sets'], $ex['reps'], $ex['restSeconds'], $ex['orderIndex']]
+                );
+            }
+
+            return $this->json(['message' => 'Routine created successfully', 'id' => $routineId], 201);
         } catch (\Throwable $e) {
             return $this->json(['error' => 'Could not create routine: ' . $e->getMessage()], 500);
         }
-
-        return $this->json(['message' => 'Routine created successfully', 'id' => $routine->getId()->toRfc4122()], 201);
     }
 
     #[Route('/{id}', name: 'update', methods: ['PUT'])]
