@@ -258,15 +258,6 @@ class RoutineController extends AbstractController
             return $this->json(['error' => 'Could not create routine: ' . $e->getMessage()], 500);
         }
 
-            $this->em->flush();
-            $conn->commit();
-        } catch (\Throwable $e) {
-            if ($conn->isTransactionActive()) {
-                $conn->rollBack();
-            }
-            return $this->json(['error' => 'Could not create routine: ' . $e->getMessage()], 500);
-        }
-
         return $this->json(['message' => 'Routine created successfully', 'id' => $routine->getId()->toRfc4122()], 201);
     }
 
@@ -360,53 +351,28 @@ class RoutineController extends AbstractController
             }
         }
 
-        $conn = $this->em->getConnection();
-        $conn->beginTransaction();
+        if (is_array($preparedExercises)) {
+            foreach ($routine->getRoutineExercises() as $existing) {
+                $this->em->remove($existing);
+            }
+            $routine->getRoutineExercises()->clear();
+
+            foreach ($preparedExercises as $preparedExercise) {
+                $routineExercise = new RoutineExercise();
+                $routineExercise->setRoutine($routine);
+                $routineExercise->setExercise($preparedExercise['exercise']);
+                $routineExercise->setSets($preparedExercise['sets']);
+                $routineExercise->setReps($preparedExercise['reps']);
+                $routineExercise->setRestSeconds($preparedExercise['restSeconds']);
+                $routineExercise->setOrderIndex($preparedExercise['orderIndex']);
+                $this->em->persist($routineExercise);
+            }
+        }
+
         try {
-            if (is_array($preparedExercises)) {
-                foreach ($routine->getRoutineExercises() as $existing) {
-                    $this->em->remove($existing);
-                }
-                $routine->getRoutineExercises()->clear();
-
-                foreach ($preparedExercises as $preparedExercise) {
-                    $routineExercise = new RoutineExercise();
-                    $routineExercise->setRoutine($routine);
-                    $routineExercise->setExercise($preparedExercise['exercise']);
-                    $routineExercise->setSets($preparedExercise['sets']);
-                    $routineExercise->setReps($preparedExercise['reps']);
-                    $routineExercise->setRestSeconds($preparedExercise['restSeconds']);
-                    $routineExercise->setOrderIndex($preparedExercise['orderIndex']);
-                    $this->em->persist($routineExercise);
-                }
-            }
-
-            try {
-                $this->em->flush();
-            } catch (\Throwable $e) {
-                return $this->json(['error' => 'Could not update routine: ' . $e->getMessage()], 500);
-            }
-                $routine->getRoutineExercises()->clear();
-
-                foreach ($preparedExercises as $preparedExercise) {
-                    $routineExercise = new RoutineExercise();
-                    $routineExercise->setRoutine($routine);
-                    $routineExercise->setExercise($preparedExercise['exercise']);
-                    $routineExercise->setSets($preparedExercise['sets']);
-                    $routineExercise->setReps($preparedExercise['reps']);
-                    $routineExercise->setRestSeconds($preparedExercise['restSeconds']);
-                    $routineExercise->setOrderIndex($preparedExercise['orderIndex']);
-                    $this->em->persist($routineExercise);
-                }
-            }
-
             $this->em->flush();
-            $conn->commit();
-        } catch (\Throwable) {
-            if ($conn->isTransactionActive()) {
-                $conn->rollBack();
-            }
-            return $this->json(['error' => 'Could not update routine'], 500);
+        } catch (\Throwable $e) {
+            return $this->json(['error' => 'Could not update routine: ' . $e->getMessage()], 500);
         }
 
         return $this->json(['message' => 'Routine updated successfully', 'id' => $routine->getId()->toRfc4122()]);
