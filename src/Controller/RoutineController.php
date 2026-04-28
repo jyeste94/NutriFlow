@@ -213,15 +213,7 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
                 }
 
-                $exercise = $this->em->getRepository(Exercise::class)->createQueryBuilder('e')
-                    ->where('e.id = :id')
-                    ->setParameter('id', Uuid::fromString($exerciseId))
-                    ->getQuery()
-                    ->getOneOrNullResult();
-
-                if (!$exercise) {
-                    return $this->json(['error' => "Exercise not found at index $index"], 404);
-                }
+                $exercise = $this->em->getReference(Exercise::class, Uuid::fromString($exerciseId));
 
                 $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
                 $reps = filter_var($exData['reps'] ?? 10, FILTER_VALIDATE_INT);
@@ -322,15 +314,7 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
                 }
 
-                $exercise = $this->em->getRepository(Exercise::class)->createQueryBuilder('e')
-                    ->where('e.id = :id')
-                    ->setParameter('id', Uuid::fromString($exerciseId))
-                    ->getQuery()
-                    ->getOneOrNullResult();
-
-                if (!$exercise) {
-                    return $this->json(['error' => "Exercise not found at index $index"], 404);
-                }
+                $exercise = $this->em->getReference(Exercise::class, Uuid::fromString($exerciseId));
 
                 $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
                 $reps = filter_var($exData['reps'] ?? 10, FILTER_VALIDATE_INT);
