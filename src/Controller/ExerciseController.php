@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Uid\UuidV7;
 
 #[Route('/v1/exercises', name: 'api_exercises_')]
 class ExerciseController extends AbstractController
@@ -129,5 +130,93 @@ class ExerciseController extends AbstractController
             'gifUrl' => $row['gif_url'],
             'videoUrl' => $row['video_url'],
         ]);
+    }
+
+    #[Route('', name: 'create', methods: ['POST'])]
+    public function create(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        if (empty($data['name'])) {
+            return $this->json(['error' => 'Exercise name is required'], 400);
+        }
+
+        $exercise = new Exercise();
+        $exercise->setId(new UuidV7());
+        $exercise->setName($data['name']);
+        $exercise->setMuscleGroup($data['muscleGroup'] ?? '');
+        $exercise->setEquipment($data['equipment'] ?? null);
+        $exercise->setDescription($data['description'] ?? null);
+        $exercise->setGifUrl($data['gifUrl'] ?? null);
+        $exercise->setVideoUrl($data['videoUrl'] ?? null);
+
+        $em->persist($exercise);
+        $em->flush();
+
+        return $this->json([
+            'id' => $exercise->getId()->toRfc4122(),
+            'name' => $exercise->getName(),
+            'muscleGroup' => $exercise->getMuscleGroup(),
+            'equipment' => $exercise->getEquipment(),
+            'description' => $exercise->getDescription(),
+            'gifUrl' => $exercise->getGifUrl(),
+            'videoUrl' => $exercise->getVideoUrl(),
+        ], 201);
+    }
+
+    #[Route('/{id}', name: 'update', methods: ['PUT'])]
+    public function update(string $id, Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        if (!Uuid::isValid($id)) {
+            return $this->json(['error' => 'Invalid exercise ID format'], 400);
+        }
+
+        $repo = $em->getRepository(Exercise::class);
+        $exercise = $repo->find($id);
+
+        if (!$exercise) {
+            return $this->json(['error' => 'Exercise not found'], 404);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        if (isset($data['name'])) $exercise->setName($data['name']);
+        if (isset($data['muscleGroup'])) $exercise->setMuscleGroup($data['muscleGroup']);
+        if (array_key_exists('equipment', $data)) $exercise->setEquipment($data['equipment']);
+        if (array_key_exists('description', $data)) $exercise->setDescription($data['description']);
+        if (array_key_exists('gifUrl', $data)) $exercise->setGifUrl($data['gifUrl']);
+        if (array_key_exists('videoUrl', $data)) $exercise->setVideoUrl($data['videoUrl']);
+
+        $em->flush();
+
+        return $this->json([
+            'id' => $exercise->getId()->toRfc4122(),
+            'name' => $exercise->getName(),
+            'muscleGroup' => $exercise->getMuscleGroup(),
+            'equipment' => $exercise->getEquipment(),
+            'description' => $exercise->getDescription(),
+            'gifUrl' => $exercise->getGifUrl(),
+            'videoUrl' => $exercise->getVideoUrl(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    public function delete(string $id, EntityManagerInterface $em): JsonResponse
+    {
+        if (!Uuid::isValid($id)) {
+            return $this->json(['error' => 'Invalid exercise ID format'], 400);
+        }
+
+        $repo = $em->getRepository(Exercise::class);
+        $exercise = $repo->find($id);
+
+        if (!$exercise) {
+            return $this->json(['error' => 'Exercise not found'], 404);
+        }
+
+        $em->remove($exercise);
+        $em->flush();
+
+        return $this->json(null, 204);
     }
 }
