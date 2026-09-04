@@ -16,6 +16,10 @@ class FatSecretScraperService
 
     public function search(string $query, int $page = 0): array
     {
+        if (($_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? '') === 'test') {
+            return [];
+        }
+
         $url = 'https://www.fatsecret.es/ajax/JsonRecipeSearch.aspx';
 
         $response = $this->httpClient->request('GET', $url, [

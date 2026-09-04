@@ -23,15 +23,30 @@ class UserPreferencesController extends AbstractController
 
         $prefs = $row ? json_decode($row['preferences'], true) : [];
 
+        if (!$row) {
+            return $this->json([
+                'calorie_goal' => null,
+                'protein_goal' => 140,
+                'carbs_goal' => 167,
+                'fat_goal' => 58,
+                'gender' => null,
+                'age' => null,
+                'weight_kg' => null,
+                'height_cm' => null,
+                'activity' => null,
+            ]);
+        }
+
         return $this->json(array_merge([
-            'calorie_goal' => 1754,
+            'calorie_goal' => null,
             'protein_goal' => 140,
             'carbs_goal' => 167,
             'fat_goal' => 58,
-            'theme' => 'system',
-            'widgets' => ['calories', 'meals', 'progress'],
-            'fasting_enabled' => false,
-            'fasting_window' => '16:8',
+            'gender' => null,
+            'age' => null,
+            'weight_kg' => null,
+            'height_cm' => null,
+            'activity' => null,
         ], $prefs));
     }
 
