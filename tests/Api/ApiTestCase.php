@@ -190,6 +190,16 @@ abstract class ApiTestCase extends WebTestCase
         $tool = new SchemaTool($this->em);
         $tool->dropSchema($metadata);
         $tool->createSchema($metadata);
+
+        // Ensure raw tables from migrations exist in test database
+        $this->em->getConnection()->executeStatement('CREATE TABLE IF NOT EXISTS user_preferences (
+            id CHAR(36) NOT NULL PRIMARY KEY,
+            user_id CHAR(36) NOT NULL UNIQUE,
+            preferences TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )');
+
         $this->em->clear();
     }
 }

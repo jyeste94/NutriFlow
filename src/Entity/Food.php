@@ -41,6 +41,10 @@ class Food
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
+    private ?User $user = null;
+
     #[ORM\OneToMany(mappedBy: 'food', targetEntity: Serving::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $servings;
 
@@ -148,6 +152,17 @@ class Food
             $serving->setFood($this);
         }
 
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
         return $this;
     }
 
