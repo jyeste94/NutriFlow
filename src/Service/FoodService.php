@@ -81,8 +81,12 @@ class FoodService
         $lastFetchedAt = $food->getLastFetchedAt();
         $ttlDate = $lastFetchedAt?->modify('+' . self::CACHE_TTL_DAYS . ' days');
 
-        // Check cache logic: If it hasn't been fetched fully yet (no servings) OR if cache expired
-        if ($food->getServings()->isEmpty() || $ttlDate === null || $now > $ttlDate) {
+        // Check cache logic: If it hasn't been fetched fully yet (no servings or missing macros) OR if cache expired
+        $firstServing = $food->getServings()->first() ?: null;
+        $needsHydration = !$firstServing || $firstServing->getProteins() === null;
+        $isExpired = $ttlDate === null || $now > $ttlDate;
+
+        if ($needsHydration || $isExpired) {
             $this->refreshFoodDetails($food);
         }
 
@@ -122,79 +126,200 @@ class FoodService
             $isDirty = true;
         }
 
+        // Parse portion & energy from remote search data
+        $rawEnergy = isset($remoteData['energy']) && $remoteData['energy'] !== ''
+            ? (float) $remoteData['energy']
+            : null;
+        $portionDesc = isset($remoteData['portion_description'])
+            ? (string) $remoteData['portion_description']
+            : '100g';
+        $portion = $this->parsePortion($portionDesc, $rawEnergy);
+
+        // If food has no servings yet, create initial serving with search calories & portion
+        if ($food->getServings()->isEmpty() && $portion['calories'] !== null) {
+            $serving = new Serving();
+            $serving->setFood($food);
+            $serving->setDescription($portion['description']);
+            $serving->setAmount($portion['amount']);
+            $serving->setUnit($portion['unit']);
+            $serving->setCalories($portion['calories']);
+            // proteins, carbs, fats remain null until getFoodDetails is called
+            $food->addServing($serving);
+            $this->em->persist($serving);
+            $isDirty = true;
+        }
+
         if ($isDirty) {
             $food->setUpdatedAt(new \DateTimeImmutable());
             $this->em->persist($food);
+            $this->em->flush();
+
+            // Ensure bestServingId points to the serving
+            if ($food->getBestServingId() === null && !$food->getServings()->isEmpty()) {
+                $food->setBestServingId($food->getServings()->first()->getId());
+            }
         }
 
         return $food;
     }
 
+    private function parsePortion(string $desc, ?float $energy): array
+    {
+        $desc = trim(html_entity_decode($desc, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        $amount = 100.0;
+        $unit = 'g';
+        $calories = $energy !== null ? (float) $energy : null;
+
+        // Pattern 1: Parenthesized grams or ml, e.g. "1 rebanada (32g)" or "1 lata (330ml)"
+        if (preg_match('/\((\d+(?:[.,]\d+)?)\s*(g|ml)\)/i', $desc, $matches)) {
+            $amount = (float) str_replace(',', '.', $matches[1]);
+            $unit = strtolower($matches[2]);
+        }
+        // Pattern 2: Direct amount, e.g. "100g", "250 ml", "100 g"
+        elseif (preg_match('/^(\d+(?:[.,]\d+)?)\s*(g|ml)$/i', $desc, $matches)) {
+            $amount = (float) str_replace(',', '.', $matches[1]);
+            $unit = strtolower($matches[2]);
+        }
+        // Pattern 3: Lone "g" or "1g" with energy per gram (e.g. 1.95 kcal/g)
+        elseif (strtolower($desc) === 'g' || strtolower($desc) === '1g') {
+            $amount = 100.0;
+            $unit = 'g';
+            if ($calories !== null && $calories < 20.0) {
+                $calories = round($calories * 100.0, 1);
+            }
+            $desc = '100g';
+        }
+
+        if (empty($desc)) {
+            $desc = $amount . $unit;
+        }
+
+        return [
+            'description' => $desc,
+            'amount' => $amount,
+            'unit' => $unit,
+            'calories' => $calories,
+        ];
+    }
+
     private function refreshFoodDetails(Food $food): void
     {
         $externalId = $food->getExternalId();
+        if (!$externalId || str_starts_with($externalId, 'custom_')) {
+            return;
+        }
         
         // Fetch detailed macros using Info Endpoint
         $macros = $this->scraper->getInfo($externalId);
         
         if ($macros === null) {
-            // HTML parser failed or 404
+            // Scraper failed or 404
             return;
         }
 
-        // Wipe old servings
-        foreach ($food->getServings() as $serving) {
-            $this->em->remove($serving);
+        // Preserve previous portion description, amount, and unit if existing
+        $existingServing = $food->getServings()->first() ?: null;
+        $prevDesc = $existingServing?->getDescription() ?? '100g';
+        $prevAmount = $existingServing?->getAmount() ?? 100.0;
+        $prevUnit = $existingServing?->getUnit() ?? 'g';
+
+        if ($existingServing) {
+            $serving = $existingServing;
+        } else {
+            $serving = new Serving();
+            $serving->setFood($food);
+            $serving->setDescription($prevDesc);
+            $serving->setAmount($prevAmount);
+            $serving->setUnit($prevUnit);
+            $food->addServing($serving);
+            $this->em->persist($serving);
         }
-        $food->getServings()->clear();
-        $this->em->flush(); // To ensure deletion is performed before inserting new
 
-        $serving = new Serving();
-        $serving->setFood($food);
-        
-        // The search endpoint gives a portion description (e.g. "1 pieza (130g)") but the info 
-        // endpoint does not return it directly inside the HTML cleanly. 
-        // We'll set a generic '100g/unit' description, or ideally we'd pass it from search.
-        // For now, we put "Standard Serving".
-        $serving->setDescription("Standard Serving");
-        
-        $serving->setCalories($macros['calories']);
-        $serving->setProteins($macros['proteins']);
-        $serving->setCarbs($macros['carbs']);
-        $serving->setFats($macros['fats']);
-        
-        $food->addServing($serving);
-        $this->em->persist($serving);
-
-        $this->em->flush();
+        // Set detailed macros
+        $serving->setCalories((float) $macros['calories']);
+        $serving->setProteins((float) $macros['proteins']);
+        $serving->setCarbs((float) $macros['carbs']);
+        $serving->setFats((float) $macros['fats']);
 
         $food->setLastFetchedAt(new \DateTimeImmutable());
         $food->setUpdatedAt(new \DateTimeImmutable());
+        $this->em->flush();
+
         if ($serving->getId() !== null) {
             $food->setBestServingId($serving->getId());
+            $this->em->flush();
         }
-
-        $this->em->flush();
     }
 
     private function formatFoodArray(Food $food): array
     {
         $servings = [];
+        $hasCompleteMacros = false;
+        $hasCalories = false;
+
+        $bestServing = null;
+        if ($food->getBestServingId()) {
+            foreach ($food->getServings() as $s) {
+                if ($s->getId()?->toRfc4122() === $food->getBestServingId()->toRfc4122()) {
+                    $bestServing = $s;
+                    break;
+                }
+            }
+        }
+        if (!$bestServing && !$food->getServings()->isEmpty()) {
+            $bestServing = $food->getServings()->first();
+        }
+
         foreach ($food->getServings() as $serving) {
+            $cal = $serving->getCalories();
+            $p = $serving->getProteins();
+            $c = $serving->getCarbs();
+            $f = $serving->getFats();
+
+            if ($cal !== null) {
+                $hasCalories = true;
+            }
+            if ($p !== null && $c !== null && $f !== null) {
+                $hasCompleteMacros = true;
+            }
+
             $servings[] = [
-                'id' => $serving->getId()->toRfc4122(),
+                'id' => $serving->getId()?->toRfc4122(),
                 'description' => $serving->getDescription(),
-                'calories' => $serving->getCalories(),
-                'proteins' => $serving->getProteins(),
-                'carbs' => $serving->getCarbs(),
-                'fats' => $serving->getFats(),
+                'amount' => $serving->getAmount() ?: 100.0,
+                'unit' => $serving->getUnit() ?: 'g',
+                'calories' => $cal !== null ? (float) $cal : null,
+                'proteins' => $p !== null ? (float) $p : null,
+                'carbs' => $c !== null ? (float) $c : null,
+                'fats' => $f !== null ? (float) $f : null,
             ];
         }
 
+        $nutritionStatus = 'unavailable';
+        if ($hasCompleteMacros) {
+            $nutritionStatus = 'available';
+        } elseif ($hasCalories) {
+            $nutritionStatus = 'requires_detail';
+        }
+
+        $mainAmount = $bestServing ? ($bestServing->getAmount() ?: 100.0) : 100.0;
+        $mainCal = $bestServing ? $bestServing->getCalories() : null;
+        $mainP = $bestServing ? $bestServing->getProteins() : null;
+        $mainC = $bestServing ? $bestServing->getCarbs() : null;
+        $mainF = $bestServing ? $bestServing->getFats() : null;
+
         return [
-            'id' => $food->getId()->toRfc4122(),
+            'id' => $food->getId()?->toRfc4122(),
             'name' => $food->getName(),
             'brand' => $food->getBrand(),
+            'nutritionStatus' => $nutritionStatus,
+            'hasNutritionInfo' => $hasCalories,
+            'servingId' => $bestServing?->getId()?->toRfc4122(),
+            'baseServingGrams' => $mainAmount,
+            'calories' => $mainCal !== null ? (float) $mainCal : null,
+            'proteins' => $mainP !== null ? (float) $mainP : null,
+            'carbs' => $mainC !== null ? (float) $mainC : null,
+            'fats' => $mainF !== null ? (float) $mainF : null,
             'servings' => $servings,
         ];
     }

@@ -36,6 +36,9 @@ class RoutineExercise
     #[ORM\Column(type: 'integer')]
     private int $orderIndex = 0; // To sort exercises within a routine
 
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $targetWeight = null;
+
     public function getId(): ?Uuid
     {
         return $this->id;
@@ -104,6 +107,17 @@ class RoutineExercise
     public function setOrderIndex(int $orderIndex): static
     {
         $this->orderIndex = $orderIndex;
+        return $this;
+    }
+
+    public function getTargetWeight(): ?float
+    {
+        return $this->targetWeight;
+    }
+
+    public function setTargetWeight(?float $targetWeight): static
+    {
+        $this->targetWeight = $targetWeight;
         return $this;
     }
 }

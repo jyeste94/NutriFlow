@@ -67,16 +67,19 @@ class FoodController extends AbstractController
         foreach ($results as $serving) {
             $food = $serving->getFood();
             if (!$food) continue;
+            $calories = $serving->getCalories();
+            $hasInfo = $calories !== null;
             $foods[] = [
                 'id' => $food->getId()?->toRfc4122(),
                 'name' => $food->getName(),
                 'brand' => $food->getBrand(),
                 'servingId' => $serving->getId()?->toRfc4122(),
                 'baseServingGrams' => $serving->getAmount() ?: 100,
-                'calories' => $serving->getCalories() ?: 0,
-                'proteins' => $serving->getProteins() ?: 0,
-                'carbs' => $serving->getCarbs() ?: 0,
-                'fats' => $serving->getFats() ?: 0,
+                'calories' => $hasInfo ? (float) $calories : null,
+                'proteins' => $serving->getProteins() !== null ? (float) $serving->getProteins() : 0.0,
+                'carbs' => $serving->getCarbs() !== null ? (float) $serving->getCarbs() : 0.0,
+                'fats' => $serving->getFats() !== null ? (float) $serving->getFats() : 0.0,
+                'hasNutritionInfo' => $hasInfo,
             ];
         }
 
@@ -112,16 +115,19 @@ class FoodController extends AbstractController
         foreach ($results as $serving) {
             $food = $serving->getFood();
             if (!$food) continue;
+            $calories = $serving->getCalories();
+            $hasInfo = $calories !== null;
             $foods[] = [
                 'id' => $food->getId()?->toRfc4122(),
                 'name' => $food->getName(),
                 'brand' => $food->getBrand(),
                 'servingId' => $serving->getId()?->toRfc4122(),
                 'baseServingGrams' => $serving->getAmount() ?: 100,
-                'calories' => $serving->getCalories() ?: 0,
-                'proteins' => $serving->getProteins() ?: 0,
-                'carbs' => $serving->getCarbs() ?: 0,
-                'fats' => $serving->getFats() ?: 0,
+                'calories' => $hasInfo ? (float) $calories : null,
+                'proteins' => $serving->getProteins() !== null ? (float) $serving->getProteins() : 0.0,
+                'carbs' => $serving->getCarbs() !== null ? (float) $serving->getCarbs() : 0.0,
+                'fats' => $serving->getFats() !== null ? (float) $serving->getFats() : 0.0,
+                'hasNutritionInfo' => $hasInfo,
             ];
         }
 
@@ -150,16 +156,18 @@ class FoodController extends AbstractController
                 $bestServing = $food->getServings()->first();
             }
 
+            $hasInfo = $bestServing !== null;
             $result[] = [
                 'id' => $food->getId()?->toRfc4122(),
                 'name' => $food->getName(),
                 'brand' => $food->getBrand(),
                 'servingId' => $bestServing?->getId()?->toRfc4122(),
                 'baseServingGrams' => $bestServing?->getAmount() ?: 100,
-                'calories' => $bestServing?->getCalories() ?: 0,
-                'proteins' => $bestServing?->getProteins() ?: 0,
-                'carbs' => $bestServing?->getCarbs() ?: 0,
-                'fats' => $bestServing?->getFats() ?: 0,
+                'calories' => $hasInfo ? ($bestServing->getCalories() !== null ? (float) $bestServing->getCalories() : 0.0) : null,
+                'proteins' => $hasInfo ? ($bestServing->getProteins() !== null ? (float) $bestServing->getProteins() : 0.0) : null,
+                'carbs' => $hasInfo ? ($bestServing->getCarbs() !== null ? (float) $bestServing->getCarbs() : 0.0) : null,
+                'fats' => $hasInfo ? ($bestServing->getFats() !== null ? (float) $bestServing->getFats() : 0.0) : null,
+                'hasNutritionInfo' => $hasInfo,
                 'isFavorite' => true,
             ];
         }

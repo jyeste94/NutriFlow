@@ -46,7 +46,7 @@ class RoutineController extends AbstractController
             ->getSingleScalarResult();
 
         $routineIdRows = $this->em->createQueryBuilder()
-            ->select('r.id')
+            ->select('r.id AS id')
             ->from(Routine::class, 'r')
             ->join('r.user', 'u')
             ->where('u.firebaseUid = :firebaseUid')
@@ -58,7 +58,7 @@ class RoutineController extends AbstractController
             ->getScalarResult();
 
         $routineIds = array_map(
-            static fn (array $row): string => (string) ($row['id'] ?? ''),
+            static fn (array $row): string => (string) ($row['id'] ?? $row['id_0'] ?? ''),
             $routineIdRows
         );
 
@@ -92,6 +92,8 @@ class RoutineController extends AbstractController
                     'reps' => $re->getReps(),
                     'restSeconds' => $re->getRestSeconds(),
                     'orderIndex' => $re->getOrderIndex(),
+                    'targetWeight' => $re->getTargetWeight(),
+                    'target_weight' => $re->getTargetWeight(),
                 ];
             }
 
@@ -145,6 +147,8 @@ class RoutineController extends AbstractController
                 'reps' => $re->getReps(),
                 'restSeconds' => $re->getRestSeconds(),
                 'orderIndex' => $re->getOrderIndex(),
+                'targetWeight' => $re->getTargetWeight(),
+                'target_weight' => $re->getTargetWeight(),
             ];
         }
 
@@ -235,12 +239,32 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid restSeconds at index $index (0-3600)"], 400);
                 }
 
+                $exercise = $this->em->getRepository(Exercise::class)->createQueryBuilder('e')
+                    ->where('e.id = :id')
+                    ->setParameter('id', Uuid::fromString($exerciseId))
+                    ->getQuery()
+                    ->getOneOrNullResult();
+                if (!$exercise instanceof Exercise) {
+                    return $this->json(['error' => "Exercise not found at index $index (exercise_id: $exerciseId)"], 400);
+                }
+
+                $targetWeightRaw = $exData['target_weight'] ?? $exData['targetWeight'] ?? null;
+                $targetWeight = null;
+                if ($targetWeightRaw !== null && $targetWeightRaw !== '') {
+                    $targetWeight = filter_var($targetWeightRaw, FILTER_VALIDATE_FLOAT);
+                    if ($targetWeight === false || $targetWeight < 0 || $targetWeight > 1000) {
+                        return $this->json(['error' => "Invalid targetWeight at index $index (0-1000)"], 400);
+                    }
+                    $targetWeight = (float) $targetWeight;
+                }
+
                 $preparedExercises[] = [
                     'exercise_id' => $exerciseId,
                     'sets' => (int) $sets,
                     'reps' => (int) $reps,
                     'restSeconds' => (int) $restSeconds,
                     'orderIndex' => (int) $index,
+                    'targetWeight' => $targetWeight,
                 ];
             }
         }
@@ -262,8 +286,8 @@ class RoutineController extends AbstractController
             foreach ($preparedExercises as $ex) {
                 $reId = (string) Uuid::v7();
                 $conn->executeStatement(
-                    'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [$reId, $routineId, $ex['exercise_id'], $ex['sets'], $ex['reps'], $ex['restSeconds'], $ex['orderIndex']]
+                    'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index, target_weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [$reId, $routineId, $ex['exercise_id'], $ex['sets'], $ex['reps'], $ex['restSeconds'], $ex['orderIndex'], $ex['targetWeight']]
                 );
             }
 
@@ -358,12 +382,23 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Exercise not found at index $index (exercise_id: $exerciseId)"], 400);
                 }
 
+                $targetWeightRaw = $exData['target_weight'] ?? $exData['targetWeight'] ?? null;
+                $targetWeight = null;
+                if ($targetWeightRaw !== null && $targetWeightRaw !== '') {
+                    $targetWeight = filter_var($targetWeightRaw, FILTER_VALIDATE_FLOAT);
+                    if ($targetWeight === false || $targetWeight < 0 || $targetWeight > 1000) {
+                        return $this->json(['error' => "Invalid targetWeight at index $index (0-1000)"], 400);
+                    }
+                    $targetWeight = (float) $targetWeight;
+                }
+
                 $preparedExercises[] = [
                     'exercise' => $exercise,
                     'sets' => (int) $sets,
                     'reps' => (int) $reps,
                     'restSeconds' => (int) $restSeconds,
                     'orderIndex' => (int) $index,
+                    'targetWeight' => $targetWeight,
                 ];
             }
         }
@@ -382,6 +417,7 @@ class RoutineController extends AbstractController
                 $routineExercise->setReps($preparedExercise['reps']);
                 $routineExercise->setRestSeconds($preparedExercise['restSeconds']);
                 $routineExercise->setOrderIndex($preparedExercise['orderIndex']);
+                $routineExercise->setTargetWeight($preparedExercise['targetWeight']);
                 $this->em->persist($routineExercise);
             }
         }
