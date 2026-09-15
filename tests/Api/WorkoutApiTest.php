@@ -95,4 +95,87 @@ final class WorkoutApiTest extends ApiTestCase
 
         $this->assertResponseStatusCodeSame(400);
     }
+
+    public function testExerciseSummariesAndPrDetection(): void
+    {
+        $headers = $this->authHeaders('workout-pr-user-1');
+        $exercise = $this->createExerciseFixture('Bench Press PR');
+        $exerciseId = $exercise->getId()?->toRfc4122();
+        $this->assertNotNull($exerciseId);
+
+        // Session 1
+        $this->client->jsonRequest('POST', '/v1/workouts', [], $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $session1Id = (string) ($this->jsonResponse()['id'] ?? '');
+
+        // Log set 1: 50kg x 10
+        $this->client->jsonRequest(
+            'POST',
+            '/v1/workouts/' . $session1Id . '/sets',
+            ['exercise_id' => $exerciseId, 'weight' => 50, 'reps' => 10],
+            $headers
+        );
+        $this->assertResponseStatusCodeSame(201);
+
+        // Log set 2: 60kg x 8 (new max weight)
+        $this->client->jsonRequest(
+            'POST',
+            '/v1/workouts/' . $session1Id . '/sets',
+            ['exercise_id' => $exerciseId, 'weight' => 60, 'reps' => 8],
+            $headers
+        );
+        $this->assertResponseStatusCodeSame(201);
+        $set2Res = $this->jsonResponse();
+        $this->assertTrue($set2Res['is_pr']);
+        $this->assertContains('max_weight', $set2Res['pr_types']);
+
+        // Test exercise summaries endpoint
+        $this->client->jsonRequest(
+            'POST',
+            '/v1/workouts/exercise-summaries',
+            ['exercise_ids' => [$exerciseId]],
+            $headers
+        );
+        $this->assertResponseIsSuccessful();
+        $summariesRes = $this->jsonResponse();
+        $this->assertArrayHasKey('summaries', $summariesRes);
+        $this->assertArrayHasKey($exerciseId, $summariesRes['summaries']);
+
+        $exSummary = $summariesRes['summaries'][$exerciseId];
+        $this->assertNotNull($exSummary['last_session']);
+        $this->assertCount(2, $exSummary['last_session']['sets']);
+        $this->assertSame(50.0, (float) $exSummary['last_session']['sets'][0]['weight']);
+        $this->assertSame(10, $exSummary['last_session']['sets'][0]['reps']);
+        $this->assertSame(60.0, (float) $exSummary['records']['max_weight']);
+
+        // Session 2
+        $this->client->jsonRequest('POST', '/v1/workouts', [], $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $session2Id = (string) ($this->jsonResponse()['id'] ?? '');
+
+        // Log set: 65kg x 5 (breaks PR of 60kg)
+        $this->client->jsonRequest(
+            'POST',
+            '/v1/workouts/' . $session2Id . '/sets',
+            ['exercise_id' => $exerciseId, 'weight' => 65, 'reps' => 5],
+            $headers
+        );
+        $this->assertResponseStatusCodeSame(201);
+        $prRes = $this->jsonResponse();
+        $this->assertTrue($prRes['is_pr']);
+        $this->assertContains('max_weight', $prRes['pr_types']);
+        $this->assertSame(60.0, (float) $prRes['previous_max_weight']);
+        $this->assertSame(65.0, (float) $prRes['new_weight']);
+
+        // Log set: 60kg x 5 (does NOT break PR)
+        $this->client->jsonRequest(
+            'POST',
+            '/v1/workouts/' . $session2Id . '/sets',
+            ['exercise_id' => $exerciseId, 'weight' => 60, 'reps' => 5],
+            $headers
+        );
+        $this->assertResponseStatusCodeSame(201);
+        $nonPrRes = $this->jsonResponse();
+        $this->assertFalse($nonPrRes['is_pr']);
+    }
 }

@@ -113,6 +113,122 @@ class WorkoutLogController extends AbstractController
         return $response;
     }
 
+    #[Route('/exercise-summaries', name: 'exercise_summaries', methods: ['POST'])]
+    public function exerciseSummaries(Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $data = $this->parseJsonBody($request);
+        if ($data instanceof JsonResponse) {
+            return $data;
+        }
+
+        $exerciseIds = $data['exercise_ids'] ?? [];
+        if (!is_array($exerciseIds) || empty($exerciseIds)) {
+            return $this->json(['summaries' => (object) []]);
+        }
+
+        $summaries = [];
+        foreach ($exerciseIds as $rawId) {
+            $exId = trim((string) $rawId);
+            if (!Uuid::isValid($exId)) {
+                continue;
+            }
+
+            /** @var WorkoutSetLog[] $allSets */
+            $allSets = $this->em->createQueryBuilder()
+                ->select('sl', 's')
+                ->from(WorkoutSetLog::class, 'sl')
+                ->join('sl.session', 's')
+                ->where('s.user = :user')
+                ->andWhere('sl.exercise = :exId')
+                ->andWhere('sl.completed = :completed')
+                ->andWhere('sl.weight > 0')
+                ->andWhere('sl.reps >= 1')
+                ->setParameter('user', $user)
+                ->setParameter('exId', $exId)
+                ->setParameter('completed', true)
+                ->orderBy('s.date', 'DESC')
+                ->addOrderBy('s.id', 'DESC')
+                ->addOrderBy('sl.id', 'ASC')
+                ->getQuery()
+                ->getResult();
+
+            if (empty($allSets)) {
+                $summaries[$exId] = [
+                    'last_session' => null,
+                    'records' => null,
+                ];
+                continue;
+            }
+
+            $lastSessionObj = $allSets[0]->getSession();
+            $lastSessionId = $lastSessionObj->getId()->toRfc4122();
+            $lastSessionDate = $lastSessionObj->getDate()->format('Y-m-d');
+
+            $lastSessionSets = [];
+            $setNumber = 1;
+            foreach ($allSets as $set) {
+                if ($set->getSession()->getId()->toRfc4122() === $lastSessionId) {
+                    $lastSessionSets[] = [
+                        'set_number' => $setNumber++,
+                        'weight' => (float) $set->getWeight(),
+                        'reps' => (int) $set->getReps(),
+                        'completed' => (bool) $set->isCompleted(),
+                    ];
+                }
+            }
+
+            $maxWeight = 0.0;
+            $maxWeightSet = null;
+            $maxE1rm = 0.0;
+            $maxE1rmSet = null;
+            $maxReps = 0;
+            $maxRepsSet = null;
+
+            foreach ($allSets as $set) {
+                $w = (float) $set->getWeight();
+                $r = (int) $set->getReps();
+                $e1rm = $r === 1 ? $w : round($w * (1.0 + $r / 30.0), 1);
+                $d = $set->getSession()->getDate()->format('Y-m-d');
+
+                if ($w > $maxWeight) {
+                    $maxWeight = $w;
+                    $maxWeightSet = ['weight' => $w, 'reps' => $r, 'date' => $d];
+                }
+                if ($e1rm > $maxE1rm) {
+                    $maxE1rm = $e1rm;
+                    $maxE1rmSet = ['weight' => $w, 'reps' => $r, 'e1rm' => $e1rm, 'date' => $d];
+                }
+                if ($r > $maxReps) {
+                    $maxReps = $r;
+                    $maxRepsSet = ['weight' => $w, 'reps' => $r, 'date' => $d];
+                }
+            }
+
+            $summaries[$exId] = [
+                'last_session' => [
+                    'session_id' => $lastSessionId,
+                    'date' => $lastSessionDate,
+                    'sets' => $lastSessionSets,
+                ],
+                'records' => [
+                    'max_weight' => $maxWeight,
+                    'max_weight_set' => $maxWeightSet,
+                    'max_e1rm' => $maxE1rm,
+                    'max_e1rm_set' => $maxE1rmSet,
+                    'max_reps' => $maxReps,
+                    'max_reps_set' => $maxRepsSet,
+                ],
+            ];
+        }
+
+        return $this->json(['summaries' => $summaries]);
+    }
+
     #[Route('/{sessionId}', name: 'get_session', methods: ['GET'])]
     public function getSession(string $sessionId): JsonResponse
     {
@@ -294,10 +410,68 @@ class WorkoutLogController extends AbstractController
             return $this->json(['error' => 'Exercise not found'], 404);
         }
 
+        $newWeight = (float) $weight;
+        $newReps = (int) $reps;
+        $newE1rm = $newReps === 1 ? $newWeight : round($newWeight * (1.0 + $newReps / 30.0), 1);
+
+        $priorStats = $this->em->createQueryBuilder()
+            ->select('MAX(sl.weight) as max_weight')
+            ->from(WorkoutSetLog::class, 'sl')
+            ->join('sl.session', 's')
+            ->where('s.user = :user')
+            ->andWhere('sl.exercise = :exId')
+            ->andWhere('sl.completed = :completed')
+            ->andWhere('sl.weight > 0')
+            ->setParameter('user', $user)
+            ->setParameter('exId', $exerciseId)
+            ->setParameter('completed', true)
+            ->getQuery()
+            ->getSingleResult();
+
+        $priorMaxWeight = $priorStats['max_weight'] !== null ? (float) $priorStats['max_weight'] : null;
+
+        $priorSets = $this->em->createQueryBuilder()
+            ->select('sl.weight, sl.reps')
+            ->from(WorkoutSetLog::class, 'sl')
+            ->join('sl.session', 's')
+            ->where('s.user = :user')
+            ->andWhere('sl.exercise = :exId')
+            ->andWhere('sl.completed = :completed')
+            ->andWhere('sl.weight > 0')
+            ->andWhere('sl.reps >= 1')
+            ->setParameter('user', $user)
+            ->setParameter('exId', $exerciseId)
+            ->setParameter('completed', true)
+            ->getQuery()
+            ->getResult();
+
+        $priorMaxE1rm = null;
+        foreach ($priorSets as $ps) {
+            $pw = (float) $ps['weight'];
+            $pr = (int) $ps['reps'];
+            $pe = $pr === 1 ? $pw : round($pw * (1.0 + $pr / 30.0), 1);
+            if ($priorMaxE1rm === null || $pe > $priorMaxE1rm) {
+                $priorMaxE1rm = $pe;
+            }
+        }
+
+        $isPr = false;
+        $prTypes = [];
+        if ($newWeight > 0) {
+            if ($priorMaxWeight !== null && $newWeight > $priorMaxWeight) {
+                $isPr = true;
+                $prTypes[] = 'max_weight';
+            }
+            if ($priorMaxE1rm !== null && $newE1rm > $priorMaxE1rm) {
+                $isPr = true;
+                $prTypes[] = 'max_e1rm';
+            }
+        }
+
         $setLog = new WorkoutSetLog();
         $setLog->setExercise($exercise);
-        $setLog->setWeight((float) $weight);
-        $setLog->setReps((int) $reps);
+        $setLog->setWeight($newWeight);
+        $setLog->setReps($newReps);
         $setLog->setCompleted(true);
 
         $session->addSet($setLog);
@@ -305,7 +479,17 @@ class WorkoutLogController extends AbstractController
 
         $this->em->flush();
 
-        return $this->json(['message' => 'Set logged successfully', 'setId' => $setLog->getId()->toRfc4122()], 201);
+        return $this->json([
+            'message' => 'Set logged successfully',
+            'setId' => $setLog->getId()->toRfc4122(),
+            'is_pr' => $isPr,
+            'pr_types' => $prTypes,
+            'pr_label' => $isPr ? '¡Nuevo récord personal!' : null,
+            'previous_max_weight' => $priorMaxWeight,
+            'new_weight' => $newWeight,
+            'previous_max_e1rm' => $priorMaxE1rm,
+            'new_e1rm' => $newE1rm,
+        ], 201);
     }
 
     /**
