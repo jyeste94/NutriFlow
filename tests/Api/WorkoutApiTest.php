@@ -177,5 +177,17 @@ final class WorkoutApiTest extends ApiTestCase
         $this->assertResponseStatusCodeSame(201);
         $nonPrRes = $this->jsonResponse();
         $this->assertFalse($nonPrRes['is_pr']);
+
+        // Log warm-up set: 100kg x 3 (even if heavier, warmup sets MUST NOT be marked as PR)
+        $this->client->jsonRequest(
+            'POST',
+            '/v1/workouts/' . $session2Id . '/sets',
+            ['exercise_id' => $exerciseId, 'weight' => 100, 'reps' => 3, 'set_type' => 'warmup'],
+            $headers
+        );
+        $this->assertResponseStatusCodeSame(201);
+        $warmupRes = $this->jsonResponse();
+        $this->assertFalse($warmupRes['is_pr']);
+        $this->assertSame('warmup', $warmupRes['set_type']);
     }
 }

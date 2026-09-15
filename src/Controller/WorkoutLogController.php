@@ -97,6 +97,7 @@ class WorkoutLogController extends AbstractController
                         'weight' => $set->getWeight(),
                         'reps' => $set->getReps(),
                         'completed' => $set->isCompleted(),
+                        'set_type' => $set->getSetType(),
                     ];
                 }
                 $entry['sets'] = $mappedSets;
@@ -178,6 +179,7 @@ class WorkoutLogController extends AbstractController
                         'weight' => (float) $set->getWeight(),
                         'reps' => (int) $set->getReps(),
                         'completed' => (bool) $set->isCompleted(),
+                        'set_type' => $set->getSetType(),
                     ];
                 }
             }
@@ -190,6 +192,11 @@ class WorkoutLogController extends AbstractController
             $maxRepsSet = null;
 
             foreach ($allSets as $set) {
+                // Warm-up sets should not count towards all-time PR records
+                if ($set->getSetType() === 'warmup') {
+                    continue;
+                }
+
                 $w = (float) $set->getWeight();
                 $r = (int) $set->getReps();
                 $e1rm = $r === 1 ? $w : round($w * (1.0 + $r / 30.0), 1);
@@ -258,6 +265,7 @@ class WorkoutLogController extends AbstractController
                 'weight' => $set->getWeight(),
                 'reps' => $set->getReps(),
                 'completed' => $set->isCompleted(),
+                'set_type' => $set->getSetType(),
             ];
         }
 
@@ -455,9 +463,15 @@ class WorkoutLogController extends AbstractController
             }
         }
 
+        $setType = trim((string) ($data['set_type'] ?? 'normal'));
+        if (!in_array($setType, ['normal', 'warmup', 'drop_set', 'failure'], true)) {
+            $setType = 'normal';
+        }
+
         $isPr = false;
         $prTypes = [];
-        if ($newWeight > 0) {
+        // Warm-up sets should never trigger or count as personal records
+        if ($setType !== 'warmup' && $newWeight > 0) {
             if ($priorMaxWeight !== null && $newWeight > $priorMaxWeight) {
                 $isPr = true;
                 $prTypes[] = 'max_weight';
@@ -473,6 +487,7 @@ class WorkoutLogController extends AbstractController
         $setLog->setWeight($newWeight);
         $setLog->setReps($newReps);
         $setLog->setCompleted(true);
+        $setLog->setSetType($setType);
 
         $session->addSet($setLog);
         $this->em->persist($setLog);
@@ -482,6 +497,7 @@ class WorkoutLogController extends AbstractController
         return $this->json([
             'message' => 'Set logged successfully',
             'setId' => $setLog->getId()->toRfc4122(),
+            'set_type' => $setLog->getSetType(),
             'is_pr' => $isPr,
             'pr_types' => $prTypes,
             'pr_label' => $isPr ? '¡Nuevo récord personal!' : null,

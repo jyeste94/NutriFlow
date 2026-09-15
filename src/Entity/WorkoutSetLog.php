@@ -33,6 +33,9 @@ class WorkoutSetLog
     #[ORM\Column(type: 'boolean')]
     private bool $completed = false;
 
+    #[ORM\Column(type: 'string', length: 20, options: ['default' => 'normal'])]
+    private string $setType = 'normal';
+
     public function getId(): ?Uuid
     {
         return $this->id;
@@ -90,6 +93,17 @@ class WorkoutSetLog
     public function setCompleted(bool $completed): static
     {
         $this->completed = $completed;
+        return $this;
+    }
+
+    public function getSetType(): string
+    {
+        return $this->setType;
+    }
+
+    public function setSetType(string $setType): static
+    {
+        $this->setType = $setType;
         return $this;
     }
 }
