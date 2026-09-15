@@ -83,7 +83,7 @@ class ExerciseController extends AbstractController
 
         $repo = $em->getRepository(Exercise::class);
         $exercises = $repo->createQueryBuilder('e')
-            ->where('e.name LIKE :q')
+            ->where('e.name LIKE :q OR e.description LIKE :q')
             ->setParameter('q', '%' . $q . '%')
             ->orderBy('e.name', 'ASC')
             ->setMaxResults($limit)
