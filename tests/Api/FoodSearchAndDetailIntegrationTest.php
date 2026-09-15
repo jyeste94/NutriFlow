@@ -267,6 +267,55 @@ final class FoodSearchAndDetailIntegrationTest extends ApiTestCase
         $this->assertTrue($detailBroken['hasNutritionInfo']);
         $this->assertCount(1, $detailBroken['servings']);
     }
+
+    public function testUnitPortionsAndLiquidMlParsing(): void
+    {
+        $headers = $this->authHeaders('food-test-unit-user');
+
+        $mockScraper = $this->createMock(\App\Service\FatSecretScraperService::class);
+        $mockScraper->expects($this->any())
+            ->method('search')
+            ->willReturn([
+                [
+                    'id' => 881122,
+                    'title' => 'Leche Desnatada',
+                    'brand_name' => 'Hacendado',
+                    'portion_description' => '1 vaso (250ml)',
+                    'energy' => 85.0,
+                ],
+                [
+                    'id' => 881123,
+                    'title' => 'Leche Entera Genérica',
+                    'portion_description' => 'ml',
+                    'energy' => 0.62,
+                ],
+            ]);
+
+        $this->client->disableReboot();
+        static::getContainer()->set(\App\Service\FatSecretScraperService::class, $mockScraper);
+
+        $this->client->request('GET', '/v1/foods/search?q=Leche', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $results = $this->jsonResponse();
+
+        $this->assertCount(2, $results);
+
+        // First item: 1 vaso (250ml)
+        $vaso = $results[0];
+        $this->assertSame('Leche Desnatada', $vaso['name']);
+        $this->assertSame('1 vaso (250ml)', $vaso['portionDescription']);
+        $this->assertSame(250.0, (float) $vaso['baseServingGrams']);
+        $this->assertSame('ml', $vaso['unit']);
+        $this->assertSame(85.0, (float) $vaso['calories']);
+
+        // Second item: ml suelto (energy 0.62 per ml -> 62 kcal per 100ml)
+        $mlItem = $results[1];
+        $this->assertSame('Leche Entera Genérica', $mlItem['name']);
+        $this->assertSame('100ml', $mlItem['portionDescription']);
+        $this->assertSame(100.0, (float) $mlItem['baseServingGrams']);
+        $this->assertSame('ml', $mlItem['unit']);
+        $this->assertSame(62.0, (float) $mlItem['calories']);
+    }
 }
 
 

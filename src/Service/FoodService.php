@@ -228,14 +228,14 @@ class FoodService
             $amount = (float) str_replace(',', '.', $matches[1]);
             $unit = strtolower($matches[2]);
         }
-        // Pattern 3: Lone "g" or "1g" with energy per gram (e.g. 1.95 kcal/g)
-        elseif (strtolower($desc) === 'g' || strtolower($desc) === '1g') {
+        // Pattern 3: Lone "g", "1g", "ml", "1ml" with energy per unit (e.g. 1.95 kcal/g or 0.619 kcal/ml)
+        elseif (in_array(strtolower($desc), ['g', '1g', 'ml', '1ml'], true)) {
             $amount = 100.0;
-            $unit = 'g';
+            $unit = str_contains(strtolower($desc), 'ml') ? 'ml' : 'g';
             if ($calories !== null && $calories < 20.0) {
                 $calories = round($calories * 100.0, 1);
             }
-            $desc = '100g';
+            $desc = '100' . $unit;
         }
 
         if (empty($desc)) {
@@ -377,6 +377,8 @@ class FoodService
             'hasNutritionInfo' => $hasCalories,
             'servingId' => $bestServing?->getId()?->toRfc4122(),
             'baseServingGrams' => $mainAmount,
+            'portionDescription' => $bestServing?->getDescription(),
+            'unit' => $bestServing?->getUnit() ?: 'g',
             'calories' => $mainCal !== null ? (float) $mainCal : null,
             'proteins' => $mainP !== null ? (float) $mainP : null,
             'carbs' => $mainC !== null ? (float) $mainC : null,
