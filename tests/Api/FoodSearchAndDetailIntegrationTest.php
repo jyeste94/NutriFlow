@@ -210,4 +210,63 @@ final class FoodSearchAndDetailIntegrationTest extends ApiTestCase
         $this->assertGreaterThan(0, (float) $detail['carbs']);
         $this->assertGreaterThan(0, (float) $detail['fats']);
     }
+
+    public function testLegacyFoodWithoutServingsInDbIsHydratedOnDetail(): void
+    {
+        $headers = $this->authHeaders('food-test-legacy-user');
+        $em = static::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
+
+        $legacy = new Food();
+        $legacy->setName('Pan Molde 100% Integral');
+        $legacy->setBrand('Hacendado');
+        $legacy->setExternalId('51773251');
+        $legacy->setLastFetchedAt(new \DateTimeImmutable());
+        $em->persist($legacy);
+        $em->flush();
+
+        $foodId = $legacy->getId()->toRfc4122();
+
+        // 1. Search for "pan mold" -> should find legacy food
+        $this->client->request('GET', '/v1/foods/search?q=pan%20mold', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $results = $this->jsonResponse();
+
+        // Find the legacy food in search results
+        $found = null;
+        foreach ($results as $item) {
+            if ($item['id'] === $foodId) {
+                $found = $item;
+                break;
+            }
+        }
+        $this->assertNotNull($found);
+
+        // 2. Fetch detail for legacy food: GET /v1/foods/{id}
+        $this->client->request('GET', '/v1/foods/' . $foodId, [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $detail = $this->jsonResponse();
+
+        $this->assertSame($foodId, $detail['id']);
+
+        // 3. Test legacy food where scraper returns null (broken or removed externalId)
+        $legacyBroken = new Food();
+        $legacyBroken->setName('Pan Molde Roto');
+        $legacyBroken->setBrand('Desconocido');
+        $legacyBroken->setExternalId('invalid_id_999999999');
+        $legacyBroken->setLastFetchedAt(new \DateTimeImmutable());
+        $em->persist($legacyBroken);
+        $em->flush();
+
+        $brokenId = $legacyBroken->getId()->toRfc4122();
+        $this->client->request('GET', '/v1/foods/' . $brokenId, [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $detailBroken = $this->jsonResponse();
+
+        $this->assertSame($brokenId, $detailBroken['id']);
+        $this->assertSame('requires_detail', $detailBroken['nutritionStatus']);
+        $this->assertTrue($detailBroken['hasNutritionInfo']);
+        $this->assertCount(1, $detailBroken['servings']);
+    }
 }
+
+

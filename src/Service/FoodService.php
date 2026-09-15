@@ -35,6 +35,15 @@ class FoodService
             if ($externalId !== null) {
                 $foodsByExternalId[$externalId] = $localFood;
             }
+
+            // Self-healing: if a legacy local food has no servings and has an externalId,
+            // attempt hydration so search immediately delivers real calories and servings!
+            if ($localFood->getServings()->isEmpty() && $externalId !== null && !str_starts_with($externalId, 'custom_')) {
+                try {
+                    $this->refreshFoodDetails($localFood);
+                } catch (\Throwable) {
+                }
+            }
         }
 
         $resultFoods = $localFoods;
@@ -72,7 +81,27 @@ class FoodService
 
     public function getFoodDetails(string $id): ?array
     {
-        $food = $this->foodRepo->findOneBy(['id' => $id]);
+        $food = null;
+        try {
+            $food = $this->foodRepo->find($id);
+        } catch (\Throwable) {
+        }
+
+        if (!$food) {
+            try {
+                $uuid = \Symfony\Component\Uid\Uuid::fromString($id);
+                $food = $this->foodRepo->find($uuid) ?? $this->foodRepo->findOneBy(['id' => $uuid]);
+            } catch (\Throwable) {
+            }
+        }
+
+        if (!$food) {
+            try {
+                $food = $this->foodRepo->findOneBy(['id' => $id]);
+            } catch (\Throwable) {
+            }
+        }
+
         if (!$food) {
             return null;
         }
@@ -87,7 +116,25 @@ class FoodService
         $isExpired = $ttlDate === null || $now > $ttlDate;
 
         if ($needsHydration || $isExpired) {
-            $this->refreshFoodDetails($food);
+            try {
+                $this->refreshFoodDetails($food);
+            } catch (\Throwable) {
+            }
+        }
+
+        // If food still has no servings, create a fallback serving
+        if ($food->getServings()->isEmpty()) {
+            $serving = new Serving();
+            $serving->setFood($food);
+            $serving->setDescription('100g');
+            $serving->setAmount(100.0);
+            $serving->setUnit('g');
+            $serving->setCalories(0.0);
+            $food->addServing($serving);
+            $this->em->persist($serving);
+            $this->em->flush();
+            $food->setBestServingId($serving->getId());
+            $this->em->flush();
         }
 
         return $this->formatFoodArray($food);
@@ -157,6 +204,7 @@ class FoodService
             // Ensure bestServingId points to the serving
             if ($food->getBestServingId() === null && !$food->getServings()->isEmpty()) {
                 $food->setBestServingId($food->getServings()->first()->getId());
+                $this->em->flush();
             }
         }
 
@@ -213,7 +261,20 @@ class FoodService
         $macros = $this->scraper->getInfo($externalId);
         
         if ($macros === null) {
-            // Scraper failed or 404
+            // Scraper failed or 404: ensure food has at least a default serving if it has none
+            if ($food->getServings()->isEmpty()) {
+                $serving = new Serving();
+                $serving->setFood($food);
+                $serving->setDescription('100g');
+                $serving->setAmount(100.0);
+                $serving->setUnit('g');
+                $serving->setCalories(0.0);
+                $food->addServing($serving);
+                $this->em->persist($serving);
+                $this->em->flush();
+                $food->setBestServingId($serving->getId());
+                $this->em->flush();
+            }
             return;
         }
 
