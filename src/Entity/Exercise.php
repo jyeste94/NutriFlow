@@ -30,6 +30,9 @@ class Exercise
     private ?string $description = null;
 
     #[ORM\Column(length: 500, nullable: true)]
+    private ?string $imageUrl = null;
+
+    #[ORM\Column(length: 500, nullable: true)]
     private ?string $gifUrl = null;
 
     #[ORM\Column(length: 500, nullable: true)]
@@ -38,6 +41,12 @@ class Exercise
     public function getId(): ?Uuid
     {
         return $this->id;
+    }
+
+    public function setId(?Uuid $id): static
+    {
+        $this->id = $id;
+        return $this;
     }
 
     public function getName(): ?string
@@ -82,6 +91,22 @@ class Exercise
     {
         $this->description = $description;
         return $this;
+    }
+
+    public function getImageUrl(): ?string
+    {
+        return $this->imageUrl ?? $this->gifUrl;
+    }
+
+    public function setImageUrl(?string $imageUrl): static
+    {
+        $this->imageUrl = $imageUrl;
+        return $this;
+    }
+
+    public function getThumbnailUrl(): ?string
+    {
+        return $this->imageUrl ?? $this->gifUrl;
     }
 
     public function getGifUrl(): ?string

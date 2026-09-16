@@ -39,17 +39,38 @@ final class ExerciseApiTest extends ApiTestCase
         $results = $this->jsonResponse();
         $this->assertCount(1, $results);
         $this->assertSame('Leg Curl', $results[0]['name']);
+        $this->assertArrayHasKey('imageUrl', $results[0]);
+        $this->assertArrayHasKey('thumbnailUrl', $results[0]);
 
         $this->client->request('GET', '/v1/exercises/' . $exerciseId, [], [], $headers);
         $this->assertResponseIsSuccessful();
         $detail = $this->jsonResponse();
         $this->assertSame($exerciseId, $detail['id']);
         $this->assertSame('Leg Curl', $detail['name']);
+        $this->assertArrayHasKey('imageUrl', $detail);
+        $this->assertArrayHasKey('thumbnailUrl', $detail);
     }
 
     public function testExerciseGetOneRejectsInvalidIdFormat(): void
     {
         $this->client->request('GET', '/v1/exercises/not-a-uuid', [], [], $this->authHeaders('exercise-user-3'));
         $this->assertResponseStatusCodeSame(400);
+    }
+
+    public function testExerciseCreateSupportsImageUrl(): void
+    {
+        $payload = [
+            'name' => 'Sentadilla Hack',
+            'muscleGroup' => 'Piernas',
+            'equipment' => 'Máquina',
+            'imageUrl' => 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hack_Squat/0.jpg',
+        ];
+
+        $this->client->request('POST', '/v1/exercises', [], [], $this->authHeaders('exercise-user-4'), json_encode($payload));
+        $this->assertResponseStatusCodeSame(201);
+        $data = $this->jsonResponse();
+        $this->assertSame('Sentadilla Hack', $data['name']);
+        $this->assertSame('https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hack_Squat/0.jpg', $data['imageUrl']);
+        $this->assertSame('https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hack_Squat/0.jpg', $data['thumbnailUrl']);
     }
 }

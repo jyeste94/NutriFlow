@@ -58,6 +58,8 @@ class ExerciseController extends AbstractController
                 'muscleGroup' => $exercise->getMuscleGroup(),
                 'equipment' => $exercise->getEquipment(),
                 'description' => $exercise->getDescription(),
+                'imageUrl' => $exercise->getImageUrl(),
+                'thumbnailUrl' => $exercise->getThumbnailUrl(),
                 'gifUrl' => $exercise->getGifUrl(),
                 'videoUrl' => $exercise->getVideoUrl(),
             ];
@@ -97,6 +99,8 @@ class ExerciseController extends AbstractController
                 'muscleGroup' => $exercise->getMuscleGroup(),
                 'equipment' => $exercise->getEquipment(),
                 'description' => $exercise->getDescription(),
+                'imageUrl' => $exercise->getImageUrl(),
+                'thumbnailUrl' => $exercise->getThumbnailUrl(),
                 'gifUrl' => $exercise->getGifUrl(),
                 'videoUrl' => $exercise->getVideoUrl(),
             ];
@@ -113,7 +117,7 @@ class ExerciseController extends AbstractController
         }
 
         $row = $em->getConnection()->fetchAssociative(
-            'SELECT id, name, muscle_group, equipment, description, gif_url, video_url FROM exercises WHERE id = ?',
+            'SELECT id, name, muscle_group, equipment, description, image_url, gif_url, video_url FROM exercises WHERE id = ?',
             [$id]
         );
 
@@ -121,12 +125,16 @@ class ExerciseController extends AbstractController
             return $this->json(['error' => 'Exercise not found'], 404);
         }
 
+        $imageUrl = $row['image_url'] ?? $row['gif_url'] ?? null;
+
         return $this->json([
             'id' => $row['id'],
             'name' => $row['name'],
             'muscleGroup' => $row['muscle_group'],
             'equipment' => $row['equipment'],
             'description' => $row['description'],
+            'imageUrl' => $imageUrl,
+            'thumbnailUrl' => $imageUrl,
             'gifUrl' => $row['gif_url'],
             'videoUrl' => $row['video_url'],
         ]);
@@ -147,6 +155,7 @@ class ExerciseController extends AbstractController
         $exercise->setMuscleGroup($data['muscleGroup'] ?? '');
         $exercise->setEquipment($data['equipment'] ?? null);
         $exercise->setDescription($data['description'] ?? null);
+        $exercise->setImageUrl($data['imageUrl'] ?? $data['gifUrl'] ?? null);
         $exercise->setGifUrl($data['gifUrl'] ?? null);
         $exercise->setVideoUrl($data['videoUrl'] ?? null);
 
@@ -159,6 +168,8 @@ class ExerciseController extends AbstractController
             'muscleGroup' => $exercise->getMuscleGroup(),
             'equipment' => $exercise->getEquipment(),
             'description' => $exercise->getDescription(),
+            'imageUrl' => $exercise->getImageUrl(),
+            'thumbnailUrl' => $exercise->getThumbnailUrl(),
             'gifUrl' => $exercise->getGifUrl(),
             'videoUrl' => $exercise->getVideoUrl(),
         ], 201);
@@ -184,6 +195,7 @@ class ExerciseController extends AbstractController
         if (isset($data['muscleGroup'])) $exercise->setMuscleGroup($data['muscleGroup']);
         if (array_key_exists('equipment', $data)) $exercise->setEquipment($data['equipment']);
         if (array_key_exists('description', $data)) $exercise->setDescription($data['description']);
+        if (array_key_exists('imageUrl', $data)) $exercise->setImageUrl($data['imageUrl']);
         if (array_key_exists('gifUrl', $data)) $exercise->setGifUrl($data['gifUrl']);
         if (array_key_exists('videoUrl', $data)) $exercise->setVideoUrl($data['videoUrl']);
 
@@ -195,6 +207,8 @@ class ExerciseController extends AbstractController
             'muscleGroup' => $exercise->getMuscleGroup(),
             'equipment' => $exercise->getEquipment(),
             'description' => $exercise->getDescription(),
+            'imageUrl' => $exercise->getImageUrl(),
+            'thumbnailUrl' => $exercise->getThumbnailUrl(),
             'gifUrl' => $exercise->getGifUrl(),
             'videoUrl' => $exercise->getVideoUrl(),
         ]);
