@@ -172,4 +172,102 @@ final class RoutineApiTest extends ApiTestCase
 
         $this->assertResponseStatusCodeSame(400);
     }
+
+    public function testCreateRoutineWithCardioExerciseWithoutReps(): void
+    {
+        $headers = $this->authHeaders('routine-cardio-user');
+        $cardioEx = $this->createExerciseFixture('Elíptica', 'Cardio', 'DISTANCE_DURATION');
+        $cardioId = $cardioEx->getId()?->toRfc4122();
+        $this->assertNotNull($cardioId);
+
+        $this->client->jsonRequest(
+            'POST',
+            '/v1/routines',
+            [
+                'name' => 'Cardio Day',
+                'daysOfWeek' => [2],
+                'exercises' => [
+                    [
+                        'exercise_id' => $cardioId,
+                        'sets' => 3,
+                        'reps' => null,
+                        'target_weight' => null,
+                        'duration_seconds' => 600,
+                        'distance_km' => 2.5,
+                        'restSeconds' => 30,
+                        'set_details' => [
+                            ['durationSeconds' => 300, 'distanceKm' => 1.25, 'restSeconds' => 30],
+                            ['durationSeconds' => 300, 'distanceKm' => 1.25, 'restSeconds' => 0],
+                        ],
+                    ],
+                ],
+            ],
+            $headers
+        );
+
+        $this->assertResponseStatusCodeSame(201);
+        $routineId = (string) ($this->jsonResponse()['id'] ?? '');
+        $this->assertNotSame('', $routineId);
+
+        $this->client->request('GET', '/v1/routines/' . $routineId, [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $routine = $this->jsonResponse();
+
+        $this->assertSame('Cardio Day', $routine['name']);
+        $this->assertCount(1, $routine['exercises']);
+
+        $exItem = $routine['exercises'][0];
+        $this->assertSame('DISTANCE_DURATION', $exItem['exercise']['trackingType']);
+        $this->assertNull($exItem['reps']);
+        $this->assertNull($exItem['targetWeight']);
+        $this->assertSame(600, $exItem['durationSeconds']);
+        $this->assertEqualsWithDelta(2.5, (float) $exItem['distanceKm'], 0.001);
+        $this->assertCount(2, $exItem['setDetails']);
+    }
+
+    public function testCreateMixedRoutineWithStrengthAndCardio(): void
+    {
+        $headers = $this->authHeaders('routine-mixed-user');
+        $strengthEx = $this->createExerciseFixture('Press banca', 'Pecho', 'WEIGHT_REPS');
+        $cardioEx = $this->createExerciseFixture('Cinta de correr', 'Cardio', 'DISTANCE_DURATION');
+
+        $this->client->jsonRequest(
+            'POST',
+            '/v1/routines',
+            [
+                'name' => 'Torso y Cardio',
+                'exercises' => [
+                    [
+                        'exercise_id' => $strengthEx->getId()?->toRfc4122(),
+                        'sets' => 4,
+                        'reps' => 8,
+                        'target_weight' => 85.0,
+                        'restSeconds' => 90,
+                    ],
+                    [
+                        'exercise_id' => $cardioEx->getId()?->toRfc4122(),
+                        'sets' => 1,
+                        'reps' => null,
+                        'duration_seconds' => 900,
+                        'distance_km' => 3.0,
+                        'restSeconds' => 0,
+                    ],
+                ],
+            ],
+            $headers
+        );
+
+        $this->assertResponseStatusCodeSame(201);
+        $routineId = (string) ($this->jsonResponse()['id'] ?? '');
+
+        $this->client->request('GET', '/v1/routines/' . $routineId, [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $routine = $this->jsonResponse();
+
+        $this->assertCount(2, $routine['exercises']);
+        $this->assertSame(8, $routine['exercises'][0]['reps']);
+        $this->assertEqualsWithDelta(85.0, (float) $routine['exercises'][0]['targetWeight'], 0.001);
+        $this->assertNull($routine['exercises'][1]['reps']);
+        $this->assertSame(900, $routine['exercises'][1]['durationSeconds']);
+    }
 }

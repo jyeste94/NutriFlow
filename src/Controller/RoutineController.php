@@ -91,6 +91,8 @@ class RoutineController extends AbstractController
                         'imageUrl' => $re->getExercise()->getImageUrl(),
                         'thumbnailUrl' => $re->getExercise()->getThumbnailUrl(),
                         'gifUrl' => $re->getExercise()->getGifUrl(),
+                        'trackingType' => $re->getExercise()->getTrackingType(),
+                        'tracking_type' => $re->getExercise()->getTrackingType(),
                     ],
                     'sets' => $re->getSets(),
                     'reps' => $re->getReps(),
@@ -98,6 +100,12 @@ class RoutineController extends AbstractController
                     'orderIndex' => $re->getOrderIndex(),
                     'targetWeight' => $re->getTargetWeight(),
                     'target_weight' => $re->getTargetWeight(),
+                    'durationSeconds' => $re->getDurationSeconds(),
+                    'duration_seconds' => $re->getDurationSeconds(),
+                    'distanceKm' => $re->getDistanceKm(),
+                    'distance_km' => $re->getDistanceKm(),
+                    'setDetails' => $re->getSetDetails(),
+                    'set_details' => $re->getSetDetails(),
                 ];
             }
 
@@ -148,6 +156,8 @@ class RoutineController extends AbstractController
                     'thumbnailUrl' => $exercise->getThumbnailUrl(),
                     'gifUrl' => $exercise->getGifUrl(),
                     'videoUrl' => $exercise->getVideoUrl(),
+                    'trackingType' => $exercise->getTrackingType(),
+                    'tracking_type' => $exercise->getTrackingType(),
                 ],
                 'sets' => $re->getSets(),
                 'reps' => $re->getReps(),
@@ -155,6 +165,12 @@ class RoutineController extends AbstractController
                 'orderIndex' => $re->getOrderIndex(),
                 'targetWeight' => $re->getTargetWeight(),
                 'target_weight' => $re->getTargetWeight(),
+                'durationSeconds' => $re->getDurationSeconds(),
+                'duration_seconds' => $re->getDurationSeconds(),
+                'distanceKm' => $re->getDistanceKm(),
+                'distance_km' => $re->getDistanceKm(),
+                'setDetails' => $re->getSetDetails(),
+                'set_details' => $re->getSetDetails(),
             ];
         }
 
@@ -227,51 +243,11 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid exercise payload at index $index"], 400);
                 }
 
-                $exerciseId = trim((string) ($exData['exercise_id'] ?? ''));
-                $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
-                $reps = filter_var($exData['reps'] ?? 10, FILTER_VALIDATE_INT);
-                $restSeconds = filter_var($exData['restSeconds'] ?? 60, FILTER_VALIDATE_INT);
-
-                if (!Uuid::isValid($exerciseId)) {
-                    return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
+                $prepared = $this->prepareExerciseItem((int) $index, $exData);
+                if ($prepared instanceof JsonResponse) {
+                    return $prepared;
                 }
-                if ($sets === false || $sets < 1 || $sets > 20) {
-                    return $this->json(['error' => "Invalid sets at index $index (1-20)"], 400);
-                }
-                if ($reps === false || $reps < 1 || $reps > 1000) {
-                    return $this->json(['error' => "Invalid reps at index $index (1-1000)"], 400);
-                }
-                if ($restSeconds === false || $restSeconds < 0 || $restSeconds > 3600) {
-                    return $this->json(['error' => "Invalid restSeconds at index $index (0-3600)"], 400);
-                }
-
-                $exercise = $this->em->getRepository(Exercise::class)->createQueryBuilder('e')
-                    ->where('e.id = :id')
-                    ->setParameter('id', Uuid::fromString($exerciseId))
-                    ->getQuery()
-                    ->getOneOrNullResult();
-                if (!$exercise instanceof Exercise) {
-                    return $this->json(['error' => "Exercise not found at index $index (exercise_id: $exerciseId)"], 400);
-                }
-
-                $targetWeightRaw = $exData['target_weight'] ?? $exData['targetWeight'] ?? null;
-                $targetWeight = null;
-                if ($targetWeightRaw !== null && $targetWeightRaw !== '') {
-                    $targetWeight = filter_var($targetWeightRaw, FILTER_VALIDATE_FLOAT);
-                    if ($targetWeight === false || $targetWeight < 0 || $targetWeight > 1000) {
-                        return $this->json(['error' => "Invalid targetWeight at index $index (0-1000)"], 400);
-                    }
-                    $targetWeight = (float) $targetWeight;
-                }
-
-                $preparedExercises[] = [
-                    'exercise_id' => $exerciseId,
-                    'sets' => (int) $sets,
-                    'reps' => (int) $reps,
-                    'restSeconds' => (int) $restSeconds,
-                    'orderIndex' => (int) $index,
-                    'targetWeight' => $targetWeight,
-                ];
+                $preparedExercises[] = $prepared;
             }
         }
 
@@ -292,8 +268,20 @@ class RoutineController extends AbstractController
             foreach ($preparedExercises as $ex) {
                 $reId = (string) Uuid::v7();
                 $conn->executeStatement(
-                    'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index, target_weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                    [$reId, $routineId, $ex['exercise_id'], $ex['sets'], $ex['reps'], $ex['restSeconds'], $ex['orderIndex'], $ex['targetWeight']]
+                    'INSERT INTO routine_exercises (id, routine_id, exercise_id, sets, reps, rest_seconds, order_index, target_weight, duration_seconds, distance_km, set_details) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [
+                        $reId,
+                        $routineId,
+                        $ex['exercise_id'],
+                        $ex['sets'],
+                        $ex['reps'],
+                        $ex['restSeconds'],
+                        $ex['orderIndex'],
+                        $ex['targetWeight'],
+                        $ex['durationSeconds'],
+                        $ex['distanceKm'],
+                        $ex['setDetails'] !== null ? json_encode($ex['setDetails']) : null,
+                    ]
                 );
             }
 
@@ -365,47 +353,11 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid exercise payload at index $index"], 400);
                 }
 
-                $exerciseId = trim((string) ($exData['exercise_id'] ?? ''));
-                $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
-                $reps = filter_var($exData['reps'] ?? 10, FILTER_VALIDATE_INT);
-                $restSeconds = filter_var($exData['restSeconds'] ?? 60, FILTER_VALIDATE_INT);
-
-                if (!Uuid::isValid($exerciseId)) {
-                    return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
+                $prepared = $this->prepareExerciseItem((int) $index, $exData);
+                if ($prepared instanceof JsonResponse) {
+                    return $prepared;
                 }
-                if ($sets === false || $sets < 1 || $sets > 20) {
-                    return $this->json(['error' => "Invalid sets at index $index (1-20)"], 400);
-                }
-                if ($reps === false || $reps < 1 || $reps > 1000) {
-                    return $this->json(['error' => "Invalid reps at index $index (1-1000)"], 400);
-                }
-                if ($restSeconds === false || $restSeconds < 0 || $restSeconds > 3600) {
-                    return $this->json(['error' => "Invalid restSeconds at index $index (0-3600)"], 400);
-                }
-
-                $exercise = $this->em->getRepository(Exercise::class)->createQueryBuilder('e')->where('e.id = :id')->setParameter('id', Uuid::fromString($exerciseId))->getQuery()->getOneOrNullResult();
-                if (!$exercise instanceof Exercise) {
-                    return $this->json(['error' => "Exercise not found at index $index (exercise_id: $exerciseId)"], 400);
-                }
-
-                $targetWeightRaw = $exData['target_weight'] ?? $exData['targetWeight'] ?? null;
-                $targetWeight = null;
-                if ($targetWeightRaw !== null && $targetWeightRaw !== '') {
-                    $targetWeight = filter_var($targetWeightRaw, FILTER_VALIDATE_FLOAT);
-                    if ($targetWeight === false || $targetWeight < 0 || $targetWeight > 1000) {
-                        return $this->json(['error' => "Invalid targetWeight at index $index (0-1000)"], 400);
-                    }
-                    $targetWeight = (float) $targetWeight;
-                }
-
-                $preparedExercises[] = [
-                    'exercise' => $exercise,
-                    'sets' => (int) $sets,
-                    'reps' => (int) $reps,
-                    'restSeconds' => (int) $restSeconds,
-                    'orderIndex' => (int) $index,
-                    'targetWeight' => $targetWeight,
-                ];
+                $preparedExercises[] = $prepared;
             }
         }
 
@@ -424,6 +376,9 @@ class RoutineController extends AbstractController
                 $routineExercise->setRestSeconds($preparedExercise['restSeconds']);
                 $routineExercise->setOrderIndex($preparedExercise['orderIndex']);
                 $routineExercise->setTargetWeight($preparedExercise['targetWeight']);
+                $routineExercise->setDurationSeconds($preparedExercise['durationSeconds']);
+                $routineExercise->setDistanceKm($preparedExercise['distanceKm']);
+                $routineExercise->setSetDetails($preparedExercise['setDetails']);
                 $this->em->persist($routineExercise);
             }
         }
@@ -498,5 +453,112 @@ class RoutineController extends AbstractController
         }
 
         return null; // Mixed types not allowed
+    }
+
+    /**
+     * @param array<string, mixed> $exData
+     * @return array<string, mixed>|JsonResponse
+     */
+    private function prepareExerciseItem(int $index, array $exData): array|JsonResponse
+    {
+        $exerciseId = trim((string) ($exData['exercise_id'] ?? ''));
+        if (!Uuid::isValid($exerciseId)) {
+            return $this->json(['error' => "Invalid exercise_id at index $index"], 400);
+        }
+
+        $exercise = $this->em->getRepository(Exercise::class)->createQueryBuilder('e')
+            ->where('e.id = :id')
+            ->setParameter('id', Uuid::fromString($exerciseId))
+            ->getQuery()
+            ->getOneOrNullResult();
+        if (!$exercise instanceof Exercise) {
+            return $this->json(['error' => "Exercise not found at index $index (exercise_id: $exerciseId)"], 400);
+        }
+
+        $isCardio = in_array($exercise->getTrackingType(), [Exercise::TRACKING_DISTANCE_DURATION, Exercise::TRACKING_DURATION], true)
+            || strcasecmp((string) $exercise->getMuscleGroup(), 'Cardio') === 0;
+
+        $sets = filter_var($exData['sets'] ?? 3, FILTER_VALIDATE_INT);
+        if ($sets === false || $sets < 1 || $sets > 50) {
+            return $this->json(['error' => "Invalid sets at index $index (1-50)"], 400);
+        }
+
+        $defaultRest = $isCardio ? 0 : 60;
+        $restSeconds = filter_var($exData['restSeconds'] ?? $defaultRest, FILTER_VALIDATE_INT);
+        if ($restSeconds === false || $restSeconds < 0 || $restSeconds > 3600) {
+            return $this->json(['error' => "Invalid restSeconds at index $index (0-3600)"], 400);
+        }
+
+        $reps = null;
+        $targetWeight = null;
+        $durationSeconds = null;
+        $distanceKm = null;
+
+        if ($isCardio) {
+            // Optional reps for cardio
+            if (isset($exData['reps']) && $exData['reps'] !== null && $exData['reps'] !== '') {
+                $parsedReps = filter_var($exData['reps'], FILTER_VALIDATE_INT);
+                if ($parsedReps !== false && $parsedReps >= 1 && $parsedReps <= 1000) {
+                    $reps = (int) $parsedReps;
+                }
+            }
+
+            // Duration in seconds
+            $durationRaw = $exData['duration_seconds'] ?? $exData['durationSeconds'] ?? null;
+            if ($durationRaw !== null && $durationRaw !== '') {
+                $parsedDur = filter_var($durationRaw, FILTER_VALIDATE_INT);
+                if ($parsedDur === false || $parsedDur < 0 || $parsedDur > 86400) {
+                    return $this->json(['error' => "Invalid duration_seconds at index $index (0-86400)"], 400);
+                }
+                $durationSeconds = (int) $parsedDur;
+            }
+
+            // Distance in km
+            $distanceRaw = $exData['distance_km'] ?? $exData['distanceKm'] ?? null;
+            if ($distanceRaw !== null && $distanceRaw !== '') {
+                $parsedDist = filter_var($distanceRaw, FILTER_VALIDATE_FLOAT);
+                if ($parsedDist === false || $parsedDist < 0 || $parsedDist > 1000) {
+                    return $this->json(['error' => "Invalid distance_km at index $index (0-1000)"], 400);
+                }
+                $distanceKm = (float) $parsedDist;
+            }
+        } else {
+            // Strength exercise: reps is expected
+            $repsRaw = $exData['reps'] ?? 10;
+            $parsedReps = filter_var($repsRaw, FILTER_VALIDATE_INT);
+            if ($parsedReps === false || $parsedReps < 1 || $parsedReps > 1000) {
+                return $this->json(['error' => "Invalid reps at index $index (1-1000)"], 400);
+            }
+            $reps = (int) $parsedReps;
+
+            $targetWeightRaw = $exData['target_weight'] ?? $exData['targetWeight'] ?? null;
+            if ($targetWeightRaw !== null && $targetWeightRaw !== '') {
+                $parsedW = filter_var($targetWeightRaw, FILTER_VALIDATE_FLOAT);
+                if ($parsedW === false || $parsedW < 0 || $parsedW > 1000) {
+                    return $this->json(['error' => "Invalid targetWeight at index $index (0-1000)"], 400);
+                }
+                $targetWeight = (float) $parsedW;
+            }
+        }
+
+        // setDetails (optional structured blocks/intervals)
+        $setDetails = null;
+        $rawDetails = $exData['set_details'] ?? $exData['setDetails'] ?? null;
+        if (is_array($rawDetails)) {
+            $setDetails = $rawDetails;
+        }
+
+        return [
+            'exercise' => $exercise,
+            'exercise_id' => $exerciseId,
+            'sets' => (int) $sets,
+            'reps' => $reps,
+            'restSeconds' => (int) $restSeconds,
+            'orderIndex' => (int) $index,
+            'targetWeight' => $targetWeight,
+            'durationSeconds' => $durationSeconds,
+            'distanceKm' => $distanceKm,
+            'setDetails' => $setDetails,
+        ];
     }
 }

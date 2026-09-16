@@ -36,6 +36,12 @@ class WorkoutSetLog
     #[ORM\Column(type: 'string', length: 20, options: ['default' => 'normal'])]
     private string $setType = 'normal';
 
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $durationSeconds = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $distanceKm = null;
+
     public function getId(): ?Uuid
     {
         return $this->id;
@@ -104,6 +110,28 @@ class WorkoutSetLog
     public function setSetType(string $setType): static
     {
         $this->setType = $setType;
+        return $this;
+    }
+
+    public function getDurationSeconds(): ?int
+    {
+        return $this->durationSeconds;
+    }
+
+    public function setDurationSeconds(?int $durationSeconds): static
+    {
+        $this->durationSeconds = $durationSeconds;
+        return $this;
+    }
+
+    public function getDistanceKm(): ?float
+    {
+        return $this->distanceKm;
+    }
+
+    public function setDistanceKm(?float $distanceKm): static
+    {
+        $this->distanceKm = $distanceKm;
         return $this;
     }
 }

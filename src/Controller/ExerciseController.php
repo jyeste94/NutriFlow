@@ -62,6 +62,8 @@ class ExerciseController extends AbstractController
                 'thumbnailUrl' => $exercise->getThumbnailUrl(),
                 'gifUrl' => $exercise->getGifUrl(),
                 'videoUrl' => $exercise->getVideoUrl(),
+                'trackingType' => $exercise->getTrackingType(),
+                'tracking_type' => $exercise->getTrackingType(),
             ];
         }, $exercises);
 
@@ -103,6 +105,8 @@ class ExerciseController extends AbstractController
                 'thumbnailUrl' => $exercise->getThumbnailUrl(),
                 'gifUrl' => $exercise->getGifUrl(),
                 'videoUrl' => $exercise->getVideoUrl(),
+                'trackingType' => $exercise->getTrackingType(),
+                'tracking_type' => $exercise->getTrackingType(),
             ];
         }, $exercises);
 
@@ -117,7 +121,7 @@ class ExerciseController extends AbstractController
         }
 
         $row = $em->getConnection()->fetchAssociative(
-            'SELECT id, name, muscle_group, equipment, description, image_url, gif_url, video_url FROM exercises WHERE id = ?',
+            'SELECT id, name, muscle_group, equipment, description, image_url, gif_url, video_url, tracking_type FROM exercises WHERE id = ?',
             [$id]
         );
 
@@ -126,6 +130,7 @@ class ExerciseController extends AbstractController
         }
 
         $imageUrl = $row['image_url'] ?? $row['gif_url'] ?? null;
+        $trackingType = $row['tracking_type'] ?? (strcasecmp((string)$row['muscle_group'], 'Cardio') === 0 ? 'DISTANCE_DURATION' : 'WEIGHT_REPS');
 
         return $this->json([
             'id' => $row['id'],
@@ -137,6 +142,8 @@ class ExerciseController extends AbstractController
             'thumbnailUrl' => $imageUrl,
             'gifUrl' => $row['gif_url'],
             'videoUrl' => $row['video_url'],
+            'trackingType' => $trackingType,
+            'tracking_type' => $trackingType,
         ]);
     }
 
@@ -158,6 +165,9 @@ class ExerciseController extends AbstractController
         $exercise->setImageUrl($data['imageUrl'] ?? $data['gifUrl'] ?? null);
         $exercise->setGifUrl($data['gifUrl'] ?? null);
         $exercise->setVideoUrl($data['videoUrl'] ?? null);
+        if (isset($data['trackingType']) || isset($data['tracking_type'])) {
+            $exercise->setTrackingType((string) ($data['trackingType'] ?? $data['tracking_type']));
+        }
 
         $em->persist($exercise);
         $em->flush();
@@ -172,6 +182,8 @@ class ExerciseController extends AbstractController
             'thumbnailUrl' => $exercise->getThumbnailUrl(),
             'gifUrl' => $exercise->getGifUrl(),
             'videoUrl' => $exercise->getVideoUrl(),
+            'trackingType' => $exercise->getTrackingType(),
+            'tracking_type' => $exercise->getTrackingType(),
         ], 201);
     }
 
@@ -198,6 +210,9 @@ class ExerciseController extends AbstractController
         if (array_key_exists('imageUrl', $data)) $exercise->setImageUrl($data['imageUrl']);
         if (array_key_exists('gifUrl', $data)) $exercise->setGifUrl($data['gifUrl']);
         if (array_key_exists('videoUrl', $data)) $exercise->setVideoUrl($data['videoUrl']);
+        if (array_key_exists('trackingType', $data) || array_key_exists('tracking_type', $data)) {
+            $exercise->setTrackingType($data['trackingType'] ?? $data['tracking_type'] ?? null);
+        }
 
         $em->flush();
 
@@ -211,6 +226,8 @@ class ExerciseController extends AbstractController
             'thumbnailUrl' => $exercise->getThumbnailUrl(),
             'gifUrl' => $exercise->getGifUrl(),
             'videoUrl' => $exercise->getVideoUrl(),
+            'trackingType' => $exercise->getTrackingType(),
+            'tracking_type' => $exercise->getTrackingType(),
         ]);
     }
 

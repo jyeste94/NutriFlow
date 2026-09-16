@@ -64,12 +64,19 @@ abstract class ApiTestCase extends WebTestCase
         return json_decode($content, true, 512, JSON_THROW_ON_ERROR);
     }
 
-    protected function createExerciseFixture(string $name = 'Push Up'): Exercise
+    protected function createExerciseFixture(
+        string $name = 'Push Up',
+        string $muscleGroup = 'chest',
+        ?string $trackingType = null
+    ): Exercise
     {
         $exercise = new Exercise();
         $exercise->setName($name);
-        $exercise->setMuscleGroup('chest');
+        $exercise->setMuscleGroup($muscleGroup);
         $exercise->setEquipment('bodyweight');
+        if ($trackingType !== null) {
+            $exercise->setTrackingType($trackingType);
+        }
 
         $this->em->persist($exercise);
         $this->em->flush();

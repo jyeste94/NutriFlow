@@ -98,6 +98,8 @@ class WorkoutLogController extends AbstractController
                         'reps' => $set->getReps(),
                         'completed' => $set->isCompleted(),
                         'set_type' => $set->getSetType(),
+                        'duration_seconds' => $set->getDurationSeconds(),
+                        'distance_km' => $set->getDistanceKm(),
                     ];
                 }
                 $entry['sets'] = $mappedSets;
@@ -266,6 +268,8 @@ class WorkoutLogController extends AbstractController
                 'reps' => $set->getReps(),
                 'completed' => $set->isCompleted(),
                 'set_type' => $set->getSetType(),
+                'duration_seconds' => $set->getDurationSeconds(),
+                'distance_km' => $set->getDistanceKm(),
             ];
         }
 
@@ -400,17 +404,8 @@ class WorkoutLogController extends AbstractController
         }
 
         $exerciseId = trim((string) ($data['exercise_id'] ?? ''));
-        $reps = filter_var($data['reps'] ?? null, FILTER_VALIDATE_INT);
-        $weight = filter_var($data['weight'] ?? null, FILTER_VALIDATE_FLOAT);
-
-        if (!Uuid::isValid($exerciseId) || $reps === false || $weight === false) {
-             return $this->json(['error' => 'Missing required fields: exercise_id, weight, reps'], 400);
-        }
-        if ($reps < 1 || $reps > 1000) {
-            return $this->json(['error' => 'reps must be between 1 and 1000'], 400);
-        }
-        if ($weight < 0 || $weight > 1000) {
-            return $this->json(['error' => 'weight must be between 0 and 1000'], 400);
+        if (!Uuid::isValid($exerciseId)) {
+            return $this->json(['error' => 'Missing or invalid exercise_id'], 400);
         }
 
         $exercise = $this->em->getRepository(Exercise::class)->find($exerciseId);
@@ -418,9 +413,30 @@ class WorkoutLogController extends AbstractController
             return $this->json(['error' => 'Exercise not found'], 404);
         }
 
-        $newWeight = (float) $weight;
-        $newReps = (int) $reps;
-        $newE1rm = $newReps === 1 ? $newWeight : round($newWeight * (1.0 + $newReps / 30.0), 1);
+        $isCardio = in_array($exercise->getTrackingType(), [Exercise::TRACKING_DISTANCE_DURATION, Exercise::TRACKING_DURATION], true)
+            || strcasecmp((string) $exercise->getMuscleGroup(), 'Cardio') === 0;
+
+        $reps = filter_var($data['reps'] ?? ($isCardio ? 0 : null), FILTER_VALIDATE_INT);
+        $weight = filter_var($data['weight'] ?? ($isCardio ? 0.0 : null), FILTER_VALIDATE_FLOAT);
+
+        if (!$isCardio) {
+            if ($reps === false || $weight === false || $reps === null || $weight === null) {
+                return $this->json(['error' => 'Missing required fields: exercise_id, weight, reps'], 400);
+            }
+            if ($reps < 1 || $reps > 1000) {
+                return $this->json(['error' => 'reps must be between 1 and 1000'], 400);
+            }
+            if ($weight < 0 || $weight > 1000) {
+                return $this->json(['error' => 'weight must be between 0 and 1000'], 400);
+            }
+        }
+
+        $durationSeconds = filter_var($data['duration_seconds'] ?? $data['durationSeconds'] ?? null, FILTER_VALIDATE_INT);
+        $distanceKm = filter_var($data['distance_km'] ?? $data['distanceKm'] ?? null, FILTER_VALIDATE_FLOAT);
+
+        $newWeight = (float) ($weight !== false && $weight !== null ? $weight : 0.0);
+        $newReps = (int) ($reps !== false && $reps !== null ? $reps : 0);
+        $newE1rm = $newReps === 1 ? $newWeight : ($newReps > 1 ? round($newWeight * (1.0 + $newReps / 30.0), 1) : 0.0);
 
         $priorStats = $this->em->createQueryBuilder()
             ->select('MAX(sl.weight) as max_weight')
@@ -488,6 +504,8 @@ class WorkoutLogController extends AbstractController
         $setLog->setReps($newReps);
         $setLog->setCompleted(true);
         $setLog->setSetType($setType);
+        $setLog->setDurationSeconds($durationSeconds !== false ? $durationSeconds : null);
+        $setLog->setDistanceKm($distanceKm !== false ? $distanceKm : null);
 
         $session->addSet($setLog);
         $this->em->persist($setLog);
@@ -498,6 +516,8 @@ class WorkoutLogController extends AbstractController
             'message' => 'Set logged successfully',
             'setId' => $setLog->getId()->toRfc4122(),
             'set_type' => $setLog->getSetType(),
+            'duration_seconds' => $setLog->getDurationSeconds(),
+            'distance_km' => $setLog->getDistanceKm(),
             'is_pr' => $isPr,
             'pr_types' => $prTypes,
             'pr_label' => $isPr ? '¡Nuevo récord personal!' : null,

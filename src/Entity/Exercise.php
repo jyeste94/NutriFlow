@@ -38,6 +38,15 @@ class Exercise
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $videoUrl = null;
 
+    public const TRACKING_WEIGHT_REPS = 'WEIGHT_REPS';
+    public const TRACKING_BODYWEIGHT_REPS = 'BODYWEIGHT_REPS';
+    public const TRACKING_DURATION = 'DURATION';
+    public const TRACKING_DISTANCE_DURATION = 'DISTANCE_DURATION';
+    public const TRACKING_WEIGHT_DISTANCE = 'WEIGHT_DISTANCE';
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $trackingType = null;
+
     public function getId(): ?Uuid
     {
         return $this->id;
@@ -130,4 +139,24 @@ class Exercise
         $this->videoUrl = $videoUrl;
         return $this;
     }
+
+    public function getTrackingType(): string
+    {
+        if ($this->trackingType !== null && $this->trackingType !== '') {
+            return $this->trackingType;
+        }
+
+        if ($this->muscleGroup !== null && strcasecmp($this->muscleGroup, 'Cardio') === 0) {
+            return self::TRACKING_DISTANCE_DURATION;
+        }
+
+        return self::TRACKING_WEIGHT_REPS;
+    }
+
+    public function setTrackingType(?string $trackingType): static
+    {
+        $this->trackingType = $trackingType;
+        return $this;
+    }
 }
+

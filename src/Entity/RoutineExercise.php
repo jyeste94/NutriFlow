@@ -27,8 +27,8 @@ class RoutineExercise
     #[ORM\Column(type: 'integer')]
     private int $sets = 3;
 
-    #[ORM\Column(type: 'integer')]
-    private int $reps = 10;
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $reps = null;
 
     #[ORM\Column(type: 'integer')]
     private int $restSeconds = 60;
@@ -38,6 +38,15 @@ class RoutineExercise
 
     #[ORM\Column(type: 'float', nullable: true)]
     private ?float $targetWeight = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $durationSeconds = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $distanceKm = null;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $setDetails = null;
 
     public function getId(): ?Uuid
     {
@@ -77,12 +86,12 @@ class RoutineExercise
         return $this;
     }
 
-    public function getReps(): int
+    public function getReps(): ?int
     {
         return $this->reps;
     }
 
-    public function setReps(int $reps): static
+    public function setReps(?int $reps): static
     {
         $this->reps = $reps;
         return $this;
@@ -118,6 +127,39 @@ class RoutineExercise
     public function setTargetWeight(?float $targetWeight): static
     {
         $this->targetWeight = $targetWeight;
+        return $this;
+    }
+
+    public function getDurationSeconds(): ?int
+    {
+        return $this->durationSeconds;
+    }
+
+    public function setDurationSeconds(?int $durationSeconds): static
+    {
+        $this->durationSeconds = $durationSeconds;
+        return $this;
+    }
+
+    public function getDistanceKm(): ?float
+    {
+        return $this->distanceKm;
+    }
+
+    public function setDistanceKm(?float $distanceKm): static
+    {
+        $this->distanceKm = $distanceKm;
+        return $this;
+    }
+
+    public function getSetDetails(): ?array
+    {
+        return $this->setDetails;
+    }
+
+    public function setSetDetails(?array $setDetails): static
+    {
+        $this->setDetails = $setDetails;
         return $this;
     }
 }
