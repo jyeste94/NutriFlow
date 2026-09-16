@@ -113,11 +113,25 @@ class DiaryController extends AbstractController
         foreach ($diary->getEntries() as $entry) {
             $serving = $entry->getServing();
             $food = $serving?->getFood();
+            $multiplier = $entry->getMultiplier();
+
+            $cal = $serving && $serving->getCalories() !== null ? round((float) $serving->getCalories() * $multiplier, 2) : 0.0;
+            $prot = $serving && $serving->getProteins() !== null ? round((float) $serving->getProteins() * $multiplier, 2) : 0.0;
+            $carbs = $serving && $serving->getCarbs() !== null ? round((float) $serving->getCarbs() * $multiplier, 2) : 0.0;
+            $fats = $serving && $serving->getFats() !== null ? round((float) $serving->getFats() * $multiplier, 2) : 0.0;
+            $amount = $serving && $serving->getAmount() !== null ? round((float) $serving->getAmount() * $multiplier, 2) : null;
+            $unit = $serving?->getUnit();
             
             $entries[] = [
                 'id' => $entry->getId()?->toRfc4122(),
                 'mealType' => $entry->getMealType(),
-                'multiplier' => $entry->getMultiplier(),
+                'multiplier' => $multiplier,
+                'calories' => $cal,
+                'proteins' => $prot,
+                'carbs' => $carbs,
+                'fats' => $fats,
+                'amount' => $amount,
+                'unit' => $unit,
                 'serving' => $serving ? [
                     'id' => $serving->getId()?->toRfc4122(),
                     'description' => $serving->getDescription(),
@@ -125,6 +139,8 @@ class DiaryController extends AbstractController
                     'proteins' => $serving->getProteins(),
                     'carbs' => $serving->getCarbs(),
                     'fats' => $serving->getFats(),
+                    'amount' => $serving->getAmount(),
+                    'unit' => $serving->getUnit(),
                 ] : null,
                 'food' => $food ? [
                     'id' => $food->getId()?->toRfc4122(),
@@ -454,6 +470,104 @@ class DiaryController extends AbstractController
                 'totalCalories' => $diary->getTotalCalories(),
             ]
         ], 201);
+    }
+
+    #[Route('/entries/{id}', name: 'update_entry', methods: ['PUT', 'PATCH'])]
+    public function updateEntry(string $id, Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $entry = $this->em->getRepository(MealEntry::class)->find($id);
+        if (!$entry) {
+            return $this->json(['error' => 'Entry not found'], 404);
+        }
+
+        $diary = $entry->getDiary();
+        if ($diary->getUser() !== $user) {
+            return $this->json(['error' => 'Forbidden'], 403);
+        }
+
+        try {
+            $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return $this->json(['error' => 'Invalid JSON body'], 400);
+        }
+
+        if (!is_array($data)) {
+            return $this->json(['error' => 'Invalid JSON body'], 400);
+        }
+
+        if (isset($data['mealType'])) {
+            $mealType = strtolower((string) $data['mealType']);
+            if (!in_array($mealType, self::ALLOWED_MEAL_TYPES, true)) {
+                return $this->json(['error' => 'mealType must be one of: ' . implode(', ', self::ALLOWED_MEAL_TYPES)], 400);
+            }
+            $entry->setMealType($mealType);
+        }
+
+        $serving = $entry->getServing();
+
+        if (isset($data['amountGrams']) && $serving && $serving->getAmount() && $serving->getAmount() > 0) {
+            $amountGrams = filter_var($data['amountGrams'], FILTER_VALIDATE_FLOAT);
+            if ($amountGrams === false || $amountGrams <= 0 || $amountGrams > 10000) {
+                return $this->json(['error' => 'amountGrams must be greater than 0 and less than or equal to 10000'], 400);
+            }
+            $multiplier = $amountGrams / (float) $serving->getAmount();
+            $entry->setMultiplier($multiplier);
+        } elseif (isset($data['multiplier'])) {
+            $multiplier = filter_var($data['multiplier'], FILTER_VALIDATE_FLOAT);
+            if ($multiplier === false || $multiplier <= 0 || $multiplier > 100) {
+                return $this->json(['error' => 'multiplier must be greater than 0 and less than or equal to 100'], 400);
+            }
+            $entry->setMultiplier((float) $multiplier);
+        }
+
+        $diary->recalculateTotals();
+        $this->em->flush();
+
+        $food = $serving?->getFood();
+        $mult = $entry->getMultiplier();
+
+        return $this->json([
+            'message' => 'Entry updated successfully',
+            'entry' => [
+                'id' => $entry->getId()?->toRfc4122(),
+                'mealType' => $entry->getMealType(),
+                'multiplier' => $mult,
+                'calories' => $serving && $serving->getCalories() !== null ? round((float) $serving->getCalories() * $mult, 2) : 0.0,
+                'proteins' => $serving && $serving->getProteins() !== null ? round((float) $serving->getProteins() * $mult, 2) : 0.0,
+                'carbs' => $serving && $serving->getCarbs() !== null ? round((float) $serving->getCarbs() * $mult, 2) : 0.0,
+                'fats' => $serving && $serving->getFats() !== null ? round((float) $serving->getFats() * $mult, 2) : 0.0,
+                'amount' => $serving && $serving->getAmount() !== null ? round((float) $serving->getAmount() * $mult, 2) : null,
+                'unit' => $serving?->getUnit(),
+                'serving' => $serving ? [
+                    'id' => $serving->getId()?->toRfc4122(),
+                    'description' => $serving->getDescription(),
+                    'calories' => $serving->getCalories(),
+                    'proteins' => $serving->getProteins(),
+                    'carbs' => $serving->getCarbs(),
+                    'fats' => $serving->getFats(),
+                    'amount' => $serving->getAmount(),
+                    'unit' => $serving->getUnit(),
+                ] : null,
+                'food' => $food ? [
+                    'id' => $food->getId()?->toRfc4122(),
+                    'name' => $food->getName(),
+                    'brand' => $food->getBrand(),
+                ] : null,
+            ],
+            'diary' => [
+                'id' => $diary->getId()?->toRfc4122(),
+                'date' => $diary->getDate()?->format('Y-m-d'),
+                'totalCalories' => $diary->getTotalCalories(),
+                'totalProteins' => $diary->getTotalProteins(),
+                'totalCarbs' => $diary->getTotalCarbs(),
+                'totalFats' => $diary->getTotalFats(),
+            ]
+        ]);
     }
 
     #[Route('/entries/{id}', name: 'delete_entry', methods: ['DELETE'])]
