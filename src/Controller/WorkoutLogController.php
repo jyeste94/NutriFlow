@@ -528,6 +528,113 @@ class WorkoutLogController extends AbstractController
         ], 201);
     }
 
+    #[Route('/{sessionId}/sets/{setId}', name: 'delete_set', methods: ['DELETE'])]
+    public function deleteSet(string $sessionId, string $setId): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $session = $this->em->getRepository(WorkoutSession::class)->find($sessionId);
+        if (!$session) {
+            return $this->json(['error' => 'Session not found'], 404);
+        }
+
+        if ($session->getUser() !== $user) {
+            return $this->json(['error' => 'Forbidden'], 403);
+        }
+
+        $set = $this->em->getRepository(WorkoutSetLog::class)->find($setId);
+        if (!$set || $set->getSession() !== $session) {
+            return $this->json(['error' => 'Set not found in this session'], 404);
+        }
+
+        $session->removeSet($set);
+        $this->em->remove($set);
+        $this->em->flush();
+
+        return $this->json(['message' => 'Set deleted successfully']);
+    }
+
+    #[Route('/{sessionId}/sets/{setId}', name: 'update_set', methods: ['PATCH'])]
+    public function updateSet(string $sessionId, string $setId, Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $session = $this->em->getRepository(WorkoutSession::class)->find($sessionId);
+        if (!$session) {
+            return $this->json(['error' => 'Session not found'], 404);
+        }
+
+        if ($session->getUser() !== $user) {
+            return $this->json(['error' => 'Forbidden'], 403);
+        }
+
+        $set = $this->em->getRepository(WorkoutSetLog::class)->find($setId);
+        if (!$set || $set->getSession() !== $session) {
+            return $this->json(['error' => 'Set not found in this session'], 404);
+        }
+
+        $data = $this->parseJsonBody($request);
+        if ($data instanceof JsonResponse) {
+            return $data;
+        }
+
+        if (array_key_exists('weight', $data)) {
+            $weight = filter_var($data['weight'], FILTER_VALIDATE_FLOAT);
+            if ($weight === false || $weight < 0 || $weight > 1000) {
+                return $this->json(['error' => 'weight must be between 0 and 1000'], 400);
+            }
+            $set->setWeight((float) $weight);
+        }
+
+        if (array_key_exists('reps', $data)) {
+            $reps = filter_var($data['reps'], FILTER_VALIDATE_INT);
+            if ($reps === false || $reps < 0 || $reps > 1000) {
+                return $this->json(['error' => 'reps must be between 0 and 1000'], 400);
+            }
+            $set->setReps((int) $reps);
+        }
+
+        if (array_key_exists('completed', $data)) {
+            $set->setCompleted((bool) $data['completed']);
+        }
+
+        if (array_key_exists('set_type', $data)) {
+            $setType = trim((string) $data['set_type']);
+            if (in_array($setType, ['normal', 'warmup', 'drop_set', 'failure'], true)) {
+                $set->setSetType($setType);
+            }
+        }
+
+        if (array_key_exists('duration_seconds', $data) || array_key_exists('durationSeconds', $data)) {
+            $dur = filter_var($data['duration_seconds'] ?? $data['durationSeconds'], FILTER_VALIDATE_INT);
+            $set->setDurationSeconds($dur !== false ? $dur : null);
+        }
+
+        if (array_key_exists('distance_km', $data) || array_key_exists('distanceKm', $data)) {
+            $dist = filter_var($data['distance_km'] ?? $data['distanceKm'], FILTER_VALIDATE_FLOAT);
+            $set->setDistanceKm($dist !== false ? $dist : null);
+        }
+
+        $this->em->flush();
+
+        return $this->json([
+            'message' => 'Set updated successfully',
+            'id' => $set->getId()->toRfc4122(),
+            'weight' => $set->getWeight(),
+            'reps' => $set->getReps(),
+            'completed' => $set->isCompleted(),
+            'set_type' => $set->getSetType(),
+            'duration_seconds' => $set->getDurationSeconds(),
+            'distance_km' => $set->getDistanceKm(),
+        ]);
+    }
+
     /**
      * @return array<mixed>|JsonResponse
      */
