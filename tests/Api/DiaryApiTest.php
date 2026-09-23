@@ -102,13 +102,23 @@ final class DiaryApiTest extends ApiTestCase
         $this->assertNotSame('', $entryId);
 
         $this->client->request('DELETE', '/v1/diaries/entries/' . $entryId, [], [], $headers);
-        $this->assertResponseIsSuccessful();
+        $this->assertResponseStatusCodeSame(204);
 
         $this->client->request('GET', '/v1/diaries/2026-03-13', [], [], $headers);
         $this->assertResponseIsSuccessful();
         $data = $this->jsonResponse();
         $this->assertCount(0, $data['entries']);
         $this->assertSame(0, $data['totalCalories']);
+    }
+
+    public function testDeleteEntryIsIdempotentWhenAlreadyDeleted(): void
+    {
+        $headers = $this->authHeaders('diary-user-idempotent');
+        // Random non-existent UUID
+        $fakeUuid = '00000000-0000-0000-0000-000000000001';
+
+        $this->client->request('DELETE', '/v1/diaries/entries/' . $fakeUuid, [], [], $headers);
+        $this->assertResponseStatusCodeSame(204);
     }
 
     public function testGetDiaryReturnsComputedEntryMacrosAndAmounts(): void

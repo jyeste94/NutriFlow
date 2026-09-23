@@ -12,6 +12,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
 
@@ -580,7 +581,8 @@ class DiaryController extends AbstractController
 
         $entry = $this->em->getRepository(MealEntry::class)->find($id);
         if (!$entry) {
-            return $this->json(['error' => 'Entry not found'], 404);
+            // Idempotent DELETE: entry is already removed or does not exist
+            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
         }
 
         $diary = $entry->getDiary();
@@ -593,7 +595,7 @@ class DiaryController extends AbstractController
         $this->em->remove($entry);
         $this->em->flush();
 
-        return $this->json(['message' => 'Entry deleted successfully']);
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
     private function parseIsoDate(string $date): ?\DateTimeImmutable
