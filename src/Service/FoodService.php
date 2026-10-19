@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\Food;
 use App\Entity\Serving;
+use App\Entity\User;
 use App\Repository\FoodRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -18,7 +19,12 @@ class FoodService
         private EntityManagerInterface $em
     ) {}
 
-    public function search(string $query, int $page = 0): array
+    /// <summary>Searches accessible local foods and supplements results from the public provider.</summary>
+    /// <param name="query">Food search text.</param>
+    /// <param name="page">Zero-based result page.</param>
+    /// <param name="user">Account whose personal foods may appear.</param>
+    /// <returns>Accessible food search results.</returns>
+    public function search(string $query, int $page = 0, ?User $user = null): array
     {
         $query = trim($query);
         if ($query === '') {
@@ -28,7 +34,7 @@ class FoodService
         $page = max(0, $page);
         $offset = $page * self::SEARCH_PAGE_SIZE;
 
-        $localFoods = $this->foodRepo->searchByNameOrBrand($query, self::SEARCH_PAGE_SIZE, $offset);
+        $localFoods = $this->foodRepo->searchByNameOrBrand($query, self::SEARCH_PAGE_SIZE, $offset, $user);
         $foodsByExternalId = [];
         foreach ($localFoods as $localFood) {
             $externalId = $localFood->getExternalId();
@@ -79,7 +85,11 @@ class FoodService
         return array_map(fn (Food $food) => $this->formatFoodArray($food), $resultFoods);
     }
 
-    public function getFoodDetails(string $id): ?array
+    /// <summary>Returns food details only when the requesting account may access the food.</summary>
+    /// <param name="id">Food identifier.</param>
+    /// <param name="user">Requesting account, or null for shared foods only.</param>
+    /// <returns>Food details, or null when missing or private to another account.</returns>
+    public function getFoodDetails(string $id, ?User $user = null): ?array
     {
         $food = null;
         try {
@@ -102,7 +112,7 @@ class FoodService
             }
         }
 
-        if (!$food) {
+        if (!$food || !$food->isAccessibleBy($user)) {
             return null;
         }
 

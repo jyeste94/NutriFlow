@@ -155,6 +155,14 @@ class Food
         return $this;
     }
 
+    /// <summary>Allows shared foods and restricts personal foods to their owner.</summary>
+    /// <param name="user">The account requesting access.</param>
+    /// <returns>Whether the account may read or reference this food.</returns>
+    public function isAccessibleBy(?User $user): bool
+    {
+        return $this->user === null || ($user !== null && $this->user->getId()?->equals($user->getId()) === true);
+    }
+
     public function getUser(): ?User
     {
         return $this->user;

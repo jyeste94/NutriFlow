@@ -56,6 +56,9 @@ class SavedMealController extends AbstractController
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
+    /// <summary>Creates a saved meal using only serving references accessible to its owner.</summary>
+    /// <param name="request">Saved meal payload.</param>
+    /// <returns>The created meal or a validation or access error.</returns>
     public function create(Request $request): JsonResponse
     {
         $user = $this->getUser();
@@ -110,6 +113,9 @@ class SavedMealController extends AbstractController
             $servingId = (string) ($itemData['servingId'] ?? $itemData['serving_id'] ?? '');
             if ($servingId !== '' && Uuid::isValid($servingId)) {
                 $serving = $this->em->getRepository(Serving::class)->find($servingId);
+                if ($serving && !$serving->getFood()?->isAccessibleBy($user)) {
+                    return $this->json(['error' => 'Serving not found'], 404);
+                }
                 if ($serving) {
                     $item->setServing($serving);
                 }
@@ -125,6 +131,10 @@ class SavedMealController extends AbstractController
     }
 
     #[Route('/{id}', name: 'update', methods: ['PUT'])]
+    /// <summary>Updates an owned saved meal without accepting another account's serving references.</summary>
+    /// <param name="id">Saved meal identifier.</param>
+    /// <param name="request">Updated meal payload.</param>
+    /// <returns>The updated meal or a validation or access error.</returns>
     public function update(string $id, Request $request): JsonResponse
     {
         $user = $this->getUser();
@@ -185,6 +195,9 @@ class SavedMealController extends AbstractController
                 $servingId = (string) ($itemData['servingId'] ?? $itemData['serving_id'] ?? '');
                 if ($servingId !== '' && Uuid::isValid($servingId)) {
                     $serving = $this->em->getRepository(Serving::class)->find($servingId);
+                    if ($serving && !$serving->getFood()?->isAccessibleBy($user)) {
+                        return $this->json(['error' => 'Serving not found'], 404);
+                    }
                     if ($serving) {
                         $item->setServing($serving);
                     }

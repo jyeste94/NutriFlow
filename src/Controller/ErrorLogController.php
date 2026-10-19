@@ -17,12 +17,15 @@ class ErrorLogController extends AbstractController
     ) {}
 
     #[Route('', name: 'list', methods: ['GET'])]
+    /// <summary>Lists internal error logs for administrators only.</summary>
+    /// <param name="request">Filter and result limit.</param>
+    /// <returns>Error logs or an access error.</returns>
     public function list(Request $request): JsonResponse
     {
         $user = $this->getUser();
         if (!$user) return $this->json(['error' => 'Unauthorized'], 401);
 
-        // Solo admin — por ahora cualquier usuario autenticado puede ver errores
+        if (!$this->isGranted('ROLE_ADMIN')) return $this->json(['error' => 'Forbidden'], 403);
         $limit = min(100, max(1, $request->query->getInt('limit', 50)));
         $source = $request->query->get('source');
 
@@ -63,11 +66,15 @@ class ErrorLogController extends AbstractController
     }
 
     #[Route('/{id}', name: 'detail', methods: ['GET'])]
+    /// <summary>Returns internal error details for administrators only.</summary>
+    /// <param name="id">Error log identifier.</param>
+    /// <returns>Error details or an access error.</returns>
     public function detail(string $id): JsonResponse
     {
         $user = $this->getUser();
         if (!$user) return $this->json(['error' => 'Unauthorized'], 401);
 
+        if (!$this->isGranted('ROLE_ADMIN')) return $this->json(['error' => 'Forbidden'], 403);
         $log = $this->em->getRepository(ErrorLog::class)->find($id);
         if (!$log) return $this->json(['error' => 'Error log not found'], 404);
 

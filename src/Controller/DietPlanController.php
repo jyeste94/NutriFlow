@@ -314,6 +314,9 @@ class DietPlanController extends AbstractController
      * @param array<mixed> $days
      * @return array<int, array{day_of_week:string, meals:array<int, array{serving:Serving, meal_type:string, multiplier:float, option_group:?string, notes:?string}>}>|JsonResponse
      */
+    /// <summary>Validates plan days and restricts serving references to accessible foods.</summary>
+    /// <param name="days">Proposed days and meals.</param>
+    /// <returns>Normalized days or a validation or access error.</returns>
     private function normalizePlanDays(array $days): array|JsonResponse
     {
         if (count($days) > 7) {
@@ -365,6 +368,9 @@ class DietPlanController extends AbstractController
                 $serving = $this->em->getRepository(Serving::class)->find($servingId);
                 if (!$serving instanceof Serving) {
                     return $this->json(['error' => "Serving not found at day $dayIndex index $mealIndex"], 400);
+                }
+                if (!$serving->getFood()?->isAccessibleBy($this->getUser())) {
+                    return $this->json(['error' => 'Serving not found'], 404);
                 }
 
                 $optionGroup = null;

@@ -51,17 +51,39 @@ class UserPreferencesController extends AbstractController
     }
 
     #[Route('/preferences', name: 'save_preferences', methods: ['PUT'])]
+    /// <summary>Validates and merges preference changes without discarding unrelated profile fields.</summary>
+    /// <param name="request">Partial preference object.</param>
+    /// <param name="em">Persistence manager.</param>
+    /// <returns>The merged preferences or a validation error.</returns>
     public function savePreferences(Request $request, EntityManagerInterface $em): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
+        try {
+            $payload = json_decode($request->getContent(), false, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return $this->json(['error' => 'Invalid JSON body'], 400);
+        }
+        if (!$payload instanceof \stdClass) {
+            return $this->json(['error' => 'Preferences must be a JSON object'], 400);
+        }
+        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        foreach (['calorie_goal', 'protein_goal', 'carbs_goal', 'fat_goal', 'age', 'weight_kg', 'height_cm', 'activity'] as $field) {
+            if (array_key_exists($field, $data) && $data[$field] !== null) {
+                $value = filter_var($data[$field], FILTER_VALIDATE_FLOAT);
+                if ($value === false || !is_finite($value) || $value < 0) {
+                    return $this->json(['error' => "$field must be a non-negative number or null"], 400);
+                }
+            }
+        }
         $user = $this->getUser();
         $userId = $user->getId()->toRfc4122();
 
         $existing = $em->getConnection()->fetchAssociative(
-            'SELECT id FROM user_preferences WHERE user_id = ?', [$userId]
+            'SELECT id, preferences FROM user_preferences WHERE user_id = ?', [$userId]
         );
 
-        $json = json_encode($data);
+        $stored = $existing ? json_decode($existing['preferences'], true, 512, JSON_THROW_ON_ERROR) : [];
+        $data = array_replace(is_array($stored) ? $stored : [], $data);
+        $json = json_encode($data, JSON_THROW_ON_ERROR);
 
         if ($existing) {
             $em->getConnection()->executeStatement(

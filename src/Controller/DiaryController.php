@@ -357,6 +357,10 @@ class DiaryController extends AbstractController
     }
 
     #[Route('/{date}/entries', name: 'add_entry', methods: ['POST'])]
+    /// <summary>Adds a meal entry using a shared serving or a food owned by the current account.</summary>
+    /// <param name="date">Diary date in ISO format.</param>
+    /// <param name="request">Meal entry payload.</param>
+    /// <returns>The created entry or a validation or access error.</returns>
     public function addEntry(string $date, Request $request): JsonResponse
     {
         $user = $this->getUser();
@@ -399,11 +403,22 @@ class DiaryController extends AbstractController
             if (!$serving) {
                 return $this->json(['error' => 'Serving not found'], 404);
             }
+            if (!$serving->getFood()?->isAccessibleBy($user)) {
+                return $this->json(['error' => 'Serving not found'], 404);
+            }
         } elseif (!empty($data['name']) && isset($data['calories'])) {
             // Case 2: Inline custom food entry
             $foodName = trim((string) $data['name']);
             if ($foodName === '') {
                 return $this->json(['error' => 'Food name cannot be empty'], 400);
+            }
+
+            foreach (['calories', 'proteins', 'carbs', 'fats', 'amountGrams'] as $field) {
+                if (!array_key_exists($field, $data)) continue;
+                $value = filter_var($data[$field], FILTER_VALIDATE_FLOAT);
+                if ($value === false || !is_finite($value) || $value < 0 || ($field === 'amountGrams' && $value == 0)) {
+                    return $this->json(['error' => "$field must be " . ($field === 'amountGrams' ? 'positive' : 'non-negative') . ' and finite'], 400);
+                }
             }
 
             $calories = (float) ($data['calories'] ?? 0);

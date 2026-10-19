@@ -24,6 +24,9 @@ class FoodController extends AbstractController
     }
 
     #[Route('/search', name: 'search', methods: ['GET'])]
+    /// <summary>Searches shared foods and foods owned by the current account.</summary>
+    /// <param name="request">Search query and page.</param>
+    /// <returns>Accessible food search results.</returns>
     public function search(Request $request): JsonResponse
     {
         $query = $request->query->get('q', '');
@@ -33,12 +36,15 @@ class FoodController extends AbstractController
             return $this->json(['error' => 'Query parameter "q" is required'], 400);
         }
 
-        $results = $this->foodService->search($query, $page);
+        $results = $this->foodService->search($query, $page, $this->getUser());
 
         return $this->json($results);
     }
 
     #[Route('/recent', name: 'recent', methods: ['GET'])]
+    /// <summary>Lists recently used foods still accessible to the current account.</summary>
+    /// <param name="request">Result limit.</param>
+    /// <returns>Accessible recent foods.</returns>
     public function getRecentFoods(Request $request): JsonResponse
     {
         $user = $this->getUser();
@@ -66,7 +72,7 @@ class FoodController extends AbstractController
         /** @var Serving $serving */
         foreach ($results as $serving) {
             $food = $serving->getFood();
-            if (!$food) continue;
+            if (!$food || !$food->isAccessibleBy($user)) continue;
             $calories = $serving->getCalories();
             $hasInfo = $calories !== null;
             $foods[] = [
@@ -87,6 +93,9 @@ class FoodController extends AbstractController
     }
 
     #[Route('/frequent', name: 'frequent', methods: ['GET'])]
+    /// <summary>Lists frequently used foods still accessible to the current account.</summary>
+    /// <param name="request">Result limit.</param>
+    /// <returns>Accessible frequent foods.</returns>
     public function getFrequentFoods(Request $request): JsonResponse
     {
         $user = $this->getUser();
@@ -114,7 +123,7 @@ class FoodController extends AbstractController
         /** @var Serving $serving */
         foreach ($results as $serving) {
             $food = $serving->getFood();
-            if (!$food) continue;
+            if (!$food || !$food->isAccessibleBy($user)) continue;
             $calories = $serving->getCalories();
             $hasInfo = $calories !== null;
             $foods[] = [
@@ -135,6 +144,8 @@ class FoodController extends AbstractController
     }
 
     #[Route('/favorites', name: 'favorites', methods: ['GET'])]
+    /// <summary>Lists favorites without exposing legacy references to another account's food.</summary>
+    /// <returns>Accessible favorite foods.</returns>
     public function getFavorites(): JsonResponse
     {
         $user = $this->getUser();
@@ -147,7 +158,7 @@ class FoodController extends AbstractController
         /** @var UserFavoriteFood $fav */
         foreach ($favs as $fav) {
             $food = $fav->getFood();
-            if (!$food) continue;
+            if (!$food || !$food->isAccessibleBy($user)) continue;
             $bestServing = null;
             if ($food->getBestServingId()) {
                 $bestServing = $this->em->getRepository(Serving::class)->find($food->getBestServingId());
@@ -205,6 +216,9 @@ class FoodController extends AbstractController
     }
 
     #[Route('/custom', name: 'create_custom', methods: ['POST'])]
+    /// <summary>Creates a personal food after validating its name, portion and nutrients.</summary>
+    /// <param name="request">Food creation payload.</param>
+    /// <returns>The created food or a validation error.</returns>
     public function createCustom(Request $request): JsonResponse
     {
         $user = $this->getUser();
@@ -220,6 +234,9 @@ class FoodController extends AbstractController
 
         if (!is_array($data) || empty($data['name'])) {
             return $this->json(['error' => 'Food name is required'], 400);
+        }
+        if ($error = $this->validateNutrition($data)) {
+            return $error;
         }
 
         $food = new Food();
@@ -264,6 +281,10 @@ class FoodController extends AbstractController
     }
 
     #[Route('/custom/{id}', name: 'update_custom', methods: ['PUT'])]
+    /// <summary>Updates an owned personal food after validating changed nutrition and portion values.</summary>
+    /// <param name="id">Food identifier.</param>
+    /// <param name="request">Food changes.</param>
+    /// <returns>The updated food or a validation or access error.</returns>
     public function updateCustom(string $id, Request $request): JsonResponse
     {
         $user = $this->getUser();
@@ -286,6 +307,12 @@ class FoodController extends AbstractController
             return $this->json(['error' => 'Invalid JSON body'], 400);
         }
 
+        if (!is_array($data)) {
+            return $this->json(['error' => 'Invalid JSON body'], 400);
+        }
+        if ($error = $this->validateNutrition($data)) {
+            return $error;
+        }
         if (isset($data['name']) && trim((string) $data['name']) !== '') {
             $food->setName(trim((string) $data['name']));
         }
@@ -346,6 +373,9 @@ class FoodController extends AbstractController
     }
 
     #[Route('/{id}/favorite', name: 'add_favorite', methods: ['POST'])]
+    /// <summary>Favorites an accessible food for the current account.</summary>
+    /// <param name="id">Food identifier.</param>
+    /// <returns>The favorite state or an access error.</returns>
     public function addFavorite(string $id): JsonResponse
     {
         $user = $this->getUser();
@@ -358,6 +388,9 @@ class FoodController extends AbstractController
             return $this->json(['error' => 'Food not found'], 404);
         }
 
+        if (!$food->isAccessibleBy($user)) {
+            return $this->json(['error' => 'Food not found'], 404);
+        }
         $fav = $this->em->getRepository(UserFavoriteFood::class)->findOneBy(['user' => $user, 'food' => $food]);
         if (!$fav) {
             $fav = new UserFavoriteFood();
@@ -393,9 +426,12 @@ class FoodController extends AbstractController
     }
 
     #[Route('/{id}', name: 'get', methods: ['GET'])]
+    /// <summary>Returns food details without exposing another account's personal foods.</summary>
+    /// <param name="id">Food identifier.</param>
+    /// <returns>Accessible food details or a not-found error.</returns>
     public function getFood(string $id): JsonResponse
     {
-        $food = $this->foodService->getFoodDetails($id);
+        $food = $this->foodService->getFoodDetails($id, $this->getUser());
 
         if (!$food) {
             return $this->json(['error' => 'Food not found'], 404);
@@ -405,12 +441,22 @@ class FoodController extends AbstractController
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
+    /// <summary>Creates a personal food and returns its details to its owner.</summary>
+    /// <param name="request">Food creation payload.</param>
+    /// <returns>The created personal food.</returns>
     public function create(Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
+        try {
+            $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return $this->json(['error' => 'Invalid JSON body'], 400);
+        }
 
-        if (empty($data['name'])) {
+        if (!is_array($data) || empty($data['name'])) {
             return $this->json(['error' => 'Food name is required'], 400);
+        }
+        if ($error = $this->validateNutrition($data)) {
+            return $error;
         }
 
         $food = new Food();
@@ -439,6 +485,25 @@ class FoodController extends AbstractController
         $this->em->persist($food);
         $this->em->flush();
 
-        return $this->json($this->foodService->getFoodDetails($food->getId()), 201);
+        return $this->json($this->foodService->getFoodDetails($food->getId()->toRfc4122(), $this->getUser()), 201);
+    }
+
+    /// <summary>Rejects blank names, invalid nutrients and non-positive portions before persistence.</summary>
+    /// <param name="data">Food fields to validate.</param>
+    /// <returns>A validation response, or null when all supplied values are valid.</returns>
+    private function validateNutrition(array $data): ?JsonResponse
+    {
+        if (array_key_exists('name', $data) && (!is_string($data['name']) || trim($data['name']) === '')) {
+            return $this->json(['error' => 'Food name is required'], 400);
+        }
+        foreach (['amountGrams', 'amount', 'calories', 'proteins', 'carbs', 'fats'] as $field) {
+            if (!array_key_exists($field, $data)) continue;
+            $value = filter_var($data[$field], FILTER_VALIDATE_FLOAT);
+            $isAmount = $field === 'amountGrams' || $field === 'amount';
+            if ($value === false || !is_finite($value) || $value < 0 || ($isAmount && $value == 0)) {
+                return $this->json(['error' => "$field must be " . ($isAmount ? 'positive' : 'non-negative') . ' and finite'], 400);
+            }
+        }
+        return null;
     }
 }
