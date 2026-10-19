@@ -150,6 +150,10 @@ class ExerciseController extends AbstractController
     #[Route('', name: 'create', methods: ['POST'])]
     public function create(Request $request, EntityManagerInterface $em): JsonResponse
     {
+        if (!$this->isGranted('ROLE_ADMIN')) {
+            return $this->json(['error' => 'Solo los administradores pueden modificar el catálogo de ejercicios.'], 403);
+        }
+
         $data = json_decode($request->getContent(), true);
 
         if (empty($data['name'])) {
@@ -190,6 +194,10 @@ class ExerciseController extends AbstractController
     #[Route('/{id}', name: 'update', methods: ['PUT'])]
     public function update(string $id, Request $request, EntityManagerInterface $em): JsonResponse
     {
+        if (!$this->isGranted('ROLE_ADMIN')) {
+            return $this->json(['error' => 'Solo los administradores pueden modificar el catálogo de ejercicios.'], 403);
+        }
+
         if (!Uuid::isValid($id)) {
             return $this->json(['error' => 'Invalid exercise ID format'], 400);
         }
@@ -234,6 +242,10 @@ class ExerciseController extends AbstractController
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
     public function delete(string $id, EntityManagerInterface $em): JsonResponse
     {
+        if (!$this->isGranted('ROLE_ADMIN')) {
+            return $this->json(['error' => 'Solo los administradores pueden modificar el catálogo de ejercicios.'], 403);
+        }
+
         if (!Uuid::isValid($id)) {
             return $this->json(['error' => 'Invalid exercise ID format'], 400);
         }

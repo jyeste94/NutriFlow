@@ -7,11 +7,13 @@ use App\Entity\MealEntry;
 use App\Entity\Serving;
 use App\Entity\UserFavoriteFood;
 use App\Service\FoodService;
+use App\Service\OpenFoodFactsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\Uid\Uuid;
 
 #[Route('/v1/foods', name: 'api_foods_')]
@@ -39,6 +41,69 @@ class FoodController extends AbstractController
         $results = $this->foodService->search($query, $page, $this->getUser());
 
         return $this->json($results);
+    }
+
+    #[Route('/barcode/{barcode}', name: 'barcode', methods: ['GET'])]
+    public function barcode(string $barcode, OpenFoodFactsService $provider): JsonResponse
+    {
+        try {
+            $product = $provider->lookup($barcode);
+        } catch (HttpExceptionInterface $error) {
+            return $this->json(['error' => $error->getMessage()], $error->getStatusCode());
+        }
+        return $product === null
+            ? $this->json(['error' => 'No encontramos este código en Open Food Facts.', 'status' => 'not_found'], 404)
+            : $this->json($product);
+    }
+
+    #[Route('/barcode/{barcode}', name: 'import_barcode', methods: ['POST'])]
+    public function importBarcode(string $barcode, OpenFoodFactsService $provider): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+        if (!preg_match('/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/D', $barcode)) {
+            return $this->json(['error' => 'Código de barras no válido.'], 400);
+        }
+        $externalId = 'custom_off_' . $user->getId()->toRfc4122() . '_' . $barcode;
+        $food = $this->em->getRepository(Food::class)->findOneBy(['externalId' => $externalId, 'user' => $user]);
+        if ($food) {
+            return $this->json($this->foodService->getFoodDetails($food->getId()->toRfc4122(), $user));
+        }
+        try {
+            $product = $provider->lookup($barcode);
+        } catch (HttpExceptionInterface $error) {
+            return $this->json(['error' => $error->getMessage()], $error->getStatusCode());
+        }
+        if ($product === null) {
+            return $this->json(['error' => 'No encontramos este código en Open Food Facts.', 'status' => 'not_found'], 404);
+        }
+        if (!$product['canImport']) {
+            return $this->json(['error' => 'El producto no tiene todos los nutrientes o su unidad no está confirmada. No se ha importado.'], 422);
+        }
+
+        $food = (new Food())
+            ->setUser($user)
+            ->setExternalId($externalId)
+            ->setName($product['name'])
+            ->setBrand($product['brand'])
+            ->setLastFetchedAt(new \DateTimeImmutable());
+        $serving = (new Serving())
+            ->setFood($food)
+            ->setDescription('100 ' . $product['unit'])
+            ->setAmount(100)
+            ->setUnit($product['unit'])
+            ->setCalories($product['calories'])
+            ->setProteins($product['proteins'])
+            ->setCarbs($product['carbs'])
+            ->setFats($product['fats']);
+        $food->addServing($serving);
+        $this->em->persist($food);
+        $this->em->flush();
+        $food->setBestServingId($serving->getId());
+        $this->em->flush();
+        return $this->json($this->foodService->getFoodDetails($food->getId()->toRfc4122(), $user), 201);
     }
 
     #[Route('/recent', name: 'recent', methods: ['GET'])]
@@ -81,10 +146,11 @@ class FoodController extends AbstractController
                 'brand' => $food->getBrand(),
                 'servingId' => $serving->getId()?->toRfc4122(),
                 'baseServingGrams' => $serving->getAmount() ?: 100,
+                'unit' => $serving->getUnit(),
                 'calories' => $hasInfo ? (float) $calories : null,
-                'proteins' => $serving->getProteins() !== null ? (float) $serving->getProteins() : 0.0,
-                'carbs' => $serving->getCarbs() !== null ? (float) $serving->getCarbs() : 0.0,
-                'fats' => $serving->getFats() !== null ? (float) $serving->getFats() : 0.0,
+                'proteins' => $serving->getProteins(),
+                'carbs' => $serving->getCarbs(),
+                'fats' => $serving->getFats(),
                 'hasNutritionInfo' => $hasInfo,
             ];
         }
@@ -132,10 +198,11 @@ class FoodController extends AbstractController
                 'brand' => $food->getBrand(),
                 'servingId' => $serving->getId()?->toRfc4122(),
                 'baseServingGrams' => $serving->getAmount() ?: 100,
+                'unit' => $serving->getUnit(),
                 'calories' => $hasInfo ? (float) $calories : null,
-                'proteins' => $serving->getProteins() !== null ? (float) $serving->getProteins() : 0.0,
-                'carbs' => $serving->getCarbs() !== null ? (float) $serving->getCarbs() : 0.0,
-                'fats' => $serving->getFats() !== null ? (float) $serving->getFats() : 0.0,
+                'proteins' => $serving->getProteins(),
+                'carbs' => $serving->getCarbs(),
+                'fats' => $serving->getFats(),
                 'hasNutritionInfo' => $hasInfo,
             ];
         }
@@ -174,10 +241,11 @@ class FoodController extends AbstractController
                 'brand' => $food->getBrand(),
                 'servingId' => $bestServing?->getId()?->toRfc4122(),
                 'baseServingGrams' => $bestServing?->getAmount() ?: 100,
-                'calories' => $hasInfo ? ($bestServing->getCalories() !== null ? (float) $bestServing->getCalories() : 0.0) : null,
-                'proteins' => $hasInfo ? ($bestServing->getProteins() !== null ? (float) $bestServing->getProteins() : 0.0) : null,
-                'carbs' => $hasInfo ? ($bestServing->getCarbs() !== null ? (float) $bestServing->getCarbs() : 0.0) : null,
-                'fats' => $hasInfo ? ($bestServing->getFats() !== null ? (float) $bestServing->getFats() : 0.0) : null,
+                'unit' => $bestServing?->getUnit(),
+                'calories' => $bestServing?->getCalories(),
+                'proteins' => $bestServing?->getProteins(),
+                'carbs' => $bestServing?->getCarbs(),
+                'fats' => $bestServing?->getFats(),
                 'hasNutritionInfo' => $hasInfo,
                 'isFavorite' => true,
             ];
@@ -205,10 +273,11 @@ class FoodController extends AbstractController
                 'brand' => $food->getBrand(),
                 'servingId' => $serving?->getId()?->toRfc4122(),
                 'baseServingGrams' => $serving?->getAmount() ?: 100,
-                'calories' => $serving?->getCalories() ?: 0,
-                'proteins' => $serving?->getProteins() ?: 0,
-                'carbs' => $serving?->getCarbs() ?: 0,
-                'fats' => $serving?->getFats() ?: 0,
+                'unit' => $serving?->getUnit(),
+                'calories' => $serving?->getCalories(),
+                'proteins' => $serving?->getProteins(),
+                'carbs' => $serving?->getCarbs(),
+                'fats' => $serving?->getFats(),
             ];
         }
 
@@ -235,7 +304,7 @@ class FoodController extends AbstractController
         if (!is_array($data) || empty($data['name'])) {
             return $this->json(['error' => 'Food name is required'], 400);
         }
-        if ($error = $this->validateNutrition($data)) {
+        if ($error = $this->validateNutrition($data, true)) {
             return $error;
         }
 
@@ -251,11 +320,11 @@ class FoodController extends AbstractController
         $amountGrams = (float) ($data['amountGrams'] ?? $data['amount'] ?? 100);
         $serving = new Serving();
         $serving->setFood($food);
-        $serving->setDescription($data['serving_description'] ?? ($amountGrams . 'g'));
-        $serving->setCalories((float) ($data['calories'] ?? 0));
-        $serving->setProteins((float) ($data['proteins'] ?? 0));
-        $serving->setCarbs((float) ($data['carbs'] ?? 0));
-        $serving->setFats((float) ($data['fats'] ?? 0));
+        $serving->setDescription($data['serving_description'] ?? ($amountGrams . ($data['unit'] ?? 'g')));
+        $serving->setCalories((float) $data['calories']);
+        $serving->setProteins(isset($data['proteins']) ? (float) $data['proteins'] : null);
+        $serving->setCarbs(isset($data['carbs']) ? (float) $data['carbs'] : null);
+        $serving->setFats(isset($data['fats']) ? (float) $data['fats'] : null);
         $serving->setAmount($amountGrams);
         $serving->setUnit($data['unit'] ?? 'g');
 
@@ -273,6 +342,7 @@ class FoodController extends AbstractController
             'brand' => $food->getBrand(),
             'servingId' => $serving->getId()?->toRfc4122(),
             'baseServingGrams' => $serving->getAmount() ?: 100,
+            'unit' => $serving->getUnit(),
             'calories' => $serving->getCalories(),
             'proteins' => $serving->getProteins(),
             'carbs' => $serving->getCarbs(),
@@ -326,10 +396,11 @@ class FoodController extends AbstractController
             if (isset($data['proteins'])) $serving->setProteins((float) $data['proteins']);
             if (isset($data['carbs'])) $serving->setCarbs((float) $data['carbs']);
             if (isset($data['fats'])) $serving->setFats((float) $data['fats']);
+            if (isset($data['unit'])) $serving->setUnit($data['unit']);
             if (isset($data['amountGrams']) || isset($data['amount'])) {
                 $amount = (float) ($data['amountGrams'] ?? $data['amount']);
                 $serving->setAmount($amount);
-                $serving->setDescription($amount . 'g');
+                $serving->setDescription($amount . ($serving->getUnit() ?? 'g'));
             }
         }
 
@@ -342,10 +413,11 @@ class FoodController extends AbstractController
             'brand' => $food->getBrand(),
             'servingId' => $serving?->getId()?->toRfc4122(),
             'baseServingGrams' => $serving?->getAmount() ?: 100,
-            'calories' => $serving?->getCalories() ?: 0,
-            'proteins' => $serving?->getProteins() ?: 0,
-            'carbs' => $serving?->getCarbs() ?: 0,
-            'fats' => $serving?->getFats() ?: 0,
+            'unit' => $serving?->getUnit(),
+            'calories' => $serving?->getCalories(),
+            'proteins' => $serving?->getProteins(),
+            'carbs' => $serving?->getCarbs(),
+            'fats' => $serving?->getFats(),
         ]);
     }
 
@@ -446,6 +518,9 @@ class FoodController extends AbstractController
     /// <returns>The created personal food.</returns>
     public function create(Request $request): JsonResponse
     {
+        if (!$this->getUser()) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
         try {
             $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
@@ -455,7 +530,7 @@ class FoodController extends AbstractController
         if (!is_array($data) || empty($data['name'])) {
             return $this->json(['error' => 'Food name is required'], 400);
         }
-        if ($error = $this->validateNutrition($data)) {
+        if ($error = $this->validateNutrition($data, true)) {
             return $error;
         }
 
@@ -470,19 +545,21 @@ class FoodController extends AbstractController
 
         $serving = new Serving();
         $serving->setFood($food);
-        $serving->setDescription($data['serving_description'] ?? '100g');
-        $serving->setCalories($data['calories'] ?? 0);
-        $serving->setProteins($data['proteins'] ?? 0);
-        $serving->setCarbs($data['carbs'] ?? 0);
-        $serving->setFats($data['fats'] ?? 0);
-
-        if (isset($data['amount'])) $serving->setAmount($data['amount']);
-        if (isset($data['unit'])) $serving->setUnit($data['unit']);
+        $amount = (float) ($data['amountGrams'] ?? $data['amount'] ?? 100);
+        $unit = $data['unit'] ?? 'g';
+        $serving->setDescription($data['serving_description'] ?? ($amount . $unit));
+        $serving->setCalories((float) $data['calories']);
+        $serving->setProteins(isset($data['proteins']) ? (float) $data['proteins'] : null);
+        $serving->setCarbs(isset($data['carbs']) ? (float) $data['carbs'] : null);
+        $serving->setFats(isset($data['fats']) ? (float) $data['fats'] : null);
+        $serving->setAmount($amount);
+        $serving->setUnit($unit);
 
         $food->addServing($serving);
-        $food->setBestServingId($serving->getId());
 
         $this->em->persist($food);
+        $this->em->flush();
+        $food->setBestServingId($serving->getId());
         $this->em->flush();
 
         return $this->json($this->foodService->getFoodDetails($food->getId()->toRfc4122(), $this->getUser()), 201);
@@ -491,8 +568,17 @@ class FoodController extends AbstractController
     /// <summary>Rejects blank names, invalid nutrients and non-positive portions before persistence.</summary>
     /// <param name="data">Food fields to validate.</param>
     /// <returns>A validation response, or null when all supplied values are valid.</returns>
-    private function validateNutrition(array $data): ?JsonResponse
+    private function validateNutrition(array $data, bool $creating = false): ?JsonResponse
     {
+        if ($creating && !array_key_exists('calories', $data)) {
+            return $this->json(['error' => 'Las calorías son obligatorias; no podemos inventar valores desconocidos.'], 400);
+        }
+        foreach (['name' => 255, 'brand' => 255, 'unit' => 50, 'serving_description' => 255] as $field => $maximum) {
+            if (!isset($data[$field])) continue;
+            if (!is_string($data[$field]) || mb_strlen($data[$field]) > $maximum) {
+                return $this->json(['error' => "$field must be text up to $maximum characters"], 400);
+            }
+        }
         if (array_key_exists('name', $data) && (!is_string($data['name']) || trim($data['name']) === '')) {
             return $this->json(['error' => 'Food name is required'], 400);
         }

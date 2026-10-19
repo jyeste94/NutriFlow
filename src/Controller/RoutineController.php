@@ -292,7 +292,7 @@ class RoutineController extends AbstractController
             if ($conn->isTransactionActive()) {
                 $conn->rollBack();
             }
-            return $this->json(['error' => 'Could not create routine: ' . $e->getMessage()], 500);
+            throw $e;
         }
     }
 
@@ -353,6 +353,15 @@ class RoutineController extends AbstractController
                     return $this->json(['error' => "Invalid exercise payload at index $index"], 400);
                 }
 
+                $existing = $routine->getRoutineExercises()->get((int) $index);
+                if ($existing && $existing->getExercise()->getId()->toRfc4122() === ($exData['exercise_id'] ?? null)) {
+                    if (!array_key_exists('setDetails', $exData) && !array_key_exists('set_details', $exData)) {
+                        $exData['setDetails'] = $existing->getSetDetails();
+                    }
+                    if (!array_key_exists('targetWeight', $exData) && !array_key_exists('target_weight', $exData)) {
+                        $exData['targetWeight'] = $existing->getTargetWeight();
+                    }
+                }
                 $prepared = $this->prepareExerciseItem((int) $index, $exData);
                 if ($prepared instanceof JsonResponse) {
                     return $prepared;
@@ -383,11 +392,7 @@ class RoutineController extends AbstractController
             }
         }
 
-        try {
-            $this->em->flush();
-        } catch (\Throwable $e) {
-            return $this->json(['error' => 'Could not update routine: ' . $e->getMessage()], 500);
-        }
+        $this->em->flush();
 
         return $this->json(['message' => 'Routine updated successfully', 'id' => $routine->getId()->toRfc4122()]);
     }

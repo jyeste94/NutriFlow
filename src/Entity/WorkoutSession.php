@@ -10,6 +10,7 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'workout_sessions')]
+#[ORM\UniqueConstraint(name: 'uniq_workout_client_session', columns: ['user_id', 'client_session_id'])]
 class WorkoutSession
 {
     #[ORM\Id]
@@ -31,6 +32,29 @@ class WorkoutSession
 
     #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $durationMinutes = null;
+
+    #[ORM\Column(type: 'string', length: 16, options: ['default' => 'active'])]
+    private string $status = 'active';
+
+    #[ORM\Column(type: 'string', length: 36, nullable: true)]
+    private ?string $clientSessionId = null;
+
+    public function setClientSessionId(?string $clientSessionId): static
+    {
+        $this->clientSessionId = $clientSessionId;
+        return $this;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function complete(): static
+    {
+        $this->status = 'completed';
+        return $this;
+    }
 
     #[ORM\OneToMany(mappedBy: 'session', targetEntity: WorkoutSetLog::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $sets;

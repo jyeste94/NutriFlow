@@ -230,6 +230,7 @@ class ProgressAnalyticsService
             ->leftJoin('s.sets', 'sl')
             ->leftJoin('sl.exercise', 'e')
             ->where('s.user = :user')
+            ->andWhere("s.status = 'completed'")
             ->andWhere('s.date >= :start')
             ->andWhere('s.date <= :end')
             ->setParameter('user', $user)
@@ -246,6 +247,7 @@ class ProgressAnalyticsService
             ->from(WorkoutSession::class, 's')
             ->leftJoin('s.sets', 'sl')
             ->where('s.user = :user')
+            ->andWhere("s.status = 'completed'")
             ->andWhere('s.date >= :start')
             ->andWhere('s.date <= :end')
             ->setParameter('user', $user)
@@ -355,6 +357,8 @@ class ProgressAnalyticsService
             ->join('sl.session', 's')
             ->join('sl.exercise', 'e')
             ->where('s.user = :user')
+            ->andWhere("s.status = 'completed'")
+            ->andWhere("sl.setType <> 'warmup'")
             ->andWhere('sl.completed = :completed')
             ->andWhere('sl.weight > 0')
             ->andWhere('sl.reps >= 1')
@@ -406,11 +410,12 @@ class ProgressAnalyticsService
             ->join('sl.session', 's')
             ->join('sl.exercise', 'e')
             ->where('s.user = :user')
+            ->andWhere("s.status = 'completed'")
+            ->andWhere("sl.setType <> 'warmup'")
             ->andWhere('e.id = :exerciseId')
             ->andWhere('sl.completed = :completed')
             ->andWhere('sl.weight > 0')
             ->andWhere('sl.reps >= 1')
-            ->andWhere('sl.reps <= 12') // Valid physiological range for e1RM
             ->andWhere('s.date >= :start')
             ->andWhere('s.date <= :end')
             ->setParameter('user', $user)
@@ -431,11 +436,10 @@ class ProgressAnalyticsService
         foreach ($periodSets as $set) {
             $weight = $set->getWeight();
             $reps = $set->getReps();
-            // Epley formula: 1RM = weight * (1 + reps / 30)
-            $e1rm = $reps === 1 ? $weight : round($weight * (1.0 + $reps / 30.0), 1);
+            $e1rm = WorkoutSetLog::estimateOneRepMax($weight, $reps);
             $dateStr = $set->getSession()->getDate()->format('Y-m-d');
 
-            if (!isset($dailyBest[$dateStr]) || $e1rm > $dailyBest[$dateStr]['e1rm']) {
+            if ($e1rm !== null && (!isset($dailyBest[$dateStr]) || $e1rm > $dailyBest[$dateStr]['e1rm'])) {
                 $dailyBest[$dateStr] = [
                     'date' => $dateStr,
                     'e1rm' => $e1rm,
@@ -456,7 +460,7 @@ class ProgressAnalyticsService
                 ];
             }
 
-            if ($maxE1rmRecord === null || $e1rm > $maxE1rmRecord['e1rm']) {
+            if ($e1rm !== null && ($maxE1rmRecord === null || $e1rm > $maxE1rmRecord['e1rm'])) {
                 $maxE1rmRecord = [
                     'type' => 'max_e1rm',
                     'label' => '1RM Estimado',

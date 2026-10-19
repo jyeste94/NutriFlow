@@ -78,7 +78,7 @@ final class FoodNutritionApiTest extends ApiTestCase
 
         // Food without any serving
         $food = new Food();
-        $food->setExternalId('ext-no-serving');
+        $food->setExternalId('custom_no-serving');
         $food->setName('Alimento Sin Ración');
         $food->setLastFetchedAt(new \DateTimeImmutable('now'));
         $food->setUpdatedAt(new \DateTimeImmutable('now'));
@@ -96,6 +96,34 @@ final class FoodNutritionApiTest extends ApiTestCase
         $this->assertFalse($favs[0]['hasNutritionInfo']);
         $this->assertNull($favs[0]['calories']);
         $this->assertNull($favs[0]['servingId']);
+
+        $this->client->request('GET', '/v1/foods/' . $foodId, [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $detail = $this->jsonResponse();
+        $this->assertSame([], $detail['servings']);
+        $this->assertNull($detail['calories']);
+        $this->assertSame('unavailable', $detail['nutritionStatus']);
+    }
+
+    public function testMissingCustomMacrosStayUnknown(): void
+    {
+        $headers = $this->authHeaders('partial-food-owner');
+        $this->client->jsonRequest('POST', '/v1/foods/custom', [
+            'name' => 'Etiqueta incompleta',
+            'calories' => 100,
+            'proteins' => 0,
+        ], $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $created = $this->jsonResponse();
+        $this->assertSame(0.0, (float) $created['proteins']);
+        $this->assertNull($created['carbs']);
+        $this->assertNull($created['fats']);
+
+        $this->client->request('GET', '/v1/foods/' . $created['id'], [], [], $headers);
+        $detail = $this->jsonResponse();
+        $this->assertNull($detail['carbs']);
+        $this->assertNull($detail['fats']);
+        $this->assertSame('requires_detail', $detail['nutritionStatus']);
     }
 
     public function testRoutineWithTargetWeightFlow(): void

@@ -14,8 +14,6 @@ class SavedMeal
 {
     #[ORM\Id]
     #[ORM\Column(type: UuidType::NAME, unique: true)]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     private ?Uuid $id = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
@@ -28,6 +26,12 @@ class SavedMeal
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $preferredMealType = null;
 
+    #[ORM\Column(options: ['default' => 1])]
+    private int $servings = 1;
+
+    #[ORM\Column(type: 'text')]
+    private string $instructions = '';
+
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $createdAt = null;
 
@@ -38,8 +42,9 @@ class SavedMeal
     #[ORM\OrderBy(['position' => 'ASC'])]
     private Collection $items;
 
-    public function __construct()
+    public function __construct(?Uuid $id = null)
     {
+        $this->id = $id ?? Uuid::v7();
         $this->items = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTimeImmutable();
@@ -80,6 +85,28 @@ class SavedMeal
     public function setPreferredMealType(?string $preferredMealType): static
     {
         $this->preferredMealType = $preferredMealType;
+        return $this;
+    }
+
+    public function getServings(): int
+    {
+        return $this->servings;
+    }
+
+    public function setServings(int $servings): static
+    {
+        $this->servings = $servings;
+        return $this;
+    }
+
+    public function getInstructions(): string
+    {
+        return $this->instructions;
+    }
+
+    public function setInstructions(string $instructions): static
+    {
+        $this->instructions = $instructions;
         return $this;
     }
 

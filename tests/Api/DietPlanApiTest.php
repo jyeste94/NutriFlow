@@ -29,6 +29,13 @@ final class DietPlanApiTest extends ApiTestCase
                         ],
                     ],
                 ],
+                [
+                    'day_of_week' => 'sun',
+                    'meals' => [
+                        ['serving_id' => $servingId, 'meal_type' => 'dinner', 'multiplier' => 0.5],
+                        ['serving_id' => $servingId, 'meal_type' => 'snack', 'multiplier' => 1],
+                    ],
+                ],
             ],
         ];
 
@@ -41,8 +48,12 @@ final class DietPlanApiTest extends ApiTestCase
         $this->assertResponseIsSuccessful();
         $plan = $this->jsonResponse();
         $this->assertSame('Weekly cut', $plan['name']);
-        $this->assertCount(1, $plan['days']);
+        $this->assertCount(2, $plan['days']);
         $this->assertCount(1, $plan['days'][0]['meals']);
+        $this->assertCount(2, $plan['days'][1]['meals']);
+        $this->assertEquals(1.5, $plan['days'][0]['meals'][0]['multiplier']);
+        $this->client->request('GET', '/v1/diet-plans', [], [], $headers);
+        $this->assertSame(2, $this->jsonResponse()[0]['day_count']);
 
         $this->client->jsonRequest(
             'PUT',
@@ -66,11 +77,23 @@ final class DietPlanApiTest extends ApiTestCase
             $headers
         );
         $this->assertResponseIsSuccessful();
+        $this->client->request('GET', '/v1/diet-plans/' . $planId, [], [], $headers);
+        $updated = $this->jsonResponse();
+        $this->assertSame('Weekly cut updated', $updated['name']);
+        $this->assertTrue($updated['is_default']);
+        $this->assertCount(1, $updated['days']);
+        $this->assertSame('tue', $updated['days'][0]['day_of_week']);
+        $this->assertEquals(2, $updated['days'][0]['meals'][0]['multiplier']);
+
+        $this->client->jsonRequest('POST', '/v1/diet-plans/' . $planId . '/apply', ['start_date' => '2026-03-18'], $headers);
+        $this->assertResponseStatusCodeSame(400);
+        $this->client->request('GET', '/v1/diaries/2026-03-17', [], [], $headers);
+        $this->assertCount(0, $this->jsonResponse()['entries']);
 
         $this->client->jsonRequest(
             'POST',
             '/v1/diet-plans/' . $planId . '/apply',
-            ['start_date' => '2026-03-16'],
+            ['start_date' => '2026-03-18', 'confirm_consumed' => true],
             $headers
         );
         $this->assertResponseStatusCodeSame(201);
@@ -82,6 +105,14 @@ final class DietPlanApiTest extends ApiTestCase
         $diary = $this->jsonResponse();
         $this->assertCount(1, $diary['entries']);
         $this->assertSame('lunch', $diary['entries'][0]['mealType']);
+        $this->assertEquals(2, $diary['entries'][0]['multiplier']);
+
+        $this->client->request('DELETE', '/v1/diet-plans/' . $planId, [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->client->request('GET', '/v1/diet-plans/' . $planId, [], [], $headers);
+        $this->assertResponseStatusCodeSame(404);
+        $this->client->request('GET', '/v1/diaries/2026-03-17', [], [], $headers);
+        $this->assertCount(1, $this->jsonResponse()['entries']);
     }
 
     public function testDietPlanValidationAndDefaultUniqueness(): void
@@ -148,6 +179,31 @@ final class DietPlanApiTest extends ApiTestCase
         $defaultPlans = array_values(array_filter($plans, static fn (array $plan): bool => (bool) ($plan['is_default'] ?? false)));
         $this->assertCount(1, $defaultPlans);
         $this->assertSame('Plan B', $defaultPlans[0]['name']);
+    }
+
+    public function testRejectedUpdateDoesNotChangeTheDefaultPlan(): void
+    {
+        $headers = $this->authHeaders('diet-atomic-user');
+        $this->client->jsonRequest('POST', '/v1/diet-plans', ['name' => 'Original default', 'is_default' => true], $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $defaultId = $this->jsonResponse()['id'];
+        $this->client->jsonRequest('POST', '/v1/diet-plans', ['name' => 'Other plan'], $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $otherId = $this->jsonResponse()['id'];
+
+        $this->client->jsonRequest('PUT', '/v1/diet-plans/' . $otherId, [
+            'name' => 'Must not persist',
+            'is_default' => true,
+            'days' => [['day_of_week' => 'invalid']],
+        ], $headers);
+        $this->assertResponseStatusCodeSame(400);
+
+        $this->client->request('GET', '/v1/diet-plans/' . $defaultId, [], [], $headers);
+        $this->assertTrue($this->jsonResponse()['is_default']);
+        $this->client->request('GET', '/v1/diet-plans/' . $otherId, [], [], $headers);
+        $other = $this->jsonResponse();
+        $this->assertFalse($other['is_default']);
+        $this->assertSame('Other plan', $other['name']);
     }
 
     public function testDietPlanDeleteIsForbiddenForOtherUser(): void

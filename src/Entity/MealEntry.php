@@ -12,8 +12,6 @@ class MealEntry
 {
     #[ORM\Id]
     #[ORM\Column(type: UuidType::NAME, unique: true)]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     private ?Uuid $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'entries')]
@@ -33,8 +31,9 @@ class MealEntry
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $createdAt = null;
 
-    public function __construct()
+    public function __construct(?Uuid $id = null)
     {
+        $this->id = $id ?? Uuid::v7();
         $this->createdAt = new \DateTimeImmutable();
     }
 

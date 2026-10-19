@@ -27,7 +27,7 @@ final class AccountPrivacyTest extends ApiTestCase
         $this->assertResponseStatusCodeSame(404);
         $this->client->jsonRequest('POST', '/v1/saved-meals', ['name' => 'Private reference', 'items' => [['name' => 'Private food', 'servingId' => $food['servingId']]]], $other);
         $this->assertResponseStatusCodeSame(404);
-        $this->client->jsonRequest('POST', '/v1/saved-meals', ['name' => 'Existing meal', 'items' => [['name' => 'Own item']]], $other);
+        $this->client->jsonRequest('POST', '/v1/saved-meals', ['name' => 'Existing meal', 'items' => [['name' => 'Own item', 'amountGrams' => 100, 'calories' => 120, 'proteins' => 5, 'carbs' => 15, 'fats' => 4]]], $other);
         $this->assertResponseStatusCodeSame(201);
         $mealId = $this->jsonResponse()['id'];
         $this->client->jsonRequest('PUT', '/v1/saved-meals/' . $mealId, ['items' => [['name' => 'Private food', 'servingId' => $food['servingId']]]], $other);

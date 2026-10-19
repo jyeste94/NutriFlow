@@ -122,7 +122,11 @@ class FoodService
 
         // Check cache logic: If it hasn't been fetched fully yet (no servings or missing macros) OR if cache expired
         $firstServing = $food->getServings()->first() ?: null;
-        $needsHydration = !$firstServing || $firstServing->getProteins() === null;
+        $needsHydration = !$firstServing
+            || $firstServing->getCalories() === null
+            || $firstServing->getProteins() === null
+            || $firstServing->getCarbs() === null
+            || $firstServing->getFats() === null;
         $isExpired = $ttlDate === null || $now > $ttlDate;
 
         if ($needsHydration || $isExpired) {
@@ -130,21 +134,6 @@ class FoodService
                 $this->refreshFoodDetails($food);
             } catch (\Throwable) {
             }
-        }
-
-        // If food still has no servings, create a fallback serving
-        if ($food->getServings()->isEmpty()) {
-            $serving = new Serving();
-            $serving->setFood($food);
-            $serving->setDescription('100g');
-            $serving->setAmount(100.0);
-            $serving->setUnit('g');
-            $serving->setCalories(0.0);
-            $food->addServing($serving);
-            $this->em->persist($serving);
-            $this->em->flush();
-            $food->setBestServingId($serving->getId());
-            $this->em->flush();
         }
 
         return $this->formatFoodArray($food);
@@ -270,21 +259,7 @@ class FoodService
         // Fetch detailed macros using Info Endpoint
         $macros = $this->scraper->getInfo($externalId);
         
-        if ($macros === null) {
-            // Scraper failed or 404: ensure food has at least a default serving if it has none
-            if ($food->getServings()->isEmpty()) {
-                $serving = new Serving();
-                $serving->setFood($food);
-                $serving->setDescription('100g');
-                $serving->setAmount(100.0);
-                $serving->setUnit('g');
-                $serving->setCalories(0.0);
-                $food->addServing($serving);
-                $this->em->persist($serving);
-                $this->em->flush();
-                $food->setBestServingId($serving->getId());
-                $this->em->flush();
-            }
+        if ($macros === null || $macros['calories'] === null) {
             return;
         }
 
@@ -308,9 +283,9 @@ class FoodService
 
         // Set detailed macros
         $serving->setCalories((float) $macros['calories']);
-        $serving->setProteins((float) $macros['proteins']);
-        $serving->setCarbs((float) $macros['carbs']);
-        $serving->setFats((float) $macros['fats']);
+        $serving->setProteins($macros['proteins']);
+        $serving->setCarbs($macros['carbs']);
+        $serving->setFats($macros['fats']);
 
         $food->setLastFetchedAt(new \DateTimeImmutable());
         $food->setUpdatedAt(new \DateTimeImmutable());
@@ -350,7 +325,7 @@ class FoodService
             if ($cal !== null) {
                 $hasCalories = true;
             }
-            if ($p !== null && $c !== null && $f !== null) {
+            if ($cal !== null && $p !== null && $c !== null && $f !== null) {
                 $hasCompleteMacros = true;
             }
 

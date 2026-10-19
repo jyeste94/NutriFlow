@@ -214,6 +214,11 @@ final class FoodSearchAndDetailIntegrationTest extends ApiTestCase
     public function testLegacyFoodWithoutServingsInDbIsHydratedOnDetail(): void
     {
         $headers = $this->authHeaders('food-test-legacy-user');
+        $scraper = $this->createMock(FatSecretScraperService::class);
+        $scraper->method('search')->willReturn([]);
+        $scraper->method('getInfo')->willReturn(null);
+        $this->client->disableReboot();
+        static::getContainer()->set(FatSecretScraperService::class, $scraper);
         $em = static::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
 
         $legacy = new Food();
@@ -263,9 +268,10 @@ final class FoodSearchAndDetailIntegrationTest extends ApiTestCase
         $detailBroken = $this->jsonResponse();
 
         $this->assertSame($brokenId, $detailBroken['id']);
-        $this->assertSame('requires_detail', $detailBroken['nutritionStatus']);
-        $this->assertTrue($detailBroken['hasNutritionInfo']);
-        $this->assertCount(1, $detailBroken['servings']);
+        $this->assertSame('unavailable', $detailBroken['nutritionStatus']);
+        $this->assertFalse($detailBroken['hasNutritionInfo']);
+        $this->assertNull($detailBroken['calories']);
+        $this->assertSame([], $detailBroken['servings']);
     }
 
     public function testUnitPortionsAndLiquidMlParsing(): void

@@ -233,5 +233,39 @@ final class DiaryApiTest extends ApiTestCase
         );
         $this->assertResponseStatusCodeSame(403);
     }
+    public function testClientIdentityRetriesOnceButPreservesSeparateIdenticalConsumptions(): void
+    {
+        $serving = $this->createServingFixture('diary-idempotency-serving');
+        $serving->setAmount(150);
+        $serving->setUnit('g');
+        $serving->setCalories(300);
+        $this->em->flush();
+        $headers = $this->authHeaders('diary-idempotency');
+        $payload = [
+            'client_id' => '12ae161b-95a8-4ce1-aeb7-d37949ea7814',
+            'serving_id' => $serving->getId()?->toRfc4122(), 'mealType' => 'breakfast',
+            'amountGrams' => 150, 'multiplier' => 1.5,
+        ];
+        $this->client->jsonRequest('POST', '/v1/diaries/2026-10-19/entries', $payload, $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $this->client->jsonRequest('POST', '/v1/diaries/2026-10-19/entries', $payload, $headers);
+        $this->assertResponseIsSuccessful();
+        $this->client->request('GET', '/v1/diaries/2026-10-19', [], [], $headers);
+        $diary = $this->jsonResponse();
+        $this->assertCount(1, $diary['entries']);
+        $this->assertEquals(150, $diary['entries'][0]['amount']);
+        $this->assertEquals(300, $diary['totalCalories']);
+        $payload['client_id'] = 'e843f14f-18d4-40ac-9adb-24e01b1c86c9';
+        $this->client->jsonRequest('POST', '/v1/diaries/2026-10-19/entries', $payload, $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $this->client->request('GET', '/v1/diaries/2026-10-19', [], [], $headers);
+        $this->assertCount(2, $this->jsonResponse()['entries']);
+        $this->assertEquals(600, $this->jsonResponse()['totalCalories']);
+        $this->client->jsonRequest('POST', '/v1/diaries/2026-10-19/entries', $payload, $this->authHeaders('other-diary-user'));
+        $this->assertResponseStatusCodeSame(409);
+        $this->client->jsonRequest('POST', '/v1/diaries/2026-10-20/entries', $payload, $headers);
+        $this->assertResponseStatusCodeSame(409);
+    }
+
 }
 

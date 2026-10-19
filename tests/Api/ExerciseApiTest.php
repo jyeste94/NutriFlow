@@ -2,6 +2,8 @@
 
 namespace App\Tests\Api;
 
+use App\Entity\User;
+
 final class ExerciseApiTest extends ApiTestCase
 {
     public function testExerciseListingSupportsFiltersAndPagination(): void
@@ -59,6 +61,10 @@ final class ExerciseApiTest extends ApiTestCase
 
     public function testExerciseCreateSupportsImageUrl(): void
     {
+        $admin = (new User())->setFirebaseUid('exercise-admin')->setRoles(['ROLE_ADMIN']);
+        $this->em->persist($admin);
+        $this->em->flush();
+
         $payload = [
             'name' => 'Sentadilla Hack',
             'muscleGroup' => 'Piernas',
@@ -66,11 +72,49 @@ final class ExerciseApiTest extends ApiTestCase
             'imageUrl' => 'https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hack_Squat/0.jpg',
         ];
 
-        $this->client->request('POST', '/v1/exercises', [], [], $this->authHeaders('exercise-user-4'), json_encode($payload));
+        $this->client->request('POST', '/v1/exercises', [], [], $this->authHeaders('exercise-admin'), json_encode($payload));
         $this->assertResponseStatusCodeSame(201);
         $data = $this->jsonResponse();
         $this->assertSame('Sentadilla Hack', $data['name']);
         $this->assertSame('https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hack_Squat/0.jpg', $data['imageUrl']);
         $this->assertSame('https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hack_Squat/0.jpg', $data['thumbnailUrl']);
+    }
+
+    public function testOrdinaryUserCannotMutateGlobalCatalog(): void
+    {
+        $id = $this->createExerciseFixture('Protected exercise')->getId()->toRfc4122();
+        $headers = $this->authHeaders('exercise-reader');
+
+        $this->client->request('POST', '/v1/exercises', [], [], $headers, json_encode(['name' => 'Unauthorized addition']));
+        $this->assertResponseStatusCodeSame(403);
+        $this->client->request('PUT', '/v1/exercises/' . $id, [], [], $headers, json_encode(['name' => 'Unauthorized edit']));
+        $this->assertResponseStatusCodeSame(403);
+        $this->client->request('DELETE', '/v1/exercises/' . $id, [], [], $headers);
+        $this->assertResponseStatusCodeSame(403);
+
+        $this->client->request('GET', '/v1/exercises', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $catalog = $this->jsonResponse();
+        $this->assertCount(1, $catalog);
+        $this->assertSame('Protected exercise', $catalog[0]['name']);
+    }
+
+    public function testAdministratorCanUpdateAndDeleteCatalogExercise(): void
+    {
+        $admin = (new User())->setFirebaseUid('catalog-admin')->setRoles(['ROLE_ADMIN']);
+        $this->em->persist($admin);
+        $id = $this->createExerciseFixture('Original exercise')->getId()->toRfc4122();
+        $headers = $this->authHeaders('catalog-admin');
+
+        $this->client->request('PUT', '/v1/exercises/' . $id, [], [], $headers, json_encode(['name' => 'Updated exercise']));
+        $this->assertResponseIsSuccessful();
+        $this->client->request('GET', '/v1/exercises/' . $id, [], [], $this->authHeaders('catalog-reader'));
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('Updated exercise', $this->jsonResponse()['name']);
+
+        $this->client->request('DELETE', '/v1/exercises/' . $id, [], [], $headers);
+        $this->assertResponseStatusCodeSame(204);
+        $this->client->request('GET', '/v1/exercises/' . $id, [], [], $headers);
+        $this->assertResponseStatusCodeSame(404);
     }
 }

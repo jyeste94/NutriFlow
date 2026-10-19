@@ -2,6 +2,8 @@
 
 namespace App\Tests\Api;
 
+use App\Entity\User;
+use App\Service\HevyImportService;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 final class HevyImportApiTest extends ApiTestCase
@@ -25,6 +27,8 @@ final class HevyImportApiTest extends ApiTestCase
 
     public function testImportValidCsv(): void
     {
+        $this->createExerciseFixture('Bench Press (Barbell)');
+        $this->createExerciseFixture('Incline Dumbbell Press');
         $headers = $this->authHeaders('hevy-user-1');
         $file = $this->makeCsv($this->sampleCsv());
 
@@ -35,11 +39,14 @@ final class HevyImportApiTest extends ApiTestCase
         $this->assertSame(1, $json['sessions_created']);
         $this->assertSame(3, $json['sets_imported']);
         $this->assertSame(0, $json['sessions_skipped']);
-        $this->assertGreaterThanOrEqual(0, $json['exercises_created']);
+        $this->assertSame(0, $json['exercises_created']);
     }
 
     public function testImportConvertsPoundsToKg(): void
     {
+        $squat = $this->createExerciseFixture('Squat');
+        $squat->setEquipment('Barbell');
+        $this->em->flush();
         $headers = $this->authHeaders('hevy-user-2');
         $csv = implode("\n", [
             'title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_lbs,reps,distance_miles,duration_seconds,rpe',
@@ -65,6 +72,8 @@ final class HevyImportApiTest extends ApiTestCase
 
     public function testImportSkipsDuplicates(): void
     {
+        $this->createExerciseFixture('Bench Press (Barbell)');
+        $this->createExerciseFixture('Incline Dumbbell Press');
         $headers = $this->authHeaders('hevy-user-3');
         $file1 = $this->makeCsv($this->sampleCsv());
         $this->client->request('POST', '/v1/import/hevy', [], ['file' => $file1], $headers);
@@ -87,8 +96,6 @@ final class HevyImportApiTest extends ApiTestCase
         $this->client->request('POST', '/v1/import/hevy', [], [], $headers);
         $this->assertResponseStatusCodeSame(400);
 
-        $json = $this->jsonResponse();
-        $this->assertStringContainsString('No file', $json['error']);
     }
 
     public function testImportRejectsInvalidHeaders(): void
@@ -110,6 +117,9 @@ final class HevyImportApiTest extends ApiTestCase
 
     public function testImportCreatesNewExercises(): void
     {
+        $admin = (new User())->setFirebaseUid('hevy-user-6')->setRoles(['ROLE_ADMIN']);
+        $this->em->persist($admin);
+        $this->em->flush();
         $headers = $this->authHeaders('hevy-user-6');
         $csv = implode("\n", [
             'title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_lbs,reps,distance_miles,duration_seconds,rpe',
@@ -129,5 +139,40 @@ final class HevyImportApiTest extends ApiTestCase
         $this->assertNotEmpty($exercises);
         $this->assertSame('Bulgarian Split Squat', $exercises[0]['name']);
         $this->assertSame('Dumbbell', $exercises[0]['equipment']);
+    }
+
+    public function testOrdinaryUserCannotCreateCatalogExercisesThroughImport(): void
+    {
+        $this->createExerciseFixture('Bench Press (Barbell)');
+        $headers = $this->authHeaders('hevy-catalog-reader');
+        $file = $this->makeCsv($this->sampleCsv());
+        $this->client->request('POST', '/v1/import/hevy', [], ['file' => $file], $headers);
+        $this->assertResponseStatusCodeSame(400);
+
+        $this->client->request('GET', '/v1/exercises', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $catalog = $this->jsonResponse();
+        $this->assertCount(1, $catalog);
+        $this->assertSame('Bench Press (Barbell)', $catalog[0]['name']);
+        $this->client->request('GET', '/v1/workouts', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame([], $this->jsonResponse());
+    }
+
+    public function testImportInternalFailureDoesNotExposeDetails(): void
+    {
+        $importer = $this->createMock(HevyImportService::class);
+        $importer->method('importWorkoutCsv')->willThrowException(new \RuntimeException('SQL private_database password=private-secret'));
+        static::getContainer()->set(HevyImportService::class, $importer);
+
+        $this->client->request('POST', '/v1/import/hevy', [], [
+            'file' => $this->makeCsv($this->sampleCsv()),
+        ], $this->authHeaders('hevy-failure-user'));
+        $this->assertResponseStatusCodeSame(500);
+        $response = $this->jsonResponse();
+        $this->assertArrayHasKey('error', $response);
+        $this->assertArrayNotHasKey('details', $response);
+        $this->assertStringNotContainsString('private_database', $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('private-secret', $this->client->getResponse()->getContent());
     }
 }

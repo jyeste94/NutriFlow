@@ -125,9 +125,10 @@ final class WorkoutApiTest extends ApiTestCase
             $headers
         );
         $this->assertResponseStatusCodeSame(201);
-        $set2Res = $this->jsonResponse();
-        $this->assertTrue($set2Res['is_pr']);
-        $this->assertContains('max_weight', $set2Res['pr_types']);
+        // The first session has no completed historical baseline yet.
+        $this->assertFalse($this->jsonResponse()['is_pr']);
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $session1Id, ['status' => 'completed'], $headers);
+        $this->assertResponseIsSuccessful();
 
         // Test exercise summaries endpoint
         $this->client->jsonRequest(

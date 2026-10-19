@@ -16,644 +16,333 @@ use Symfony\Component\Uid\Uuid;
 #[Route('/v1/workouts', name: 'api_workouts_')]
 class WorkoutLogController extends AbstractController
 {
-    public function __construct(
-        private EntityManagerInterface $em
-    ) {}
+    public function __construct(private EntityManagerInterface $em) {}
 
     #[Route('', name: 'list_sessions', methods: ['GET'])]
     public function listSessions(Request $request): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user) {
+        if (!$user = $this->getUser()) {
             return $this->json(['error' => 'Unauthorized'], 401);
         }
-
+        $status = $request->query->get('status');
+        if ($status !== null && !in_array($status, ['active', 'completed'], true)) {
+            return $this->json(['error' => 'Invalid status'], 400);
+        }
         $page = max(1, $request->query->getInt('page', 1));
         $limit = min(100, max(1, $request->query->getInt('limit', 25)));
-        $offset = ($page - 1) * $limit;
-
-        $total = (int) $this->em->createQueryBuilder()
-            ->select('COUNT(s.id)')
-            ->from(WorkoutSession::class, 's')
-            ->where('s.user = :user')
-            ->setParameter('user', $user)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $sessions = $this->em->createQueryBuilder()
-            ->select('s', 'sl', 'e')
-            ->from(WorkoutSession::class, 's')
-            ->leftJoin('s.sets', 'sl')
-            ->leftJoin('sl.exercise', 'e')
-            ->where('s.user = :user')
-            ->setParameter('user', $user)
-            ->orderBy('s.date', 'DESC')
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
-
-        $includeSets = $request->query->getBoolean('include_sets', false);
-
-        $result = [];
-        foreach ($sessions as $session) {
-            $sets = $session->getSets();
-            $exerciseMap = [];
-            $totalVolume = 0;
-
-            foreach ($sets as $set) {
-                $exId = $set->getExercise()->getId()->toRfc4122();
-                if (!isset($exerciseMap[$exId])) {
-                    $exerciseMap[$exId] = [
-                        'exercise_id' => $exId,
-                        'exercise_name' => $set->getExercise()->getName(),
-                    ];
-                }
-                $totalVolume += $set->getWeight() * $set->getReps();
-            }
-
-            $routine = $session->getRoutine();
-
-            $entry = [
-                'id' => $session->getId()->toRfc4122(),
-                'routine_id' => $routine?->getId()?->toRfc4122(),
-                'routine_name' => $routine?->getName(),
-                'date' => $session->getDate()->format('c'),
-                'duration_minutes' => $session->getDurationMinutes(),
-                'total_volume' => $totalVolume,
-                'exercise_count' => count($exerciseMap),
-                'set_count' => $sets->count(),
-            ];
-
-            if ($includeSets) {
-                $mappedSets = [];
-                foreach ($sets as $set) {
-                    $exercise = $set->getExercise();
-                    $mappedSets[] = [
-                        'id' => $set->getId()->toRfc4122(),
-                        'exercise_id' => $exercise->getId()->toRfc4122(),
-                        'exercise_name' => $exercise->getName(),
-                        'muscle_group' => $exercise->getMuscleGroup(),
-                        'weight' => $set->getWeight(),
-                        'reps' => $set->getReps(),
-                        'completed' => $set->isCompleted(),
-                        'set_type' => $set->getSetType(),
-                        'duration_seconds' => $set->getDurationSeconds(),
-                        'distance_km' => $set->getDistanceKm(),
-                    ];
-                }
-                $entry['sets'] = $mappedSets;
-            }
-
-            $result[] = $entry;
+        $qb = $this->em->createQueryBuilder()->from(WorkoutSession::class, 's')
+            ->where('s.user = :user')->setParameter('user', $user);
+        if ($status !== null) {
+            $qb->andWhere('s.status = :status')->setParameter('status', $status);
         }
-
-        $response = $this->json($result);
+        $total = (int) (clone $qb)->select('COUNT(s.id)')->getQuery()->getSingleScalarResult();
+        // Paginate sessions, not joined set rows: a long workout occupies one result.
+        $sessions = $qb->select('s')->orderBy('s.date', 'DESC')->addOrderBy('s.id', 'DESC')
+            ->setFirstResult(($page - 1) * $limit)->setMaxResults($limit)->getQuery()->getResult();
+        $response = $this->json(array_map(fn (WorkoutSession $s) => $this->serializeSession($s, $request->query->getBoolean('include_sets')), $sessions));
         $response->headers->set('X-Total-Count', (string) $total);
         $response->headers->set('X-Page', (string) $page);
         $response->headers->set('X-Per-Page', (string) $limit);
-
         return $response;
     }
 
     #[Route('/exercise-summaries', name: 'exercise_summaries', methods: ['POST'])]
     public function exerciseSummaries(Request $request): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user) {
+        if (!$this->getUser()) {
             return $this->json(['error' => 'Unauthorized'], 401);
         }
-
         $data = $this->parseJsonBody($request);
-        if ($data instanceof JsonResponse) {
-            return $data;
+        if ($data instanceof JsonResponse) return $data;
+        $ids = $data['exercise_ids'] ?? [];
+        if (!is_array($ids) || count($ids) > 100) {
+            return $this->json(['error' => 'exercise_ids must be an array of at most 100 IDs'], 400);
         }
-
-        $exerciseIds = $data['exercise_ids'] ?? [];
-        if (!is_array($exerciseIds) || empty($exerciseIds)) {
-            return $this->json(['summaries' => (object) []]);
-        }
-
         $summaries = [];
-        foreach ($exerciseIds as $rawId) {
-            $exId = trim((string) $rawId);
-            if (!Uuid::isValid($exId)) {
-                continue;
-            }
-
-            /** @var WorkoutSetLog[] $allSets */
-            $allSets = $this->em->createQueryBuilder()
-                ->select('sl', 's')
-                ->from(WorkoutSetLog::class, 'sl')
-                ->join('sl.session', 's')
-                ->where('s.user = :user')
-                ->andWhere('sl.exercise = :exId')
-                ->andWhere('sl.completed = :completed')
-                ->andWhere('sl.weight > 0')
-                ->andWhere('sl.reps >= 1')
-                ->setParameter('user', $user)
-                ->setParameter('exId', $exId)
-                ->setParameter('completed', true)
-                ->orderBy('s.date', 'DESC')
-                ->addOrderBy('s.id', 'DESC')
-                ->addOrderBy('sl.id', 'ASC')
-                ->getQuery()
-                ->getResult();
-
-            if (empty($allSets)) {
-                $summaries[$exId] = [
-                    'last_session' => null,
-                    'records' => null,
-                ];
-                continue;
-            }
-
-            $lastSessionObj = $allSets[0]->getSession();
-            $lastSessionId = $lastSessionObj->getId()->toRfc4122();
-            $lastSessionDate = $lastSessionObj->getDate()->format('Y-m-d');
-
-            $lastSessionSets = [];
-            $setNumber = 1;
-            foreach ($allSets as $set) {
-                if ($set->getSession()->getId()->toRfc4122() === $lastSessionId) {
-                    $lastSessionSets[] = [
-                        'set_number' => $setNumber++,
-                        'weight' => (float) $set->getWeight(),
-                        'reps' => (int) $set->getReps(),
-                        'completed' => (bool) $set->isCompleted(),
-                        'set_type' => $set->getSetType(),
-                    ];
+        foreach ($ids as $id) {
+            if (!is_string($id) || !Uuid::isValid($id)) continue;
+            $sets = $this->recordSets($id);
+            $lastSession = ($sets[0] ?? null)?->getSession();
+            $lastSets = [];
+            foreach ($sets as $set) {
+                if ($set->getSession() === $lastSession) {
+                    $lastSets[] = $this->serializeSet($set);
                 }
             }
-
-            $maxWeight = 0.0;
-            $maxWeightSet = null;
-            $maxE1rm = 0.0;
-            $maxE1rmSet = null;
-            $maxReps = 0;
-            $maxRepsSet = null;
-
-            foreach ($allSets as $set) {
-                // Warm-up sets should not count towards all-time PR records
-                if ($set->getSetType() === 'warmup') {
-                    continue;
-                }
-
-                $w = (float) $set->getWeight();
-                $r = (int) $set->getReps();
-                $e1rm = $r === 1 ? $w : round($w * (1.0 + $r / 30.0), 1);
-                $d = $set->getSession()->getDate()->format('Y-m-d');
-
-                if ($w > $maxWeight) {
-                    $maxWeight = $w;
-                    $maxWeightSet = ['weight' => $w, 'reps' => $r, 'date' => $d];
-                }
-                if ($e1rm > $maxE1rm) {
-                    $maxE1rm = $e1rm;
-                    $maxE1rmSet = ['weight' => $w, 'reps' => $r, 'e1rm' => $e1rm, 'date' => $d];
-                }
-                if ($r > $maxReps) {
-                    $maxReps = $r;
-                    $maxRepsSet = ['weight' => $w, 'reps' => $r, 'date' => $d];
-                }
-            }
-
-            $summaries[$exId] = [
-                'last_session' => [
-                    'session_id' => $lastSessionId,
-                    'date' => $lastSessionDate,
-                    'sets' => $lastSessionSets,
-                ],
-                'records' => [
-                    'max_weight' => $maxWeight,
-                    'max_weight_set' => $maxWeightSet,
-                    'max_e1rm' => $maxE1rm,
-                    'max_e1rm_set' => $maxE1rmSet,
-                    'max_reps' => $maxReps,
-                    'max_reps_set' => $maxRepsSet,
-                ],
+            usort($lastSets, fn (array $a, array $b) => $a['set_number'] <=> $b['set_number']);
+            $summaries[$id] = [
+                'last_session' => $lastSession ? [
+                    'session_id' => $lastSession->getId()->toRfc4122(),
+                    'date' => $lastSession->getDate()->format('Y-m-d'),
+                    'sets' => $lastSets,
+                ] : null,
+                'records' => $sets ? $this->records($sets) : null,
             ];
         }
-
-        return $this->json(['summaries' => $summaries]);
+        return $this->json(['summaries' => $summaries ?: (object) []]);
     }
 
     #[Route('/{sessionId}', name: 'get_session', methods: ['GET'])]
     public function getSession(string $sessionId): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $session = $this->em->getRepository(WorkoutSession::class)->find($sessionId);
-        if (!$session) {
-            return $this->json(['error' => 'Session not found'], 404);
-        }
-        if ($session->getUser() !== $user) {
-            return $this->json(['error' => 'Forbidden'], 403);
-        }
-
-        $routine = $session->getRoutine();
-        $sets = [];
-
-        foreach ($session->getSets() as $set) {
-            $exercise = $set->getExercise();
-            $sets[] = [
-                'id' => $set->getId()->toRfc4122(),
-                'exercise_id' => $exercise->getId()->toRfc4122(),
-                'exercise_name' => $exercise->getName(),
-                'muscle_group' => $exercise->getMuscleGroup(),
-                'weight' => $set->getWeight(),
-                'reps' => $set->getReps(),
-                'completed' => $set->isCompleted(),
-                'set_type' => $set->getSetType(),
-                'duration_seconds' => $set->getDurationSeconds(),
-                'distance_km' => $set->getDistanceKm(),
-            ];
-        }
-
-        return $this->json([
-            'id' => $session->getId()->toRfc4122(),
-            'routine_id' => $routine?->getId()?->toRfc4122(),
-            'routine_name' => $routine?->getName(),
-            'date' => $session->getDate()->format('c'),
-            'duration_minutes' => $session->getDurationMinutes(),
-            'sets' => $sets,
-        ]);
+        $session = $this->ownedSession($sessionId);
+        return $session instanceof JsonResponse ? $session : $this->json($this->serializeSession($session, true));
     }
 
     #[Route('/{sessionId}', name: 'update_session', methods: ['PATCH'])]
     public function updateSession(string $sessionId, Request $request): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $session = $this->em->getRepository(WorkoutSession::class)->find($sessionId);
-        if (!$session) {
-            return $this->json(['error' => 'Session not found'], 404);
-        }
-        if ($session->getUser() !== $user) {
-            return $this->json(['error' => 'Forbidden'], 403);
-        }
-
+        $session = $this->ownedSession($sessionId);
+        if ($session instanceof JsonResponse) return $session;
         $data = $this->parseJsonBody($request);
-        if ($data instanceof JsonResponse) {
-            return $data;
+        if ($data instanceof JsonResponse) return $data;
+        if (array_key_exists('status', $data) && $data['status'] !== 'completed') {
+            return $this->json(['error' => 'A session may only transition to completed'], 400);
         }
-
-        if (isset($data['duration_minutes'])) {
+        if ($session->getStatus() === 'completed') {
+            // Retrying a successful finish is safe; finished sessions cannot reopen.
+            return $this->json($this->serializeSession($session, true));
+        }
+        if (array_key_exists('duration_minutes', $data)) {
             $duration = filter_var($data['duration_minutes'], FILTER_VALIDATE_INT);
-            if ($duration === false || $duration < 0) {
-                return $this->json(['error' => 'duration_minutes must be a positive integer'], 400);
+            if ($duration === false || $duration < 0 || $duration > 10080) {
+                return $this->json(['error' => 'duration_minutes must be between 0 and 10080'], 400);
             }
             $session->setDurationMinutes($duration);
         }
-
+        if (($data['status'] ?? null) === 'completed') {
+            if (!$session->getSets()->exists(fn ($key, WorkoutSetLog $set) => $set->isCompleted())) {
+                return $this->json(['error' => 'Completa al menos una serie o descarta la sesión'], 400);
+            }
+            $session->complete();
+        }
         $this->em->flush();
-
-        return $this->json(['message' => 'Session updated successfully']);
+        return $this->json($this->serializeSession($session, true));
     }
 
     #[Route('/{sessionId}', name: 'delete_session', methods: ['DELETE'])]
     public function deleteSession(string $sessionId): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $session = $this->em->getRepository(WorkoutSession::class)->find($sessionId);
-        if (!$session) {
-            return $this->json(['error' => 'Session not found'], 404);
-        }
-        if ($session->getUser() !== $user) {
-            return $this->json(['error' => 'Forbidden'], 403);
-        }
-
+        $session = $this->ownedSession($sessionId);
+        if ($session instanceof JsonResponse) return $session;
         $this->em->remove($session);
         $this->em->flush();
-
         return $this->json(['message' => 'Session deleted successfully']);
     }
 
     #[Route('', name: 'start_session', methods: ['POST'])]
     public function startSession(Request $request): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
-
+        if (!$user = $this->getUser()) return $this->json(['error' => 'Unauthorized'], 401);
         $data = $this->parseJsonBody($request);
-        if ($data instanceof JsonResponse) {
-            return $data;
+        if ($data instanceof JsonResponse) return $data;
+        $clientId = $data['client_session_id'] ?? null;
+        if ($clientId !== null && (!is_string($clientId) || !Uuid::isValid($clientId))) {
+            return $this->json(['error' => 'Invalid client_session_id'], 400);
         }
-
-        $session = new WorkoutSession();
-        $session->setUser($user);
-
+        if ($clientId !== null) {
+            $existing = $this->em->getRepository(WorkoutSession::class)->findOneBy(['user' => $user, 'clientSessionId' => $clientId]);
+            if ($existing) {
+                return $this->json($this->serializeSession($existing, true));
+            }
+        }
+        $session = (new WorkoutSession())->setUser($user)->setClientSessionId($clientId);
         if (isset($data['routine_id'])) {
-            $routineId = trim((string) $data['routine_id']);
-            if (!Uuid::isValid($routineId)) {
+            if (!is_string($data['routine_id']) || !Uuid::isValid($data['routine_id'])) {
                 return $this->json(['error' => 'Invalid routine_id format'], 400);
             }
-
-            $routine = $this->em->getRepository(Routine::class)->find($routineId);
-            if (!$routine) {
-                return $this->json(['error' => 'Routine not found'], 404);
-            }
-            if ($routine->getUser() !== $user) {
-                return $this->json(['error' => 'Forbidden'], 403);
-            }
-
+            $routine = $this->em->getRepository(Routine::class)->find($data['routine_id']);
+            if (!$routine) return $this->json(['error' => 'Routine not found'], 404);
+            if ($routine->getUser() !== $user) return $this->json(['error' => 'Forbidden'], 403);
             $session->setRoutine($routine);
         }
-
         $this->em->persist($session);
         $this->em->flush();
-
-        return $this->json([
-            'message' => 'Workout session started', 
-            'id' => $session->getId()->toRfc4122()
-        ], 201);
+        return $this->json($this->serializeSession($session, true), 201);
     }
 
     #[Route('/{sessionId}/sets', name: 'log_set', methods: ['POST'])]
     public function logSet(string $sessionId, Request $request): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $session = $this->em->getRepository(WorkoutSession::class)->find($sessionId);
-        if (!$session) {
-            return $this->json(['error' => 'Session not found'], 404);
-        }
-
-        if ($session->getUser() !== $user) {
-            return $this->json(['error' => 'Forbidden'], 403);
-        }
-
+        $session = $this->ownedSession($sessionId, true);
+        if ($session instanceof JsonResponse) return $session;
         $data = $this->parseJsonBody($request);
-        if ($data instanceof JsonResponse) {
-            return $data;
+        if ($data instanceof JsonResponse) return $data;
+        $clientId = $data['client_set_id'] ?? null;
+        if ($clientId !== null && (!is_string($clientId) || $clientId === '' || strlen($clientId) > 100)) {
+            return $this->json(['error' => 'Invalid client_set_id'], 400);
         }
-
-        $exerciseId = trim((string) ($data['exercise_id'] ?? ''));
-        if (!Uuid::isValid($exerciseId)) {
-            return $this->json(['error' => 'Missing or invalid exercise_id'], 400);
+        if ($clientId !== null) {
+            $existing = $this->em->getRepository(WorkoutSetLog::class)->findOneBy(['session' => $session, 'clientSetId' => $clientId]);
+            if ($existing) {
+                if ($existing->getExercise()->getId()->toRfc4122() !== ($data['exercise_id'] ?? null)) {
+                    return $this->json(['error' => 'client_set_id belongs to a different exercise'], 409);
+                }
+                return $this->json(['setId' => $existing->getId()->toRfc4122()] + $this->serializeSet($existing));
+            }
         }
-
+        $exerciseId = $data['exercise_id'] ?? null;
+        if (!is_string($exerciseId) || !Uuid::isValid($exerciseId)) return $this->json(['error' => 'Missing or invalid exercise_id'], 400);
         $exercise = $this->em->getRepository(Exercise::class)->find($exerciseId);
-        if (!$exercise) {
-            return $this->json(['error' => 'Exercise not found'], 404);
-        }
-
-        $isCardio = in_array($exercise->getTrackingType(), [Exercise::TRACKING_DISTANCE_DURATION, Exercise::TRACKING_DURATION], true)
-            || strcasecmp((string) $exercise->getMuscleGroup(), 'Cardio') === 0;
-
-        $reps = filter_var($data['reps'] ?? ($isCardio ? 0 : null), FILTER_VALIDATE_INT);
-        $weight = filter_var($data['weight'] ?? ($isCardio ? 0.0 : null), FILTER_VALIDATE_FLOAT);
-
-        if (!$isCardio) {
-            if ($reps === false || $weight === false || $reps === null || $weight === null) {
-                return $this->json(['error' => 'Missing required fields: exercise_id, weight, reps'], 400);
-            }
-            if ($reps < 1 || $reps > 1000) {
-                return $this->json(['error' => 'reps must be between 1 and 1000'], 400);
-            }
-            if ($weight < 0 || $weight > 1000) {
-                return $this->json(['error' => 'weight must be between 0 and 1000'], 400);
-            }
-        }
-
-        $durationSeconds = filter_var($data['duration_seconds'] ?? $data['durationSeconds'] ?? null, FILTER_VALIDATE_INT);
-        $distanceKm = filter_var($data['distance_km'] ?? $data['distanceKm'] ?? null, FILTER_VALIDATE_FLOAT);
-
-        $newWeight = (float) ($weight !== false && $weight !== null ? $weight : 0.0);
-        $newReps = (int) ($reps !== false && $reps !== null ? $reps : 0);
-        $newE1rm = $newReps === 1 ? $newWeight : ($newReps > 1 ? round($newWeight * (1.0 + $newReps / 30.0), 1) : 0.0);
-
-        $priorStats = $this->em->createQueryBuilder()
-            ->select('MAX(sl.weight) as max_weight')
-            ->from(WorkoutSetLog::class, 'sl')
-            ->join('sl.session', 's')
-            ->where('s.user = :user')
-            ->andWhere('sl.exercise = :exId')
-            ->andWhere('sl.completed = :completed')
-            ->andWhere('sl.weight > 0')
-            ->setParameter('user', $user)
-            ->setParameter('exId', $exerciseId)
-            ->setParameter('completed', true)
-            ->getQuery()
-            ->getSingleResult();
-
-        $priorMaxWeight = $priorStats['max_weight'] !== null ? (float) $priorStats['max_weight'] : null;
-
-        $priorSets = $this->em->createQueryBuilder()
-            ->select('sl.weight, sl.reps')
-            ->from(WorkoutSetLog::class, 'sl')
-            ->join('sl.session', 's')
-            ->where('s.user = :user')
-            ->andWhere('sl.exercise = :exId')
-            ->andWhere('sl.completed = :completed')
-            ->andWhere('sl.weight > 0')
-            ->andWhere('sl.reps >= 1')
-            ->setParameter('user', $user)
-            ->setParameter('exId', $exerciseId)
-            ->setParameter('completed', true)
-            ->getQuery()
-            ->getResult();
-
-        $priorMaxE1rm = null;
-        foreach ($priorSets as $ps) {
-            $pw = (float) $ps['weight'];
-            $pr = (int) $ps['reps'];
-            $pe = $pr === 1 ? $pw : round($pw * (1.0 + $pr / 30.0), 1);
-            if ($priorMaxE1rm === null || $pe > $priorMaxE1rm) {
-                $priorMaxE1rm = $pe;
-            }
-        }
-
-        $setType = trim((string) ($data['set_type'] ?? 'normal'));
-        if (!in_array($setType, ['normal', 'warmup', 'drop_set', 'failure'], true)) {
-            $setType = 'normal';
-        }
-
-        $isPr = false;
-        $prTypes = [];
-        // Warm-up sets should never trigger or count as personal records
-        if ($setType !== 'warmup' && $newWeight > 0) {
-            if ($priorMaxWeight !== null && $newWeight > $priorMaxWeight) {
-                $isPr = true;
-                $prTypes[] = 'max_weight';
-            }
-            if ($priorMaxE1rm !== null && $newE1rm > $priorMaxE1rm) {
-                $isPr = true;
-                $prTypes[] = 'max_e1rm';
-            }
-        }
-
-        $setLog = new WorkoutSetLog();
-        $setLog->setExercise($exercise);
-        $setLog->setWeight($newWeight);
-        $setLog->setReps($newReps);
-        $setLog->setCompleted(true);
-        $setLog->setSetType($setType);
-        $setLog->setDurationSeconds($durationSeconds !== false ? $durationSeconds : null);
-        $setLog->setDistanceKm($distanceKm !== false ? $distanceKm : null);
-
-        $session->addSet($setLog);
-        $this->em->persist($setLog);
-
+        if (!$exercise) return $this->json(['error' => 'Exercise not found'], 404);
+        $set = (new WorkoutSetLog())->setExercise($exercise)->setClientSetId($clientId)->setCompleted(true);
+        $error = $this->applySetData($set, $data, true);
+        if ($error) return $error;
+        $prior = $this->records($this->recordSets($exerciseId));
+        $session->addSet($set);
+        $this->em->persist($set);
         $this->em->flush();
-
+        $prTypes = [];
+        $e1rm = WorkoutSetLog::estimateOneRepMax($set->getWeight(), $set->getReps());
+        if ($set->isCompleted() && $set->getSetType() !== 'warmup' && $set->getWeight() > 0) {
+            if ($prior['max_weight'] > 0 && $set->getWeight() > $prior['max_weight']) $prTypes[] = 'max_weight';
+            if ($prior['max_reps'] > 0 && $set->getReps() > $prior['max_reps']) $prTypes[] = 'max_reps';
+            if ($e1rm !== null && $prior['max_e1rm'] > 0 && $e1rm > $prior['max_e1rm']) $prTypes[] = 'max_e1rm';
+        }
         return $this->json([
-            'message' => 'Set logged successfully',
-            'setId' => $setLog->getId()->toRfc4122(),
-            'set_type' => $setLog->getSetType(),
-            'duration_seconds' => $setLog->getDurationSeconds(),
-            'distance_km' => $setLog->getDistanceKm(),
-            'is_pr' => $isPr,
-            'pr_types' => $prTypes,
-            'pr_label' => $isPr ? '¡Nuevo récord personal!' : null,
-            'previous_max_weight' => $priorMaxWeight,
-            'new_weight' => $newWeight,
-            'previous_max_e1rm' => $priorMaxE1rm,
-            'new_e1rm' => $newE1rm,
-        ], 201);
+            'setId' => $set->getId()->toRfc4122(), 'is_pr' => count($prTypes) > 0, 'pr_types' => $prTypes,
+            'previous_max_weight' => $prior['max_weight'], 'new_weight' => $set->getWeight(),
+            'previous_max_e1rm' => $prior['max_e1rm'], 'new_e1rm' => $e1rm,
+        ] + $this->serializeSet($set), 201);
     }
 
     #[Route('/{sessionId}/sets/{setId}', name: 'delete_set', methods: ['DELETE'])]
     public function deleteSet(string $sessionId, string $setId): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $session = $this->em->getRepository(WorkoutSession::class)->find($sessionId);
-        if (!$session) {
-            return $this->json(['error' => 'Session not found'], 404);
-        }
-
-        if ($session->getUser() !== $user) {
-            return $this->json(['error' => 'Forbidden'], 403);
-        }
-
-        $set = $this->em->getRepository(WorkoutSetLog::class)->find($setId);
-        if (!$set || $set->getSession() !== $session) {
-            return $this->json(['error' => 'Set not found in this session'], 404);
-        }
-
+        $session = $this->ownedSession($sessionId, true);
+        if ($session instanceof JsonResponse) return $session;
+        $set = Uuid::isValid($setId) ? $this->em->getRepository(WorkoutSetLog::class)->find($setId) : null;
+        if (!$set || $set->getSession() !== $session) return $this->json(['error' => 'Set not found in this session'], 404);
         $session->removeSet($set);
         $this->em->remove($set);
         $this->em->flush();
-
         return $this->json(['message' => 'Set deleted successfully']);
     }
 
     #[Route('/{sessionId}/sets/{setId}', name: 'update_set', methods: ['PATCH'])]
     public function updateSet(string $sessionId, string $setId, Request $request): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $session = $this->em->getRepository(WorkoutSession::class)->find($sessionId);
-        if (!$session) {
-            return $this->json(['error' => 'Session not found'], 404);
-        }
-
-        if ($session->getUser() !== $user) {
-            return $this->json(['error' => 'Forbidden'], 403);
-        }
-
-        $set = $this->em->getRepository(WorkoutSetLog::class)->find($setId);
-        if (!$set || $set->getSession() !== $session) {
-            return $this->json(['error' => 'Set not found in this session'], 404);
-        }
-
+        $session = $this->ownedSession($sessionId, true);
+        if ($session instanceof JsonResponse) return $session;
+        $set = Uuid::isValid($setId) ? $this->em->getRepository(WorkoutSetLog::class)->find($setId) : null;
+        if (!$set || $set->getSession() !== $session) return $this->json(['error' => 'Set not found in this session'], 404);
         $data = $this->parseJsonBody($request);
-        if ($data instanceof JsonResponse) {
-            return $data;
-        }
-
-        if (array_key_exists('weight', $data)) {
-            $weight = filter_var($data['weight'], FILTER_VALIDATE_FLOAT);
-            if ($weight === false || $weight < 0 || $weight > 1000) {
-                return $this->json(['error' => 'weight must be between 0 and 1000'], 400);
-            }
-            $set->setWeight((float) $weight);
-        }
-
-        if (array_key_exists('reps', $data)) {
-            $reps = filter_var($data['reps'], FILTER_VALIDATE_INT);
-            if ($reps === false || $reps < 0 || $reps > 1000) {
-                return $this->json(['error' => 'reps must be between 0 and 1000'], 400);
-            }
-            $set->setReps((int) $reps);
-        }
-
-        if (array_key_exists('completed', $data)) {
-            $set->setCompleted((bool) $data['completed']);
-        }
-
-        if (array_key_exists('set_type', $data)) {
-            $setType = trim((string) $data['set_type']);
-            if (in_array($setType, ['normal', 'warmup', 'drop_set', 'failure'], true)) {
-                $set->setSetType($setType);
-            }
-        }
-
-        if (array_key_exists('duration_seconds', $data) || array_key_exists('durationSeconds', $data)) {
-            $dur = filter_var($data['duration_seconds'] ?? $data['durationSeconds'], FILTER_VALIDATE_INT);
-            $set->setDurationSeconds($dur !== false ? $dur : null);
-        }
-
-        if (array_key_exists('distance_km', $data) || array_key_exists('distanceKm', $data)) {
-            $dist = filter_var($data['distance_km'] ?? $data['distanceKm'], FILTER_VALIDATE_FLOAT);
-            $set->setDistanceKm($dist !== false ? $dist : null);
-        }
-
+        if ($data instanceof JsonResponse) return $data;
+        $error = $this->applySetData($set, $data);
+        if ($error) return $error;
         $this->em->flush();
-
-        return $this->json([
-            'message' => 'Set updated successfully',
-            'id' => $set->getId()->toRfc4122(),
-            'weight' => $set->getWeight(),
-            'reps' => $set->getReps(),
-            'completed' => $set->isCompleted(),
-            'set_type' => $set->getSetType(),
-            'duration_seconds' => $set->getDurationSeconds(),
-            'distance_km' => $set->getDistanceKm(),
-        ]);
+        return $this->json($this->serializeSet($set));
     }
 
-    /**
-     * @return array<mixed>|JsonResponse
-     */
+    private function ownedSession(string $id, bool $active = false): WorkoutSession|JsonResponse
+    {
+        if (!$user = $this->getUser()) return $this->json(['error' => 'Unauthorized'], 401);
+        $session = Uuid::isValid($id) ? $this->em->getRepository(WorkoutSession::class)->find($id) : null;
+        if (!$session) return $this->json(['error' => 'Session not found'], 404);
+        if ($session->getUser() !== $user) return $this->json(['error' => 'Forbidden'], 403);
+        if ($active && $session->getStatus() !== 'active') return $this->json(['error' => 'Session already completed'], 409);
+        return $session;
+    }
+
+    private function applySetData(WorkoutSetLog $set, array $data, bool $creating = false): ?JsonResponse
+    {
+        $cardio = in_array($set->getExercise()->getTrackingType(), [Exercise::TRACKING_DISTANCE_DURATION, Exercise::TRACKING_DURATION], true)
+            || strcasecmp((string) $set->getExercise()->getMuscleGroup(), 'Cardio') === 0;
+        $weight = $data['weight'] ?? ($creating && !$cardio ? null : $set->getWeight());
+        $reps = $data['reps'] ?? ($creating && !$cardio ? null : $set->getReps());
+        $weight = filter_var($weight, FILTER_VALIDATE_FLOAT);
+        $reps = filter_var($reps, FILTER_VALIDATE_INT);
+        if ($weight === false || !is_finite((float) $weight) || $weight < 0 || $weight > 1000 || $reps === false || $reps < ($cardio ? 0 : 1) || $reps > 1000) {
+            return $this->json(['error' => 'Invalid weight or reps'], 400);
+        }
+        $type = $data['set_type'] ?? $set->getSetType();
+        if (!in_array($type, ['normal', 'warmup', 'drop_set', 'failure'], true)) return $this->json(['error' => 'Invalid set_type'], 400);
+        $completed = $data['completed'] ?? $set->isCompleted();
+        if (!is_bool($completed)) return $this->json(['error' => 'completed must be a boolean'], 400);
+        $number = filter_var($data['set_number'] ?? $set->getSetNumber(), FILTER_VALIDATE_INT);
+        if ($number === false || $number < 1 || $number > 1000) return $this->json(['error' => 'Invalid set_number'], 400);
+        $duration = array_key_exists('duration_seconds', $data) ? $data['duration_seconds'] : ($data['durationSeconds'] ?? $set->getDurationSeconds());
+        $distance = array_key_exists('distance_km', $data) ? $data['distance_km'] : ($data['distanceKm'] ?? $set->getDistanceKm());
+        if ($duration !== null && (filter_var($duration, FILTER_VALIDATE_INT) === false || $duration < 0 || $duration > 604800)) return $this->json(['error' => 'Invalid duration_seconds'], 400);
+        if ($distance !== null && (filter_var($distance, FILTER_VALIDATE_FLOAT) === false || !is_finite((float) $distance) || $distance < 0 || $distance > 10000)) return $this->json(['error' => 'Invalid distance_km'], 400);
+        $set->setWeight((float) $weight)->setReps((int) $reps)->setSetType($type)->setCompleted($completed)->setSetNumber($number)
+            ->setDurationSeconds($duration !== null ? (int) $duration : null)->setDistanceKm($distance !== null ? (float) $distance : null);
+        return null;
+    }
+
+    private function serializeSet(WorkoutSetLog $set): array
+    {
+        $exercise = $set->getExercise();
+        return [
+            'id' => $set->getId()->toRfc4122(), 'client_set_id' => $set->getClientSetId(), 'set_number' => $set->getSetNumber(),
+            'exercise_id' => $exercise->getId()->toRfc4122(), 'exercise_name' => $exercise->getName(),
+            'muscle_group' => $exercise->getMuscleGroup(), 'tracking_type' => $exercise->getTrackingType(),
+            'weight' => $set->getWeight(), 'reps' => $set->getReps(), 'completed' => $set->isCompleted(),
+            'set_type' => $set->getSetType(), 'duration_seconds' => $set->getDurationSeconds(), 'distance_km' => $set->getDistanceKm(),
+        ];
+    }
+
+    private function serializeSession(WorkoutSession $session, bool $includeSets): array
+    {
+        $volume = 0.0;
+        $exercises = [];
+        $completed = 0;
+        $sets = [];
+        foreach ($session->getSets() as $set) {
+            if ($includeSets) $sets[] = $this->serializeSet($set);
+            if (!$set->isCompleted()) continue;
+            $completed++;
+            $exercises[$set->getExercise()->getId()->toRfc4122()] = true;
+            $volume += $set->getWeight() * $set->getReps();
+        }
+        usort($sets, fn (array $a, array $b) => $a['set_number'] <=> $b['set_number']);
+        $result = [
+            'id' => $session->getId()->toRfc4122(), 'status' => $session->getStatus(),
+            'routine_id' => $session->getRoutine()?->getId()?->toRfc4122(), 'routine_name' => $session->getRoutine()?->getName(),
+            'date' => $session->getDate()->format('c'), 'duration_minutes' => $session->getDurationMinutes(),
+            'total_volume' => round($volume, 1), 'exercise_count' => count($exercises), 'set_count' => $completed,
+        ];
+        if ($includeSets) $result['sets'] = $sets;
+        return $result;
+    }
+
+    /** @return WorkoutSetLog[] */
+    private function recordSets(string $exerciseId): array
+    {
+        return $this->em->createQueryBuilder()->select('sl', 's')->from(WorkoutSetLog::class, 'sl')->join('sl.session', 's')
+            ->where('s.user = :user')->andWhere("s.status = 'completed'")->andWhere('sl.exercise = :exercise')
+            ->andWhere('sl.completed = :completed')->setParameter('user', $this->getUser())->setParameter('exercise', $exerciseId)
+            ->setParameter('completed', true)->orderBy('s.date', 'DESC')->addOrderBy('s.id', 'DESC')->addOrderBy('sl.setNumber', 'ASC')->addOrderBy('sl.id', 'ASC')
+            ->getQuery()->getResult();
+    }
+
+    private function records(array $sets): array
+    {
+        $records = ['max_weight' => 0.0, 'max_weight_set' => null, 'max_e1rm' => 0.0, 'max_e1rm_set' => null, 'max_reps' => 0, 'max_reps_set' => null];
+        foreach ($sets as $set) {
+            if ($set->getSetType() === 'warmup' || $set->getWeight() <= 0 || $set->getReps() < 1) continue;
+            $weight = $set->getWeight();
+            $reps = $set->getReps();
+            $entry = ['weight' => $weight, 'reps' => $reps, 'date' => $set->getSession()->getDate()->format('Y-m-d')];
+            $e1rm = WorkoutSetLog::estimateOneRepMax($weight, $reps);
+            foreach (['max_weight' => $weight, 'max_reps' => $reps, 'max_e1rm' => $e1rm] as $key => $value) {
+                if ($value !== null && $value > $records[$key]) {
+                    $records[$key] = $value;
+                    $records[$key . '_set'] = $key === 'max_e1rm' ? $entry + ['e1rm' => $e1rm] : $entry;
+                }
+            }
+        }
+        return $records;
+    }
+
     private function parseJsonBody(Request $request): array|JsonResponse
     {
-        if ($request->getContent() === '') {
-            return [];
-        }
-
+        if ($request->getContent() === '') return [];
         try {
             $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
             return $this->json(['error' => 'Invalid JSON body'], 400);
         }
-
-        if (!is_array($data)) {
-            return $this->json(['error' => 'Invalid JSON body'], 400);
-        }
-
-        return $data;
+        return is_array($data) ? $data : $this->json(['error' => 'Invalid JSON body'], 400);
     }
 }

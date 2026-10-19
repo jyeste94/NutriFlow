@@ -8,6 +8,7 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'workout_set_logs')]
+#[ORM\UniqueConstraint(name: 'uniq_workout_client_set', columns: ['session_id', 'client_set_id'])]
 class WorkoutSetLog
 {
     #[ORM\Id]
@@ -41,6 +42,42 @@ class WorkoutSetLog
 
     #[ORM\Column(type: 'float', nullable: true)]
     private ?float $distanceKm = null;
+
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    private ?string $clientSetId = null;
+
+    #[ORM\Column(type: 'integer', options: ['default' => 1])]
+    private int $setNumber = 1;
+
+    public function getClientSetId(): ?string
+    {
+        return $this->clientSetId;
+    }
+
+    public function setClientSetId(?string $clientSetId): static
+    {
+        $this->clientSetId = $clientSetId;
+        return $this;
+    }
+
+    public function getSetNumber(): int
+    {
+        return $this->setNumber;
+    }
+
+    public function setSetNumber(int $setNumber): static
+    {
+        $this->setNumber = $setNumber;
+        return $this;
+    }
+
+    public static function estimateOneRepMax(float $weight, int $reps): ?float
+    {
+        if ($weight <= 0 || $reps < 1 || $reps > 12) {
+            return null;
+        }
+        return round($reps === 1 ? $weight : $weight * (1 + $reps / 30), 1);
+    }
 
     public function getId(): ?Uuid
     {

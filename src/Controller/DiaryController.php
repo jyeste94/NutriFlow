@@ -8,6 +8,7 @@ use App\Entity\MealEntry;
 use App\Entity\SavedMeal;
 use App\Entity\Serving;
 use App\Entity\User;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -197,6 +198,9 @@ class DiaryController extends AbstractController
             return $this->json(['error' => 'mealType must be one of: ' . implode(', ', self::ALLOWED_MEAL_TYPES)], 400);
         }
 
+        return $this->em->wrapInTransaction(function () use ($user, $sourceDateObj, $targetDateObj, $mealType): JsonResponse {
+        $this->em->lock($user, LockMode::PESSIMISTIC_WRITE);
+
         $sourceDiary = $this->em->getRepository(MealDiary::class)->findOneBy([
             'user' => $user,
             'date' => $sourceDateObj
@@ -253,6 +257,7 @@ class DiaryController extends AbstractController
                 'totalCalories' => $targetDiary->getTotalCalories(),
             ]
         ], 201);
+        });
     }
 
     #[Route('/{date}/saved-meals/{id}', name: 'add_saved_meal', methods: ['POST'])]
@@ -285,10 +290,48 @@ class DiaryController extends AbstractController
                 return $this->json(['error' => 'Invalid JSON body'], 400);
             }
         }
+        if (!is_array($body)) {
+            return $this->json(['error' => 'Invalid JSON body'], 400);
+        }
+        $clientId = $body['client_id'] ?? null;
+        if ($clientId !== null && (!is_string($clientId) || !Uuid::isValid($clientId))) {
+            return $this->json(['error' => 'client_id must be a UUID'], 400);
+        }
+        $requestedServings = filter_var($body['servings'] ?? $savedMeal->getServings(), FILTER_VALIDATE_FLOAT);
+        if ($requestedServings === false || !is_finite($requestedServings) || $requestedServings <= 0 || $requestedServings > 100) {
+            return $this->json(['error' => 'servings must be greater than 0 and less than or equal to 100'], 400);
+        }
+        $portionRatio = $requestedServings / $savedMeal->getServings();
+        foreach ($savedMeal->getItems() as $item) {
+            if ($item->getServing() && ($item->getServing()->getAmount() <= 0 || !$item->getServing()->getFood()?->isAccessibleBy($user))) {
+                return $this->json(['error' => 'Saved meal contains an unavailable serving'], 400);
+            }
+            $linkedServing = $item->getServing();
+            if ($linkedServing && in_array(null, [$linkedServing->getCalories(), $linkedServing->getProteins(), $linkedServing->getCarbs(), $linkedServing->getFats()], true)) {
+                return $this->json(['error' => 'Saved meal contains incomplete nutrition'], 400);
+            }
+        }
 
         $mealType = strtolower((string) ($body['mealType'] ?? $savedMeal->getPreferredMealType() ?? 'snack'));
         if (!in_array($mealType, self::ALLOWED_MEAL_TYPES, true)) {
             return $this->json(['error' => 'mealType must be one of: ' . implode(', ', self::ALLOWED_MEAL_TYPES)], 400);
+        }
+
+        return $this->em->wrapInTransaction(function () use ($user, $savedMeal, $diaryDate, $mealType, $portionRatio, $clientId): JsonResponse {
+        $this->em->lock($user, LockMode::PESSIMISTIC_WRITE);
+        $existingIds = [];
+        if ($clientId !== null) {
+            foreach ($savedMeal->getItems() as $item) {
+                $entryId = Uuid::v5(Uuid::fromString($clientId), (string) $item->getId());
+                $existing = $this->em->getRepository(MealEntry::class)->find($entryId);
+                if (!$existing) continue;
+                if ($existing->getDiary()?->getUser() !== $user || $existing->getDiary()?->getDate()?->format('Y-m-d') !== $diaryDate->format('Y-m-d')
+                    || $existing->getMealType() !== $mealType
+                    || abs($existing->getMultiplier() * $existing->getServing()->getAmount() - $item->getAmountGrams() * $portionRatio) > 0.01) {
+                    return $this->json(['error' => 'client_id is already in use'], 409);
+                }
+                $existingIds[(string) $entryId] = true;
+            }
         }
 
         $diary = $this->em->getRepository(MealDiary::class)->findOneBy([
@@ -305,6 +348,8 @@ class DiaryController extends AbstractController
 
         $addedCount = 0;
         foreach ($savedMeal->getItems() as $item) {
+            $entryId = $clientId !== null ? Uuid::v5(Uuid::fromString($clientId), (string) $item->getId()) : null;
+            if ($entryId !== null && isset($existingIds[(string) $entryId])) continue;
             $serving = $item->getServing();
 
             // If item has no serving reference, create a custom food and serving on the fly
@@ -333,10 +378,10 @@ class DiaryController extends AbstractController
                 $this->em->persist($serving);
             }
 
-            $entry = new MealEntry();
+            $entry = new MealEntry($entryId);
             $entry->setServing($serving);
             $entry->setMealType($mealType);
-            $entry->setMultiplier(1.0);
+            $entry->setMultiplier($item->getAmountGrams() / $serving->getAmount() * $portionRatio);
 
             $diary->addEntry($entry);
             $this->em->persist($entry);
@@ -353,7 +398,8 @@ class DiaryController extends AbstractController
                 'date' => $diary->getDate()?->format('Y-m-d'),
                 'totalCalories' => $diary->getTotalCalories(),
             ]
-        ], 201);
+        ], $addedCount > 0 ? 201 : 200);
+        });
     }
 
     #[Route('/{date}/entries', name: 'add_entry', methods: ['POST'])]
@@ -383,6 +429,24 @@ class DiaryController extends AbstractController
             return $this->json(['error' => 'Invalid JSON body'], 400);
         }
 
+        $clientId = $data['client_id'] ?? null;
+        if ($clientId !== null && (!is_string($clientId) || !Uuid::isValid($clientId))) {
+            return $this->json(['error' => 'client_id must be a UUID'], 400);
+        }
+
+        return $this->em->wrapInTransaction(function () use ($user, $data, $diaryDate, $clientId): JsonResponse {
+        // Serialize an account's creates, including retries following a lost HTTP response.
+        $this->em->lock($user, LockMode::PESSIMISTIC_WRITE);
+        if ($clientId !== null) {
+            $existing = $this->em->getRepository(MealEntry::class)->find($clientId);
+            if ($existing) {
+                if ($existing->getDiary()?->getUser() !== $user || $existing->getDiary()?->getDate()?->format('Y-m-d') !== $diaryDate->format('Y-m-d')) {
+                    return $this->json(['error' => 'client_id is already in use'], 409);
+                }
+                return $this->json(['entryId' => $existing->getId()?->toRfc4122()], 200);
+            }
+        }
+
         $mealType = strtolower((string) ($data['mealType'] ?? ''));
         if (!in_array($mealType, self::ALLOWED_MEAL_TYPES, true)) {
             return $this->json(['error' => 'mealType must be one of: ' . implode(', ', self::ALLOWED_MEAL_TYPES)], 400);
@@ -406,6 +470,19 @@ class DiaryController extends AbstractController
             if (!$serving->getFood()?->isAccessibleBy($user)) {
                 return $this->json(['error' => 'Serving not found'], 404);
             }
+            if (in_array(null, [$serving->getCalories(), $serving->getProteins(), $serving->getCarbs(), $serving->getFats()], true)) {
+                return $this->json(['error' => 'Serving nutrition is incomplete'], 400);
+            }
+            if (array_key_exists('amountGrams', $data)) {
+                $amount = filter_var($data['amountGrams'], FILTER_VALIDATE_FLOAT);
+                if ($amount === false || !is_finite($amount) || $amount <= 0 || $amount > 10000 || $serving->getAmount() <= 0) {
+                    return $this->json(['error' => 'Invalid amount or serving amount'], 400);
+                }
+                $multiplier = $amount / $serving->getAmount();
+                if ($multiplier > 100) {
+                    return $this->json(['error' => 'multiplier must not exceed 100'], 400);
+                }
+            }
         } elseif (!empty($data['name']) && isset($data['calories'])) {
             // Case 2: Inline custom food entry
             $foodName = trim((string) $data['name']);
@@ -414,7 +491,9 @@ class DiaryController extends AbstractController
             }
 
             foreach (['calories', 'proteins', 'carbs', 'fats', 'amountGrams'] as $field) {
-                if (!array_key_exists($field, $data)) continue;
+                if (!isset($data[$field])) {
+                    return $this->json(['error' => "$field is required"], 400);
+                }
                 $value = filter_var($data[$field], FILTER_VALIDATE_FLOAT);
                 if ($value === false || !is_finite($value) || $value < 0 || ($field === 'amountGrams' && $value == 0)) {
                     return $this->json(['error' => "$field must be " . ($field === 'amountGrams' ? 'positive' : 'non-negative') . ' and finite'], 400);
@@ -467,7 +546,7 @@ class DiaryController extends AbstractController
             $this->em->persist($diary);
         }
 
-        $entry = new MealEntry();
+        $entry = new MealEntry($clientId !== null ? Uuid::fromString($clientId) : null);
         $entry->setServing($serving);
         $entry->setMealType($mealType);
         $entry->setMultiplier((float) $multiplier);
@@ -486,6 +565,7 @@ class DiaryController extends AbstractController
                 'totalCalories' => $diary->getTotalCalories(),
             ]
         ], 201);
+        });
     }
 
     #[Route('/entries/{id}', name: 'update_entry', methods: ['PUT', 'PATCH'])]
@@ -495,6 +575,9 @@ class DiaryController extends AbstractController
         if (!$user) {
             return $this->json(['error' => 'Unauthorized'], 401);
         }
+
+        return $this->em->wrapInTransaction(function () use ($user, $id, $request): JsonResponse {
+        $this->em->lock($user, LockMode::PESSIMISTIC_WRITE);
 
         $entry = $this->em->getRepository(MealEntry::class)->find($id);
         if (!$entry) {
@@ -521,7 +604,6 @@ class DiaryController extends AbstractController
             if (!in_array($mealType, self::ALLOWED_MEAL_TYPES, true)) {
                 return $this->json(['error' => 'mealType must be one of: ' . implode(', ', self::ALLOWED_MEAL_TYPES)], 400);
             }
-            $entry->setMealType($mealType);
         }
 
         $serving = $entry->getServing();
@@ -532,6 +614,9 @@ class DiaryController extends AbstractController
                 return $this->json(['error' => 'amountGrams must be greater than 0 and less than or equal to 10000'], 400);
             }
             $multiplier = $amountGrams / (float) $serving->getAmount();
+            if ($multiplier > 100) {
+                return $this->json(['error' => 'multiplier must not exceed 100'], 400);
+            }
             $entry->setMultiplier($multiplier);
         } elseif (isset($data['multiplier'])) {
             $multiplier = filter_var($data['multiplier'], FILTER_VALIDATE_FLOAT);
@@ -540,6 +625,7 @@ class DiaryController extends AbstractController
             }
             $entry->setMultiplier((float) $multiplier);
         }
+        if (isset($mealType)) $entry->setMealType($mealType);
 
         $diary->recalculateTotals();
         $this->em->flush();
@@ -584,6 +670,7 @@ class DiaryController extends AbstractController
                 'totalFats' => $diary->getTotalFats(),
             ]
         ]);
+        });
     }
 
     #[Route('/entries/{id}', name: 'delete_entry', methods: ['DELETE'])]
@@ -593,6 +680,9 @@ class DiaryController extends AbstractController
         if (!$user) {
             return $this->json(['error' => 'Unauthorized'], 401);
         }
+
+        return $this->em->wrapInTransaction(function () use ($user, $id): JsonResponse {
+        $this->em->lock($user, LockMode::PESSIMISTIC_WRITE);
 
         $entry = $this->em->getRepository(MealEntry::class)->find($id);
         if (!$entry) {
@@ -611,6 +701,7 @@ class DiaryController extends AbstractController
         $this->em->flush();
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        });
     }
 
     private function parseIsoDate(string $date): ?\DateTimeImmutable

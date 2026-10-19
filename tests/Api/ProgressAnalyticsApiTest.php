@@ -95,6 +95,7 @@ final class ProgressAnalyticsApiTest extends ApiTestCase
 
         $this->client->jsonRequest('PATCH', '/v1/workouts/' . $s1, [
             'duration_minutes' => 60,
+            'status' => 'completed',
         ], $headers);
         $this->assertResponseIsSuccessful();
 
@@ -102,9 +103,9 @@ final class ProgressAnalyticsApiTest extends ApiTestCase
         $this->assertResponseIsSuccessful();
         $res = $this->jsonResponse();
 
-        $this->assertGreaterThanOrEqual(1, $res['summary']['total_workouts']);
-        $this->assertGreaterThanOrEqual(60, $res['summary']['total_duration_minutes']);
-        $this->assertGreaterThanOrEqual(800.0, $res['summary']['total_volume_kg']);
+        $this->assertSame(1, $res['summary']['total_workouts']);
+        $this->assertSame(60, $res['summary']['total_duration_minutes']);
+        $this->assertSame(800.0, (float) $res['summary']['total_volume_kg']);
         $this->assertCount(4, $res['weekly_distribution']); // 4 weeks in 4w
     }
 
@@ -125,6 +126,8 @@ final class ProgressAnalyticsApiTest extends ApiTestCase
             'weight' => 100.0,
         ], $headers);
         $this->assertResponseStatusCodeSame(201);
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $sId, ['status' => 'completed'], $headers);
+        $this->assertResponseIsSuccessful();
 
         $this->client->request('GET', '/v1/progress/strength?period=4w&exercise_id=' . $exerciseId, [], [], $headers);
         $this->assertResponseIsSuccessful();

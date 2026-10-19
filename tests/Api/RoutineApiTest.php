@@ -189,15 +189,15 @@ final class RoutineApiTest extends ApiTestCase
                 'exercises' => [
                     [
                         'exercise_id' => $cardioId,
-                        'sets' => 3,
+                        'sets' => 2,
                         'reps' => null,
                         'target_weight' => null,
                         'duration_seconds' => 600,
                         'distance_km' => 2.5,
                         'restSeconds' => 30,
                         'set_details' => [
-                            ['durationSeconds' => 300, 'distanceKm' => 1.25, 'restSeconds' => 30],
-                            ['durationSeconds' => 300, 'distanceKm' => 1.25, 'restSeconds' => 0],
+                            ['durationSeconds' => 45, 'distanceKm' => 0.25, 'restSeconds' => 30],
+                            ['durationSeconds' => 555, 'distanceKm' => 2.25, 'restSeconds' => 0],
                         ],
                     ],
                 ],
@@ -223,6 +223,12 @@ final class RoutineApiTest extends ApiTestCase
         $this->assertSame(600, $exItem['durationSeconds']);
         $this->assertEqualsWithDelta(2.5, (float) $exItem['distanceKm'], 0.001);
         $this->assertCount(2, $exItem['setDetails']);
+        $this->client->jsonRequest('PUT', '/v1/routines/' . $routineId, [
+            'exercises' => [['exercise_id' => $cardioId, 'sets' => 2, 'durationSeconds' => 600, 'distanceKm' => 2.5, 'restSeconds' => 30]],
+        ], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->client->request('GET', '/v1/routines/' . $routineId, [], [], $headers);
+        $this->assertSame($exItem['setDetails'], $this->jsonResponse()['exercises'][0]['setDetails']);
     }
 
     public function testCreateMixedRoutineWithStrengthAndCardio(): void

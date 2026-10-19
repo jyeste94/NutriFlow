@@ -8,6 +8,7 @@ use App\Entity\DietPlanMeal;
 use App\Entity\MealDiary;
 use App\Entity\MealEntry;
 use App\Entity\Serving;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -69,6 +70,7 @@ class DietPlanController extends AbstractController
 
         $data = $this->parseJsonBody($request);
         if ($data instanceof JsonResponse) return $data;
+        if ($error = $this->validatePlanFields($data)) return $error;
 
         $name = trim((string) ($data['name'] ?? ''));
         if ($name === '') return $this->json(['error' => 'Diet plan name is required'], 400);
@@ -89,13 +91,13 @@ class DietPlanController extends AbstractController
             return $normalizedDays;
         }
 
-        if ($plan->isDefault()) {
-            $this->unsetDefaultPlansForUser($user);
-        }
 
         $conn = $this->em->getConnection();
         $conn->beginTransaction();
         try {
+            if ($plan->isDefault()) {
+                $this->unsetDefaultPlansForUser($user, $plan);
+            }
             $this->em->persist($plan);
             $this->replacePlanDays($plan, $normalizedDays);
             $this->em->flush();
@@ -123,6 +125,16 @@ class DietPlanController extends AbstractController
 
         $data = $this->parseJsonBody($request);
         if ($data instanceof JsonResponse) return $data;
+        if ($error = $this->validatePlanFields($data)) return $error;
+
+        $normalizedDays = null;
+        if (array_key_exists('days', $data)) {
+            if (!is_array($data['days'])) {
+                return $this->json(['error' => 'days must be an array'], 400);
+            }
+            $normalizedDays = $this->normalizePlanDays($data['days']);
+            if ($normalizedDays instanceof JsonResponse) return $normalizedDays;
+        }
 
         if (isset($data['name'])) {
             $name = trim((string) $data['name']);
@@ -141,29 +153,18 @@ class DietPlanController extends AbstractController
         }
 
         if (array_key_exists('is_default', $data)) {
-            if (!empty($data['is_default'])) {
-                $this->unsetDefaultPlansForUser($user);
-            }
             $plan->setIsDefault(!empty($data['is_default']));
         }
 
-        $normalizedDays = null;
-        if (array_key_exists('days', $data)) {
-            if (!is_array($data['days'])) {
-                return $this->json(['error' => 'days must be an array'], 400);
-            }
-
-            $normalizedDays = $this->normalizePlanDays($data['days']);
-            if ($normalizedDays instanceof JsonResponse) {
-                return $normalizedDays;
-            }
-        }
 
         $plan->setUpdatedAt(new \DateTimeImmutable());
 
         $conn = $this->em->getConnection();
         $conn->beginTransaction();
         try {
+            if ($plan->isDefault()) {
+                $this->unsetDefaultPlansForUser($user, $plan);
+            }
             if (is_array($normalizedDays)) {
                 $this->replacePlanDays($plan, $normalizedDays);
             }
@@ -210,12 +211,17 @@ class DietPlanController extends AbstractController
         $data = $this->parseJsonBody($request);
         if ($data instanceof JsonResponse) return $data;
 
-        $startDate = isset($data['start_date']) ? $this->parseIsoDate($data['start_date']) : new \DateTimeImmutable();
+        if (($data['confirm_consumed'] ?? null) !== true) {
+            return $this->json(['error' => 'Confirm that these meals should be recorded as consumed'], 400);
+        }
+        $startDate = is_string($data['start_date'] ?? null) ? $this->parseIsoDate($data['start_date']) : null;
         if (!$startDate) return $this->json(['error' => 'Invalid start_date format. Use YYYY-MM-DD'], 400);
 
         // Find Monday of the week containing startDate
         $dayOfWeek = (int) $startDate->format('N'); // 1=Mon, 7=Sun
         $monday = $startDate->modify('-' . ($dayOfWeek - 1) . ' days');
+        return $this->em->wrapInTransaction(function () use ($user, $plan, $monday): JsonResponse {
+        $this->em->lock($user, LockMode::PESSIMISTIC_WRITE);
 
         $dayNames = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
         $results = [];
@@ -253,6 +259,7 @@ class DietPlanController extends AbstractController
         $this->em->flush();
 
         return $this->json(['message' => 'Diet plan applied', 'entry_ids' => $results], 201);
+        });
     }
 
     /**
@@ -261,9 +268,13 @@ class DietPlanController extends AbstractController
     private function serializePlan(DietPlan $plan): array
     {
         $days = [];
-        foreach ($plan->getDays() as $day) {
+        $orderedDays = $plan->getDays()->toArray();
+        usort($orderedDays, static fn (DietPlanDay $a, DietPlanDay $b) => $a->getSortOrder() <=> $b->getSortOrder());
+        foreach ($orderedDays as $day) {
             $meals = [];
-            foreach ($day->getMeals() as $meal) {
+            $orderedMeals = $day->getMeals()->toArray();
+            usort($orderedMeals, static fn (DietPlanMeal $a, DietPlanMeal $b) => $a->getSortOrder() <=> $b->getSortOrder());
+            foreach ($orderedMeals as $meal) {
                 $serving = $meal->getServing();
                 $food = $serving->getFood();
                 $meals[] = [
@@ -274,10 +285,10 @@ class DietPlanController extends AbstractController
                     'food_name' => $food->getName(),
                     'food_brand' => $food->getBrand(),
                     'serving_description' => $serving->getDescription(),
-                    'calories' => $serving->getCalories() * $meal->getMultiplier(),
-                    'proteins' => $serving->getProteins() * $meal->getMultiplier(),
-                    'carbs' => $serving->getCarbs() * $meal->getMultiplier(),
-                    'fats' => $serving->getFats() * $meal->getMultiplier(),
+                    'calories' => $serving->getCalories() === null ? null : $serving->getCalories() * $meal->getMultiplier(),
+                    'proteins' => $serving->getProteins() === null ? null : $serving->getProteins() * $meal->getMultiplier(),
+                    'carbs' => $serving->getCarbs() === null ? null : $serving->getCarbs() * $meal->getMultiplier(),
+                    'fats' => $serving->getFats() === null ? null : $serving->getFats() * $meal->getMultiplier(),
                     'option_group' => $meal->getOptionGroup(),
                     'notes' => $meal->getNotes(),
                 ];
@@ -438,16 +449,27 @@ class DietPlanController extends AbstractController
         }
     }
 
-    private function unsetDefaultPlansForUser(object $user): void
+    private function unsetDefaultPlansForUser(object $user, DietPlan $selected): void
     {
-        $this->em->createQueryBuilder()
-            ->update(DietPlan::class, 'p')
-            ->set('p.isDefault', ':false')
-            ->where('p.user = :user')
-            ->setParameter('false', false)
-            ->setParameter('user', $user)
-            ->getQuery()
-            ->execute();
+        foreach ($this->em->getRepository(DietPlan::class)->findBy(['user' => $user, 'isDefault' => true]) as $plan) {
+            if ($plan !== $selected) $plan->setIsDefault(false);
+        }
+    }
+
+    private function validatePlanFields(array $data): ?JsonResponse
+    {
+        if (array_key_exists('name', $data) && (!is_string($data['name']) || trim($data['name']) === '' || mb_strlen(trim($data['name'])) > 255)) {
+            return $this->json(['error' => 'name must contain between 1 and 255 characters'], 400);
+        }
+        foreach (['description', 'supplement_protocol'] as $field) {
+            if (isset($data[$field]) && !is_string($data[$field])) {
+                return $this->json(['error' => "$field must be a string or null"], 400);
+            }
+        }
+        if (array_key_exists('is_default', $data) && !is_bool($data['is_default'])) {
+            return $this->json(['error' => 'is_default must be a boolean'], 400);
+        }
+        return null;
     }
 
     /**

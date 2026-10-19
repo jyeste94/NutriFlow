@@ -67,6 +67,7 @@ Si una IA toca IDs o relaciones, no debe volver a asumir UUID binario.
 - `GET /v1/diaries/{date}`
 - `POST /v1/diaries/{date}/entries`
 - `DELETE /v1/diaries/entries/{id}`
+- La creacion admite `client_id` UUID estable para reintentos; el borrado repetido de una entrada ausente devuelve 204.
 
 ### Diet Plans
 - `GET /v1/diet-plans`
@@ -84,10 +85,25 @@ Si una IA toca IDs o relaciones, no debe volver a asumir UUID binario.
 - `GET /v1/exercises`
 - `GET /v1/exercises/search`
 - `GET /v1/exercises/{id}`
+- `POST /v1/exercises` (ROLE_ADMIN)
+- `PUT /v1/exercises/{id}` (ROLE_ADMIN)
+- `DELETE /v1/exercises/{id}` (ROLE_ADMIN)
+- Las lecturas siguen disponibles para usuarios autenticados.
+- La importacion Hevy solo crea ejercicios ausentes si el usuario tiene ROLE_ADMIN; para el resto exige que todos existan antes de escribir sesiones.
 
 ### Foods
 - `GET /v1/foods/search`
 - `GET /v1/foods/{id}`
+- `GET /v1/foods/barcode/{barcode}`: consulta Open Food Facts; devuelve nutrientes por 100 g/ml, unidad verificada y `canImport`. Nutrientes desconocidos son `null`; 404 significa producto ausente y 502/504 error/timeout del proveedor.
+- `POST /v1/foods/barcode/{barcode}`: importa en el catalogo personal del usuario autenticado, sin aceptar macros enviados por el cliente. Repite la consulta al proveedor y rechaza datos incompletos con 422; devolver un alimento previamente importado no lo duplica.
+
+### Saved Meals / Recetas
+- `GET /v1/saved-meals`, `GET /v1/saved-meals/{id}`
+- `POST /v1/saved-meals`, `PUT /v1/saved-meals/{id}`, `DELETE /v1/saved-meals/{id}`
+- Las recetas reutilizan comidas guardadas: `name`, `items`, `servings` (raciones enteras 1..100), `instructions` (preparacion, hasta 20000 caracteres), `preferredMealType`. La creacion admite `client_id` UUID idempotente.
+- Los ingredientes contienen `servingId`, `amountGrams` y nutrientes de la cantidad completa; si estan vinculados al catalogo el servidor calcula los nutrientes desde la racion accesible. Las recetas usan gramos, sin asumir equivalencia gramos/mililitros.
+- `POST /v1/diaries/{date}/saved-meals/{id}` acepta `mealType`, `servings` (raciones consumidas, tambien fraccionarias) y `client_id` UUID opcional para reintentos idempotentes; escala todos los ingredientes por consumidas / raciones de la receta. Conservar el mismo UUID hasta confirmar exito para una misma receta, fecha, comida y cantidad.
+- Migracion requerida: `Version20261019000200`, anade `saved_meals.servings` (1 para comidas existentes) e `instructions` (texto vacio para existentes). Ejecutar las migraciones antes de desplegar el frontend de recetas.
 
 ### Measurements
 - `GET /v1/measurements`
@@ -109,6 +125,15 @@ Si una IA toca IDs o relaciones, no debe volver a asumir UUID binario.
 - `DELETE /v1/workouts/{sessionId}`
 - `POST /v1/workouts`
 - `POST /v1/workouts/{sessionId}/sets`
+- `PATCH /v1/workouts/{sessionId}/sets/{setId}`
+- `DELETE /v1/workouts/{sessionId}/sets/{setId}`
+- `status` distingue `active` y `completed`; solo finalizar cambia la sesion a completada. `GET` admite filtro `status`.
+- `client_session_id` es unico por usuario; `client_set_id` por sesion. Conservarlos en reintentos. `set_number` conserva orden, `duration_seconds` no se redondea a minutos.
+- Migracion requerida: `Version20261019000100`. Las sesiones antiguas solo se consideran completadas si tienen duracion de cierre y alguna serie completada.
+
+### Preferencias y registros auxiliares
+- `GET/PUT /v1/user/preferences`: perfil energetico y objetivos; `roles` es solo lectura. Mifflin × actividad calcula mantenimiento; `calorie_adjustment` calcula ingesta. No sumar calorias del entrenamiento de nuevo.
+- Lista de compra y ayuno permiten actualizar y borrar exclusivamente registros del usuario autenticado. El frontend solo confirma cambios persistidos.
 
 ## Reglas funcionales importantes
 ### Routines
@@ -123,7 +148,7 @@ Si una IA toca IDs o relaciones, no debe volver a asumir UUID binario.
 - `meal_type` valido: `breakfast,almuerzo,lunch,merienda,dinner,snack`
 - `multiplier` debe ser mayor que `0` y menor o igual que `100`
 - si un plan se marca `is_default`, debe desmarcar los demas del mismo usuario
-- `apply` crea entradas de diario para la semana del `start_date`
+- `apply` exige `confirm_consumed: true` y crea entradas para la semana lunes-domingo que contiene `start_date`; guardar un plan no modifica el diario.
 
 ### Measurements
 - `weight_kg` obligatorio en create
@@ -137,8 +162,11 @@ Si una IA toca IDs o relaciones, no debe volver a asumir UUID binario.
 - la busqueda se hace sobre nombre o marca, en minusculas
 
 ### Errors
-- el listener de excepciones guarda contexto del request
-- headers sensibles y algunos campos del body se redactan
+- `/v1/errors` y `/v1/errors/{id}` requieren ROLE_ADMIN.
+- El listener guarda clase, ubicacion y frames sin argumentos; no persiste mensajes arbitrarios, URI sin sanear ni IP.
+- Headers, query y body conservan estructura con valores redactados recursivamente; bodies no estructurados se omiten.
+- Los errores internos de API devuelven JSON generico incluso si falla la persistencia del log.
+- Nelmio es la unica autoridad CORS y usa la allowlist CORS_ALLOW_ORIGIN.
 
 ## Entidades clave
 ### User
@@ -208,14 +236,10 @@ Cobertura actual validada:
 - recalc de `MealDiary`
 - tipo Doctrine custom para UUID texto
 
-Ultimo estado verificado:
-- `34` tests
-- `171` assertions
-- PHPUnit en verde
 
 Comando:
 ```powershell
-vendor\bin\phpunit --no-coverage
+php -d memory_limit=512M vendor\bin\phpunit --no-coverage
 ```
 
 ## Comandos utiles
@@ -250,8 +274,8 @@ Eso no bloquea la suite funcional actual, pero significa que queda trabajo de mi
 La API depende mucho de validacion manual dentro de controladores.
 Si se amplian endpoints, conviene considerar DTOs o un patron de request validation mas consistente.
 
-### 3. Error logs accesibles para cualquier usuario autenticado
-`/v1/errors` no esta restringido a admins. Hoy es una decision tecnica provisional.
+### 3. Acceso administrativo y diagnosticos de errores
+`/v1/errors` esta restringido a administradores. No volver a persistir valores de peticiones, mensajes arbitrarios ni argumentos de stack: pueden contener credenciales o datos personales.
 
 ### 4. Mezcla de estilos
 Hay controladores con QueryBuilder, otros con `find()`, otros con SQL directo.

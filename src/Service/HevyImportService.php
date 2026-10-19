@@ -54,6 +54,16 @@ class HevyImportService
 
         $workoutGroups = $this->groupBySession($rows);
         $this->warmExerciseCache();
+        $canCreateExercises = in_array('ROLE_ADMIN', $user->getRoles(), true);
+        if (!$canCreateExercises) {
+            foreach ($rows as $row) {
+                $title = trim($row['exercise_title'] ?? '');
+                if ($title !== '' && !isset($this->exerciseCache[mb_strtolower($title)])) {
+                    $result['errors'][] = 'El CSV contiene ejercicios que no existen en el catálogo. Solicita a un administrador que los añada antes de importar.';
+                    return $result;
+                }
+            }
+        }
         $existingSessionDates = $this->loadExistingSessionDates($user);
 
         $batchSize = 50;
@@ -78,6 +88,7 @@ class HevyImportService
             $session = new WorkoutSession();
             $session->setUser($user);
             $session->setDate($startDate);
+            $session->complete();
 
             if ($endDate && $startDate) {
                 $diffMinutes = (int) round(($endDate->getTimestamp() - $startDate->getTimestamp()) / 60);
@@ -94,7 +105,7 @@ class HevyImportService
                     continue;
                 }
 
-                $exercise = $this->resolveExercise($exerciseTitle, $result);
+                $exercise = $this->resolveExercise($exerciseTitle, $result, $canCreateExercises);
 
                 $weightLbs = (float) ($row['weight_lbs'] ?? 0);
                 $reps = (int) ($row['reps'] ?? 0);
@@ -213,7 +224,7 @@ class HevyImportService
         return null;
     }
 
-    private function resolveExercise(string $exerciseTitle, array &$result): Exercise
+    private function resolveExercise(string $exerciseTitle, array &$result, bool $canCreateExercises): Exercise
     {
         $normalized = mb_strtolower($exerciseTitle);
 
@@ -221,18 +232,8 @@ class HevyImportService
             return $this->exerciseCache[$normalized];
         }
 
-        $exercise = $this->em->createQueryBuilder()
-            ->select('e')
-            ->from(Exercise::class, 'e')
-            ->where('LOWER(e.name) = :name')
-            ->setParameter('name', $normalized)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
-
-        if ($exercise) {
-            $this->exerciseCache[$normalized] = $exercise;
-            return $exercise;
+        if (!$canCreateExercises) {
+            throw new \LogicException('Only administrators can create catalog exercises.');
         }
 
         $name = $exerciseTitle;
@@ -259,10 +260,14 @@ class HevyImportService
 
     private function warmExerciseCache(): void
     {
+        $this->exerciseCache = [];
         $exercises = $this->em->getRepository(Exercise::class)->findAll();
         foreach ($exercises as $exercise) {
             $key = mb_strtolower($exercise->getName());
             $this->exerciseCache[$key] = $exercise;
+            if ($exercise->getEquipment()) {
+                $this->exerciseCache[$key . ' (' . mb_strtolower($exercise->getEquipment()) . ')'] = $exercise;
+            }
         }
     }
 

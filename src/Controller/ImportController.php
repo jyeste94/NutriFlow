@@ -39,34 +39,28 @@ class ImportController extends AbstractController
             return $this->json(['error' => 'File too large. Maximum size is 10MB.'], 413);
         }
 
-        try {
-            $csvContent = file_get_contents($file->getPathname());
-            if ($csvContent === false || trim($csvContent) === '') {
-                return $this->json(['error' => 'Could not read the uploaded file or file is empty.'], 400);
-            }
-
-            $result = $this->hevyImportService->importWorkoutCsv($user, $csvContent);
-
-            if (!empty($result['errors']) && $result['sessions_created'] === 0) {
-                return $this->json([
-                    'error' => 'Import failed',
-                    'details' => $result['errors'],
-                ], 400);
-            }
-
-            return $this->json([
-                'message' => 'Import completed successfully',
-                'sessions_created' => $result['sessions_created'],
-                'sets_imported' => $result['sets_imported'],
-                'exercises_created' => $result['exercises_created'],
-                'sessions_skipped' => $result['sessions_skipped'],
-                'errors' => $result['errors'],
-            ]);
-        } catch (\Throwable $e) {
-            return $this->json([
-                'error' => 'An unexpected error occurred during import.',
-                'details' => [$e->getMessage()],
-            ], 500);
+        $csvContent = file_get_contents($file->getPathname());
+        if ($csvContent === false || trim($csvContent) === '') {
+            return $this->json(['error' => 'Could not read the uploaded file or file is empty.'], 400);
         }
+
+        // Unexpected failures go to the global listener for safe logging and a generic response.
+        $result = $this->hevyImportService->importWorkoutCsv($user, $csvContent);
+
+        if (!empty($result['errors']) && $result['sessions_created'] === 0) {
+            return $this->json([
+                'error' => 'Import failed',
+                'details' => $result['errors'],
+            ], 400);
+        }
+
+        return $this->json([
+            'message' => 'Import completed successfully',
+            'sessions_created' => $result['sessions_created'],
+            'sets_imported' => $result['sets_imported'],
+            'exercises_created' => $result['exercises_created'],
+            'sessions_skipped' => $result['sessions_skipped'],
+            'errors' => $result['errors'],
+        ]);
     }
 }

@@ -106,11 +106,6 @@ class FatSecretScraperService
                 return null;
             }
 
-            $macros['calories'] = $macros['calories'] ?? 0.0;
-            $macros['proteins'] = $macros['proteins'] ?? 0.0;
-            $macros['carbs'] = $macros['carbs'] ?? 0.0;
-            $macros['fats'] = $macros['fats'] ?? 0.0;
-
             return $macros;
         } catch (\Throwable) {
             return null;
