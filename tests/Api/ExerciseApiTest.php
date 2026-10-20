@@ -2,6 +2,7 @@
 
 namespace App\Tests\Api;
 
+use App\Entity\Exercise;
 use App\Entity\User;
 
 final class ExerciseApiTest extends ApiTestCase
@@ -51,6 +52,162 @@ final class ExerciseApiTest extends ApiTestCase
         $this->assertSame('Leg Curl', $detail['name']);
         $this->assertArrayHasKey('imageUrl', $detail);
         $this->assertArrayHasKey('thumbnailUrl', $detail);
+    }
+
+    public function testCatalogAndSearchCanPageBeyondFiftyWithStableDuplicateNameOrdering(): void
+    {
+        $expectedIds = [];
+        for ($index = 0; $index < 205; ++$index) {
+            $exercise = (new Exercise())->setName('Pagination Press')->setMuscleGroup('chest');
+            $this->em->persist($exercise);
+            $expectedIds[] = $exercise;
+        }
+        $this->em->flush();
+        $expectedIds = array_map(fn (Exercise $exercise) => $exercise->getId()->toRfc4122(), $expectedIds);
+        sort($expectedIds, SORT_STRING);
+        $headers = $this->authHeaders('exercise-pagination');
+
+        foreach (['/v1/exercises?', '/v1/exercises/search?q=pagination&'] as $endpoint) {
+            $this->client->request('GET', $endpoint . 'limit=999&page=1', [], [], $headers);
+            $this->assertResponseIsSuccessful();
+            $response = $this->client->getResponse();
+            $this->assertSame('205', $response->headers->get('X-Total-Count'));
+            $this->assertSame('1', $response->headers->get('X-Page'));
+            $this->assertSame('200', $response->headers->get('X-Per-Page'));
+            $firstPage = $this->jsonResponse();
+            $this->assertCount(200, $firstPage);
+
+            $this->client->request('GET', $endpoint . 'limit=200&page=2', [], [], $headers);
+            $this->assertResponseIsSuccessful();
+            $this->assertSame('205', $this->client->getResponse()->headers->get('X-Total-Count'));
+            $this->assertSame('2', $this->client->getResponse()->headers->get('X-Page'));
+            $secondPage = $this->jsonResponse();
+            $this->assertCount(5, $secondPage);
+            $ids = array_column(array_merge($firstPage, $secondPage), 'id');
+            $this->assertSame($expectedIds, $ids);
+            $this->assertCount(205, array_unique($ids));
+
+            $this->client->request('GET', $endpoint . 'limit=200&page=3', [], [], $headers);
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([], $this->jsonResponse());
+            $this->assertSame('205', $this->client->getResponse()->headers->get('X-Total-Count'));
+
+            $this->client->request('GET', $endpoint . 'limit=0&page=0', [], [], $headers);
+            $this->assertResponseIsSuccessful();
+            $this->assertCount(1, $this->jsonResponse());
+            $this->assertSame('1', $this->client->getResponse()->headers->get('X-Page'));
+            $this->assertSame('1', $this->client->getResponse()->headers->get('X-Per-Page'));
+        }
+    }
+
+    public function testSearchMatchesBilingualTokensAcrossFieldsWithoutMergingEquipmentOrVariants(): void
+    {
+        $flat = $this->createExerciseFixture('Localized label')
+            ->setSourceName('Dumbbell Bench Press')
+            ->setEquipment('dumbbell')
+            ->setDescription('Start on a flat bench.');
+        $incline = $this->createExerciseFixture('Incline Dumbbell Bench Press')
+            ->setEquipment('dumbbell')
+            ->setDescription('Use an inclined bench.');
+        $decline = $this->createExerciseFixture('Decline Dumbbell Bench Press')
+            ->setEquipment('dumbbell')
+            ->setDescription('Use a decline bench.');
+        $barbell = $this->createExerciseFixture('Barbell Bench Press')
+            ->setEquipment('barbell')
+            ->setDescription('Use a flat bench.');
+        $spanish = $this->createExerciseFixture('Press de PÉCHO')
+            ->setEquipment('MÁNCUERNAS')
+            ->setDescription('Press sobre banca plana.');
+        $this->em->flush();
+
+        $cases = [
+            ['press banca mancuernas', [$flat, $incline, $decline, $spanish]],
+            ['MÁNCUERNAS en BÁNCA con PRESS', [$flat, $incline, $decline, $spanish]],
+            ['plano press mancuernas banca', [$flat, $spanish]],
+            ['flat dumbbell press', [$flat, $spanish]],
+            ['press inclinado mancuernas', [$incline]],
+            ['mancuernas declinado press', [$decline]],
+            ['barra banca press', [$barbell]],
+            ['pecho press mancuernas', [$spanish]],
+        ];
+        foreach ($cases as [$query, $expected]) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-bilingual'));
+            $this->assertResponseIsSuccessful();
+            $this->assertEqualsCanonicalizing(
+                array_map(fn (Exercise $exercise) => $exercise->getId()->toRfc4122(), $expected),
+                array_column($this->jsonResponse(), 'id'),
+                $query
+            );
+            $this->assertSame((string) count($expected), $this->client->getResponse()->headers->get('X-Total-Count'));
+        }
+    }
+
+    public function testSearchExpandsMovementVocabularyInEitherLanguageAndTokenOrder(): void
+    {
+        $row = $this->createExerciseFixture('Bent Over Barbell Row')->setEquipment('barbell');
+        $squat = $this->createExerciseFixture('Sentadilla con barra')->setEquipment('barra');
+        $deadlift = $this->createExerciseFixture('Romanian Deadlift')->setEquipment('dumbbell');
+        $this->em->flush();
+
+        foreach ([
+            ['remo con barra', $row],
+            ['barbell squat', $squat],
+            ['peso muerto rumano con mancuernas', $deadlift],
+            ['muerto mancuernas peso rumano', $deadlift],
+        ] as [$query, $expected]) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-movements'));
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([$expected->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'), $query);
+        }
+    }
+
+    public function testSearchTreatsSqlWildcardsAndEscapeCharactersLiterally(): void
+    {
+        $percent = $this->createExerciseFixture('Literal 100% Press');
+        $this->createExerciseFixture('Literal 100X Press');
+        $underscore = $this->createExerciseFixture('Literal_under');
+        $this->createExerciseFixture('LiteralXunder');
+        $bang = $this->createExerciseFixture('Bang! Press');
+
+        foreach ([['%', $percent], ['100%', $percent], ['_', $underscore], ['literal_', $underscore], ['bang!', $bang]] as [$query, $expected]) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-literal'));
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([$expected->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'), $query);
+        }
+    }
+
+    public function testSearchRequiresAQueryAndDoesNotMatchEverythingForConnectorOnlyQueries(): void
+    {
+        $this->createExerciseFixture('Press');
+        $headers = $this->authHeaders('exercise-empty-search');
+        $this->client->request('GET', '/v1/exercises/search', [], [], $headers);
+        $this->assertResponseStatusCodeSame(400);
+
+        $this->client->request('GET', '/v1/exercises/search?q=de+la+con', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame([], $this->jsonResponse());
+        $this->assertSame('0', $this->client->getResponse()->headers->get('X-Total-Count'));
+    }
+
+    public function testSearchRejectsOversizedQueriesAndExcessiveDistinctTerms(): void
+    {
+        foreach ([implode(' ', range(1, 1100)), implode(' ', range(1, 21)), str_repeat('ñ', 201)] as $query) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-bounded-search'));
+            $this->assertResponseStatusCodeSame(400);
+        }
+    }
+
+    public function testSearchAcceptsTwoHundredUnicodeCharactersAndTwentyDistinctTerms(): void
+    {
+        $name = str_repeat('ñ', 199) . 'a';
+        $unicodeExercise = $this->createExerciseFixture($name);
+        $terms = implode(' ', range(1, 20));
+        $termsExercise = $this->createExerciseFixture($terms);
+        foreach ([[$name, $unicodeExercise], [$terms, $termsExercise]] as [$query, $expected]) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-bounded-search'));
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([$expected->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'));
+        }
     }
 
     public function testExerciseGetOneRejectsInvalidIdFormat(): void

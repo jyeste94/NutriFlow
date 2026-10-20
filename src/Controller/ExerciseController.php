@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Exercise;
+use App\Service\ExerciseSearch;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -46,6 +47,7 @@ class ExerciseController extends AbstractController
 
         $exercises = $qb
             ->orderBy('e.name', 'ASC')
+            ->addOrderBy('e.id', 'ASC')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
             ->getQuery()
@@ -76,23 +78,21 @@ class ExerciseController extends AbstractController
     }
 
     #[Route('/search', name: 'search', methods: ['GET'])]
-    public function search(Request $request, EntityManagerInterface $em): JsonResponse
+    public function search(Request $request, ExerciseSearch $search): JsonResponse
     {
         $q = $request->query->get('q', '');
         if (trim($q) === '') {
             return $this->json(['error' => 'Query parameter "q" is required'], 400);
         }
 
-        $limit = min(50, max(1, $request->query->getInt('limit', 20)));
-
-        $repo = $em->getRepository(Exercise::class);
-        $exercises = $repo->createQueryBuilder('e')
-            ->where('e.name LIKE :q OR e.description LIKE :q')
-            ->setParameter('q', '%' . $q . '%')
-            ->orderBy('e.name', 'ASC')
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+        $page = max(1, $request->query->getInt('page', 1));
+        $limit = min(200, max(1, $request->query->getInt('limit', 20)));
+        try {
+            $matches = $search->search($q, $page, $limit);
+        } catch (\InvalidArgumentException $error) {
+            return $this->json(['error' => $error->getMessage()], 400);
+        }
+        $exercises = $matches['exercises'];
 
         $result = array_map(function (Exercise $exercise) {
             return [
@@ -110,7 +110,12 @@ class ExerciseController extends AbstractController
             ];
         }, $exercises);
 
-        return $this->json($result);
+        $response = $this->json($result);
+        $response->headers->set('X-Total-Count', (string) $matches['total']);
+        $response->headers->set('X-Page', (string) $page);
+        $response->headers->set('X-Per-Page', (string) $limit);
+
+        return $response;
     }
 
     #[Route('/{id}', name: 'get_one', methods: ['GET'])]

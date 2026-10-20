@@ -9,6 +9,7 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Entity]
 #[ORM\Table(name: 'exercises')]
 #[ORM\Index(name: 'idx_exercises_name', columns: ['name'])]
+#[ORM\UniqueConstraint(name: 'uniq_exercises_source_id', columns: ['source_id'])]
 class Exercise
 {
     #[ORM\Id]
@@ -19,6 +20,12 @@ class Exercise
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $sourceId = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $sourceName = null;
 
     #[ORM\Column(length: 100)]
     private ?string $muscleGroup = null; // Chest, Back, Legs, etc.
@@ -66,6 +73,28 @@ class Exercise
     public function setName(string $name): static
     {
         $this->name = $name;
+        return $this;
+    }
+
+    public function getSourceId(): ?string
+    {
+        return $this->sourceId;
+    }
+
+    public function setSourceId(?string $sourceId): static
+    {
+        $this->sourceId = $sourceId;
+        return $this;
+    }
+
+    public function getSourceName(): ?string
+    {
+        return $this->sourceName;
+    }
+
+    public function setSourceName(?string $sourceName): static
+    {
+        $this->sourceName = $sourceName;
         return $this;
     }
 
