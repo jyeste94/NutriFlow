@@ -234,4 +234,208 @@ final class WorkoutSessionModificationTest extends ApiTestCase
         $this->assertContains('max_reps', $this->jsonResponse()['pr_types']);
         $this->assertNotContains('max_e1rm', $this->jsonResponse()['pr_types']);
     }
+    public function testPartialFinishPersistsEditedSummaryAndExerciseOrderWithoutChangingRoutine(): void
+    {
+        $headers = $this->authHeaders('finish-summary-user');
+        $press = $this->createExerciseFixture('Finish press')->getId()->toRfc4122();
+        $row = $this->createExerciseFixture('Finish row')->getId()->toRfc4122();
+        $this->client->jsonRequest('POST', '/v1/routines', [
+            'name' => 'Original template',
+            'exercises' => [
+                ['exercise_id' => $press, 'sets' => 3, 'reps' => 8, 'restSeconds' => 90],
+                ['exercise_id' => $row, 'sets' => 3, 'reps' => 6, 'restSeconds' => 60],
+            ],
+        ], $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $routineId = $this->jsonResponse()['id'];
+        $this->client->jsonRequest('POST', '/v1/workouts', ['routine_id' => $routineId], $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $sessionId = $this->jsonResponse()['id'];
+        $this->assertSame('Original template', $this->jsonResponse()['name']);
+        $this->client->jsonRequest('PUT', '/v1/routines/' . $routineId, ['name' => 'Renamed template'], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->client->request('GET', '/v1/routines/' . $routineId, [], [], $headers);
+        $routineBeforeFinish = $this->jsonResponse();
+        $this->client->request('GET', '/v1/workouts/' . $sessionId, [], [], $headers);
+        $this->assertSame('Original template', $this->jsonResponse()['name']);
+
+        $setIds = [];
+        foreach ([
+            ['exercise_id' => $press, 'weight' => 50, 'reps' => 8, 'set_number' => 2, 'exercise_order' => 0],
+            ['exercise_id' => $press, 'weight' => 40, 'reps' => 10, 'set_number' => 1, 'exercise_order' => 0, 'completed' => false],
+            ['exercise_id' => $row, 'weight' => 60, 'reps' => 6, 'set_number' => 1, 'exercise_order' => 1],
+        ] as $payload) {
+            $this->client->jsonRequest('POST', '/v1/workouts/' . $sessionId . '/sets', $payload, $headers);
+            $this->assertResponseStatusCodeSame(201);
+            $setIds[] = $this->jsonResponse()['id'];
+        }
+        foreach ($setIds as $index => $setId) {
+            $this->client->jsonRequest('PATCH', '/v1/workouts/' . $sessionId . '/sets/' . $setId, [
+                'exercise_order' => $index === 2 ? 0 : 1,
+            ], $headers);
+            $this->assertResponseIsSuccessful();
+        }
+        $finish = [
+            'status' => 'completed', 'name' => '  Sesion editada  ',
+            'date' => '2026-10-18T10:30:00+02:00', 'duration_seconds' => 125, 'duration_minutes' => 99,
+        ];
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $sessionId, $finish, $headers);
+        $this->assertResponseIsSuccessful();
+        $summary = $this->jsonResponse();
+        $this->assertSame('completed', $summary['status']);
+        $this->assertSame('Sesion editada', $summary['name']);
+        $this->assertSame('2026-10-18T08:30:00+00:00', $summary['date']);
+        $this->assertSame(125, $summary['duration_seconds']);
+        $this->assertSame(2, $summary['duration_minutes']);
+        $this->assertSame(2, $summary['set_count']);
+        $this->assertSame(2, $summary['exercise_count']);
+        $this->assertSame(760.0, (float) $summary['total_volume']);
+        $this->assertSame([$setIds[2], $setIds[1], $setIds[0]], array_column($summary['sets'], 'id'));
+        $this->assertSame([0, 1, 1], array_column($summary['sets'], 'exercise_order'));
+        $this->assertFalse($summary['sets'][1]['completed']);
+        $this->assertSame([], $summary['personal_records']);
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $sessionId, $finish, $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame($summary, $this->jsonResponse());
+        $this->client->request('GET', '/v1/workouts/' . $sessionId, [], [], $headers);
+        $this->assertSame($summary, $this->jsonResponse());
+        $this->client->request('GET', '/v1/workouts?status=completed&include_sets=1', [], [], $headers);
+        $this->assertSame([$summary], $this->jsonResponse());
+        $this->client->request('GET', '/v1/workouts?status=completed', [], [], $headers);
+        $this->assertSame('Sesion editada', $this->jsonResponse()[0]['name']);
+        $this->assertSame(125, $this->jsonResponse()[0]['duration_seconds']);
+        $this->client->request('GET', '/v1/routines/' . $routineId, [], [], $headers);
+        $this->assertSame($routineBeforeFinish, $this->jsonResponse());
+    }
+
+    public function testFinishMetadataAndExerciseOrderValidationAreAtomicAndKeepMinuteCompatibility(): void
+    {
+        $headers = $this->authHeaders('finish-validation-user');
+        $exerciseId = $this->createExerciseFixture('Finish validation')->getId()->toRfc4122();
+        $this->client->jsonRequest('POST', '/v1/workouts', [], $headers);
+        $sessionId = $this->jsonResponse()['id'];
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $sessionId, ['duration_minutes' => 2], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(120, $this->jsonResponse()['duration_seconds']);
+        $this->client->jsonRequest('POST', '/v1/workouts/' . $sessionId . '/sets', [
+            'exercise_id' => $exerciseId, 'weight' => 10, 'reps' => 8, 'completed' => false,
+        ], $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $setId = $this->jsonResponse()['id'];
+        $this->assertSame(0, $this->jsonResponse()['exercise_order']);
+        $this->client->request('GET', '/v1/workouts/' . $sessionId, [], [], $headers);
+        $before = $this->jsonResponse();
+        foreach ([
+            ['name' => '   '], ['name' => str_repeat('a', 256)], ['name' => null], ['name' => 123],
+            ['date' => 'tomorrow'], ['date' => '2026-02-30'], ['date' => '0000-01-01'],
+            ['date' => '2026-10-18T25:00:00Z'], ['date' => '2026-10-18T10:30:00'],
+            ['date' => '2026-10-18 trailing'], ['date' => []], ['date' => null],
+            ['duration_seconds' => -1], ['duration_seconds' => 604801], ['duration_seconds' => 1.5],
+            ['duration_seconds' => '45'], ['duration_seconds' => true], ['duration_seconds' => null],
+            ['duration_minutes' => -1], ['duration_minutes' => 10081], ['status' => 'active'],
+            ['status' => 'completed', 'name' => 'Must not persist', 'date' => '2026-10-01', 'duration_seconds' => 45],
+        ] as $invalid) {
+            $this->client->jsonRequest('PATCH', '/v1/workouts/' . $sessionId, $invalid, $headers);
+            $this->assertResponseStatusCodeSame(400);
+            $this->client->request('GET', '/v1/workouts/' . $sessionId, [], [], $headers);
+            $this->assertSame($before, $this->jsonResponse());
+        }
+        foreach ([-1, 1.5, '1', null, true, 2147483648] as $invalidOrder) {
+            $this->client->jsonRequest('PATCH', '/v1/workouts/' . $sessionId . '/sets/' . $setId, [
+                'exercise_order' => $invalidOrder, 'weight' => 99,
+            ], $headers);
+            $this->assertResponseStatusCodeSame(400);
+            $this->client->jsonRequest('POST', '/v1/workouts/' . $sessionId . '/sets', [
+                'exercise_id' => $exerciseId, 'weight' => 99, 'reps' => 8, 'exercise_order' => $invalidOrder,
+            ], $headers);
+            $this->assertResponseStatusCodeSame(400);
+        }
+        $this->client->request('GET', '/v1/workouts/' . $sessionId, [], [], $headers);
+        $this->assertSame($before, $this->jsonResponse());
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $sessionId, [
+            'name' => str_repeat('a', 255), 'date' => '2024-02-29', 'duration_seconds' => 0,
+        ], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(0, $this->jsonResponse()['duration_seconds']);
+        $this->assertSame(0, $this->jsonResponse()['duration_minutes']);
+        $this->assertSame('2024-02-29T00:00:00+00:00', $this->jsonResponse()['date']);
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $sessionId . '/sets/' . $setId, ['completed' => true], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $sessionId, [
+            'status' => 'completed', 'duration_seconds' => 604800,
+        ], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(604800, $this->jsonResponse()['duration_seconds']);
+        $this->assertSame(10080, $this->jsonResponse()['duration_minutes']);
+    }
+
+    public function testSummaryRecordsUseOnlyEarlierCompletedSessionsAndSurviveLaterWorkouts(): void
+    {
+        $headers = $this->authHeaders('finish-pr-user');
+        $exerciseId = $this->createExerciseFixture('Durable summary records')->getId()->toRfc4122();
+        $startWithSets = function (array $sessionHeaders, array $sets): array {
+            $this->client->jsonRequest('POST', '/v1/workouts', [], $sessionHeaders);
+            $this->assertResponseStatusCodeSame(201);
+            $sessionId = $this->jsonResponse()['id'];
+            $ids = [];
+            foreach ($sets as $payload) {
+                $this->client->jsonRequest('POST', '/v1/workouts/' . $sessionId . '/sets', $payload, $sessionHeaders);
+                $this->assertResponseStatusCodeSame(201);
+                $ids[] = $this->jsonResponse()['id'];
+            }
+            return [$sessionId, $ids];
+        };
+        [$baselineId] = $startWithSets($headers, [
+            ['exercise_id' => $exerciseId, 'weight' => 100, 'reps' => 5],
+            ['exercise_id' => $exerciseId, 'weight' => 120, 'reps' => 15],
+            ['exercise_id' => $exerciseId, 'weight' => 500, 'reps' => 20, 'set_type' => 'warmup'],
+            ['exercise_id' => $exerciseId, 'weight' => 900, 'reps' => 20, 'completed' => false],
+        ]);
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $baselineId, ['status' => 'completed', 'date' => '2026-10-16'], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame([], $this->jsonResponse()['personal_records']);
+        $startWithSets($headers, [['exercise_id' => $exerciseId, 'weight' => 950, 'reps' => 20]]);
+        [$futureId] = $startWithSets($headers, [['exercise_id' => $exerciseId, 'weight' => 400, 'reps' => 12]]);
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $futureId, ['status' => 'completed', 'date' => '2026-10-20'], $headers);
+        $this->assertResponseIsSuccessful();
+        $otherHeaders = $this->authHeaders('finish-pr-other-user');
+        [$otherId] = $startWithSets($otherHeaders, [['exercise_id' => $exerciseId, 'weight' => 700, 'reps' => 12]]);
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $otherId, ['status' => 'completed', 'date' => '2026-10-17'], $otherHeaders);
+        $this->assertResponseIsSuccessful();
+
+        [$sessionId, $setIds] = $startWithSets($headers, [
+            ['exercise_id' => $exerciseId, 'weight' => 125, 'reps' => 15],
+            ['exercise_id' => $exerciseId, 'weight' => 130, 'reps' => 16],
+            ['exercise_id' => $exerciseId, 'weight' => 110, 'reps' => 5],
+            ['exercise_id' => $exerciseId, 'weight' => 900, 'reps' => 20, 'set_type' => 'warmup'],
+            ['exercise_id' => $exerciseId, 'weight' => 950, 'reps' => 20, 'completed' => false],
+        ]);
+        $this->client->request('GET', '/v1/workouts/' . $sessionId, [], [], $headers);
+        $this->assertSame([], $this->jsonResponse()['personal_records']);
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $sessionId, [
+            'status' => 'completed', 'date' => '2026-10-18', 'duration_seconds' => 45,
+        ], $headers);
+        $this->assertResponseIsSuccessful();
+        $records = $this->jsonResponse()['personal_records'];
+        $this->assertCount(3, $records);
+        $byType = array_column($records, null, 'type');
+        foreach ([
+            'max_weight' => [130, 120, $setIds[1]],
+            'max_reps' => [16, 15, $setIds[1]],
+            'max_e1rm' => [128.3, 116.7, $setIds[2]],
+        ] as $type => [$value, $previous, $setId]) {
+            $this->assertSame((float) $value, (float) $byType[$type]['value']);
+            $this->assertSame((float) $previous, (float) $byType[$type]['previous_value']);
+            $this->assertSame($setId, $byType[$type]['set_id']);
+            $this->assertSame($exerciseId, $byType[$type]['exercise_id']);
+            $this->assertSame('Durable summary records', $byType[$type]['exercise_name']);
+        }
+        [$laterId] = $startWithSets($headers, [['exercise_id' => $exerciseId, 'weight' => 800, 'reps' => 12]]);
+        $this->client->jsonRequest('PATCH', '/v1/workouts/' . $laterId, ['status' => 'completed', 'date' => '2026-10-21'], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->client->request('GET', '/v1/workouts/' . $sessionId, [], [], $headers);
+        $this->assertSame($records, $this->jsonResponse()['personal_records']);
+        $this->client->request('GET', '/v1/workouts/' . $baselineId, [], [], $headers);
+        $this->assertSame([], $this->jsonResponse()['personal_records']);
+    }
 }

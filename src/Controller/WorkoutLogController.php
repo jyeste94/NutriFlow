@@ -99,23 +99,41 @@ class WorkoutLogController extends AbstractController
         if (array_key_exists('status', $data) && $data['status'] !== 'completed') {
             return $this->json(['error' => 'A session may only transition to completed'], 400);
         }
+        $name = $session->getName();
+        if (array_key_exists('name', $data)) {
+            if (!is_string($data['name']) || ($name = trim($data['name'])) === '' || mb_strlen($name) > 255) {
+                return $this->json(['error' => 'name must contain between 1 and 255 characters'], 400);
+            }
+        }
+        $date = $session->getDate();
+        if (array_key_exists('date', $data)) {
+            $date = $this->parseSessionDate($data['date']);
+            if ($date === null) return $this->json(['error' => 'date must be a valid ISO date or datetime'], 400);
+        }
+        $duration = $session->getDurationSeconds();
+        if (array_key_exists('duration_minutes', $data)) {
+            $minutes = filter_var($data['duration_minutes'], FILTER_VALIDATE_INT);
+            if ($minutes === false || $minutes < 0 || $minutes > 10080) {
+                return $this->json(['error' => 'duration_minutes must be between 0 and 10080'], 400);
+            }
+            $duration = $minutes * 60;
+        }
+        if (array_key_exists('duration_seconds', $data)) {
+            if (!is_int($data['duration_seconds']) || $data['duration_seconds'] < 0 || $data['duration_seconds'] > 604800) {
+                return $this->json(['error' => 'duration_seconds must be an integer between 0 and 604800'], 400);
+            }
+            $duration = $data['duration_seconds'];
+        }
         if ($session->getStatus() === 'completed') {
             // Retrying a successful finish is safe; finished sessions cannot reopen.
             return $this->json($this->serializeSession($session, true));
         }
-        if (array_key_exists('duration_minutes', $data)) {
-            $duration = filter_var($data['duration_minutes'], FILTER_VALIDATE_INT);
-            if ($duration === false || $duration < 0 || $duration > 10080) {
-                return $this->json(['error' => 'duration_minutes must be between 0 and 10080'], 400);
-            }
-            $session->setDurationMinutes($duration);
+        if (($data['status'] ?? null) === 'completed'
+            && !$session->getSets()->exists(fn ($key, WorkoutSetLog $set) => $set->isCompleted())) {
+            return $this->json(['error' => 'Completa al menos una serie o descarta la sesión'], 400);
         }
-        if (($data['status'] ?? null) === 'completed') {
-            if (!$session->getSets()->exists(fn ($key, WorkoutSetLog $set) => $set->isCompleted())) {
-                return $this->json(['error' => 'Completa al menos una serie o descarta la sesión'], 400);
-            }
-            $session->complete();
-        }
+        $session->setName($name)->setDate($date)->setDurationSeconds($duration);
+        if (($data['status'] ?? null) === 'completed') $session->complete();
         $this->em->flush();
         return $this->json($this->serializeSession($session, true));
     }
@@ -156,6 +174,7 @@ class WorkoutLogController extends AbstractController
             if ($routine->getUser() !== $user) return $this->json(['error' => 'Forbidden'], 403);
             $session->setRoutine($routine);
         }
+        $session->setName($session->getRoutine()?->getName() ?? 'Entrenamiento');
         $this->em->persist($session);
         $this->em->flush();
         return $this->json($this->serializeSession($session, true), 201);
@@ -192,13 +211,8 @@ class WorkoutLogController extends AbstractController
         $session->addSet($set);
         $this->em->persist($set);
         $this->em->flush();
-        $prTypes = [];
+        $prTypes = $this->newRecordTypes($prior, $this->records([$set]));
         $e1rm = WorkoutSetLog::estimateOneRepMax($set->getWeight(), $set->getReps());
-        if ($set->isCompleted() && $set->getSetType() !== 'warmup' && $set->getWeight() > 0) {
-            if ($prior['max_weight'] > 0 && $set->getWeight() > $prior['max_weight']) $prTypes[] = 'max_weight';
-            if ($prior['max_reps'] > 0 && $set->getReps() > $prior['max_reps']) $prTypes[] = 'max_reps';
-            if ($e1rm !== null && $prior['max_e1rm'] > 0 && $e1rm > $prior['max_e1rm']) $prTypes[] = 'max_e1rm';
-        }
         return $this->json([
             'setId' => $set->getId()->toRfc4122(), 'is_pr' => count($prTypes) > 0, 'pr_types' => $prTypes,
             'previous_max_weight' => $prior['max_weight'], 'new_weight' => $set->getWeight(),
@@ -261,12 +275,14 @@ class WorkoutLogController extends AbstractController
         if (!is_bool($completed)) return $this->json(['error' => 'completed must be a boolean'], 400);
         $number = filter_var($data['set_number'] ?? $set->getSetNumber(), FILTER_VALIDATE_INT);
         if ($number === false || $number < 1 || $number > 1000) return $this->json(['error' => 'Invalid set_number'], 400);
+        $order = array_key_exists('exercise_order', $data) ? $data['exercise_order'] : $set->getExerciseOrder();
+        if (!is_int($order) || $order < 0 || $order > 2147483647) return $this->json(['error' => 'exercise_order must be a nonnegative integer'], 400);
         $duration = array_key_exists('duration_seconds', $data) ? $data['duration_seconds'] : ($data['durationSeconds'] ?? $set->getDurationSeconds());
         $distance = array_key_exists('distance_km', $data) ? $data['distance_km'] : ($data['distanceKm'] ?? $set->getDistanceKm());
         if ($duration !== null && (filter_var($duration, FILTER_VALIDATE_INT) === false || $duration < 0 || $duration > 604800)) return $this->json(['error' => 'Invalid duration_seconds'], 400);
         if ($distance !== null && (filter_var($distance, FILTER_VALIDATE_FLOAT) === false || !is_finite((float) $distance) || $distance < 0 || $distance > 10000)) return $this->json(['error' => 'Invalid distance_km'], 400);
         $set->setWeight((float) $weight)->setReps((int) $reps)->setSetType($type)->setCompleted($completed)->setSetNumber($number)
-            ->setDurationSeconds($duration !== null ? (int) $duration : null)->setDistanceKm($distance !== null ? (float) $distance : null);
+            ->setExerciseOrder($order)->setDurationSeconds($duration !== null ? (int) $duration : null)->setDistanceKm($distance !== null ? (float) $distance : null);
         return null;
     }
 
@@ -275,6 +291,7 @@ class WorkoutLogController extends AbstractController
         $exercise = $set->getExercise();
         return [
             'id' => $set->getId()->toRfc4122(), 'client_set_id' => $set->getClientSetId(), 'set_number' => $set->getSetNumber(),
+            'exercise_order' => $set->getExerciseOrder(),
             'exercise_id' => $exercise->getId()->toRfc4122(), 'exercise_name' => $exercise->getName(),
             'muscle_group' => $exercise->getMuscleGroup(), 'tracking_type' => $exercise->getTrackingType(),
             'weight' => $set->getWeight(), 'reps' => $set->getReps(), 'completed' => $set->isCompleted(),
@@ -295,32 +312,41 @@ class WorkoutLogController extends AbstractController
             $exercises[$set->getExercise()->getId()->toRfc4122()] = true;
             $volume += $set->getWeight() * $set->getReps();
         }
-        usort($sets, fn (array $a, array $b) => $a['set_number'] <=> $b['set_number']);
+        usort($sets, fn (array $a, array $b) => ($a['exercise_order'] <=> $b['exercise_order']) ?: ($a['set_number'] <=> $b['set_number']) ?: strcmp($a['id'], $b['id']));
         $result = [
             'id' => $session->getId()->toRfc4122(), 'status' => $session->getStatus(),
+            'name' => $session->getName(), 'duration_seconds' => $session->getDurationSeconds(),
             'routine_id' => $session->getRoutine()?->getId()?->toRfc4122(), 'routine_name' => $session->getRoutine()?->getName(),
             'date' => $session->getDate()->format('c'), 'duration_minutes' => $session->getDurationMinutes(),
             'total_volume' => round($volume, 1), 'exercise_count' => count($exercises), 'set_count' => $completed,
         ];
-        if ($includeSets) $result['sets'] = $sets;
+        if ($includeSets) {
+            $result['sets'] = $sets;
+            $result['personal_records'] = $this->sessionPersonalRecords($session);
+        }
         return $result;
     }
 
     /** @return WorkoutSetLog[] */
-    private function recordSets(string $exerciseId): array
+    private function recordSets(string $exerciseId, ?WorkoutSession $before = null): array
     {
-        return $this->em->createQueryBuilder()->select('sl', 's')->from(WorkoutSetLog::class, 'sl')->join('sl.session', 's')
+        $qb = $this->em->createQueryBuilder()->select('sl', 's')->from(WorkoutSetLog::class, 'sl')->join('sl.session', 's')
             ->where('s.user = :user')->andWhere("s.status = 'completed'")->andWhere('sl.exercise = :exercise')
             ->andWhere('sl.completed = :completed')->setParameter('user', $this->getUser())->setParameter('exercise', $exerciseId)
-            ->setParameter('completed', true)->orderBy('s.date', 'DESC')->addOrderBy('s.id', 'DESC')->addOrderBy('sl.setNumber', 'ASC')->addOrderBy('sl.id', 'ASC')
-            ->getQuery()->getResult();
+            ->setParameter('completed', true)->orderBy('s.date', 'DESC')->addOrderBy('s.id', 'DESC')->addOrderBy('sl.setNumber', 'ASC')->addOrderBy('sl.id', 'ASC');
+        if ($before !== null) {
+            $qb->andWhere('(s.date < :date OR (s.date = :date AND s.id < :sessionId))')
+                ->setParameter('date', $before->getDate())
+                ->setParameter('sessionId', $before->getId()->toRfc4122());
+        }
+        return $qb->getQuery()->getResult();
     }
 
     private function records(array $sets): array
     {
         $records = ['max_weight' => 0.0, 'max_weight_set' => null, 'max_e1rm' => 0.0, 'max_e1rm_set' => null, 'max_reps' => 0, 'max_reps_set' => null];
         foreach ($sets as $set) {
-            if ($set->getSetType() === 'warmup' || $set->getWeight() <= 0 || $set->getReps() < 1) continue;
+            if (!$set->isCompleted() || $set->getSetType() === 'warmup' || $set->getWeight() <= 0 || $set->getReps() < 1) continue;
             $weight = $set->getWeight();
             $reps = $set->getReps();
             $entry = ['weight' => $weight, 'reps' => $reps, 'date' => $set->getSession()->getDate()->format('Y-m-d')];
@@ -333,6 +359,54 @@ class WorkoutLogController extends AbstractController
             }
         }
         return $records;
+    }
+
+    private function newRecordTypes(array $prior, array $current): array
+    {
+        return array_values(array_filter(['max_weight', 'max_reps', 'max_e1rm'],
+            fn (string $type) => $prior[$type] > 0 && $current[$type] > $prior[$type]));
+    }
+
+    private function sessionPersonalRecords(WorkoutSession $session): array
+    {
+        if ($session->getStatus() !== 'completed') return [];
+        $exerciseSets = [];
+        foreach ($session->getSets() as $set) {
+            $exerciseSets[$set->getExercise()->getId()->toRfc4122()][] = $set;
+        }
+        ksort($exerciseSets);
+        $result = [];
+        foreach ($exerciseSets as $exerciseId => $sets) {
+            usort($sets, fn (WorkoutSetLog $a, WorkoutSetLog $b) => ($a->getSetNumber() <=> $b->getSetNumber()) ?: strcmp($a->getId()->toRfc4122(), $b->getId()->toRfc4122()));
+            $prior = $this->records($this->recordSets($exerciseId, $session));
+            $current = $this->records($sets);
+            foreach ($this->newRecordTypes($prior, $current) as $type) {
+                foreach ($sets as $set) {
+                    if ($this->records([$set])[$type] !== $current[$type]) continue;
+                    $result[] = [
+                        'type' => $type, 'exercise_id' => $exerciseId, 'exercise_name' => $set->getExercise()->getName(),
+                        'set_id' => $set->getId()->toRfc4122(), 'weight' => $set->getWeight(), 'reps' => $set->getReps(),
+                        'value' => $current[$type], 'previous_value' => $prior[$type],
+                    ];
+                    break;
+                }
+            }
+        }
+        return $result;
+    }
+
+    private function parseSessionDate(mixed $value): ?\DateTimeImmutable
+    {
+        if (!is_string($value) || !preg_match('/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-](?:0\d|1[0-4]):[0-5]\d))?$/D', $value)) return null;
+        if (!checkdate((int) substr($value, 5, 2), (int) substr($value, 8, 2), (int) substr($value, 0, 4))) return null;
+        try {
+            $date = new \DateTimeImmutable($value, new \DateTimeZone('UTC'));
+            $errors = \DateTimeImmutable::getLastErrors();
+        } catch (\Exception) {
+            return null;
+        }
+        if ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) return null;
+        return $date->setTimezone(new \DateTimeZone('UTC'));
     }
 
     private function parseJsonBody(Request $request): array|JsonResponse

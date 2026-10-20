@@ -27,11 +27,17 @@ class WorkoutSession
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Routine $routine = null;
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $name = null;
+
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $date = null;
 
     #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $durationMinutes = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $durationSeconds = null;
 
     #[ORM\Column(type: 'string', length: 16, options: ['default' => 'active'])]
     private string $status = 'active';
@@ -92,6 +98,17 @@ class WorkoutSession
         return $this;
     }
 
+    public function getName(): string
+    {
+        return $this->name ?? $this->routine?->getName() ?? 'Entrenamiento';
+    }
+
+    public function setName(string $name): static
+    {
+        $this->name = $name;
+        return $this;
+    }
+
     public function getDate(): ?\DateTimeImmutable
     {
         return $this->date;
@@ -111,6 +128,19 @@ class WorkoutSession
     public function setDurationMinutes(?int $durationMinutes): static
     {
         $this->durationMinutes = $durationMinutes;
+        $this->durationSeconds = $durationMinutes !== null ? $durationMinutes * 60 : null;
+        return $this;
+    }
+
+    public function getDurationSeconds(): ?int
+    {
+        return $this->durationSeconds ?? ($this->durationMinutes !== null ? $this->durationMinutes * 60 : null);
+    }
+
+    public function setDurationSeconds(?int $durationSeconds): static
+    {
+        $this->durationSeconds = $durationSeconds;
+        $this->durationMinutes = $durationSeconds !== null ? intdiv($durationSeconds, 60) : null;
         return $this;
     }
 

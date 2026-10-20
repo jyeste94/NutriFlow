@@ -49,6 +49,20 @@ class WorkoutSetLog
     #[ORM\Column(type: 'integer', options: ['default' => 1])]
     private int $setNumber = 1;
 
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private int $exerciseOrder = 0;
+
+    public function getExerciseOrder(): int
+    {
+        return $this->exerciseOrder;
+    }
+
+    public function setExerciseOrder(int $exerciseOrder): static
+    {
+        $this->exerciseOrder = $exerciseOrder;
+        return $this;
+    }
+
     public function getClientSetId(): ?string
     {
         return $this->clientSetId;

@@ -128,8 +128,14 @@ Si una IA toca IDs o relaciones, no debe volver a asumir UUID binario.
 - `PATCH /v1/workouts/{sessionId}/sets/{setId}`
 - `DELETE /v1/workouts/{sessionId}/sets/{setId}`
 - `status` distingue `active` y `completed`; solo finalizar cambia la sesion a completada. `GET` admite filtro `status`.
-- `client_session_id` es unico por usuario; `client_set_id` por sesion. Conservarlos en reintentos. `set_number` conserva orden, `duration_seconds` no se redondea a minutos.
-- Migracion requerida: `Version20261019000100`. Las sesiones antiguas solo se consideran completadas si tienen duracion de cierre y alguna serie completada.
+- `client_session_id` es unico por usuario; `client_set_id` por sesion. Conservarlos en reintentos.
+- `name` es una instantanea independiente del nombre de la rutina al iniciar (sin rutina: `Entrenamiento`); las lecturas antiguas sin nombre usan el de la rutina como fallback.
+- `PATCH` permite editar `name` (trim, 1..255 caracteres), `date` (`YYYY-MM-DD` o datetime ISO con segundos y zona, normalizado a UTC) y `duration_seconds` (entero 0..604800), con o sin `status: completed`. El cierre exige al menos una serie completada, conserva las incompletas sin contarlas y nunca modifica la rutina. Repetir el cierre devuelve la sesion persistida sin reabrirla.
+- `duration_minutes` sigue siendo compatible: al escribir minutos se calculan segundos; si se envian ambos prevalecen los segundos exactos y los minutos se obtienen truncando. El detalle y la lista incluyen ambos campos.
+- Cada set admite `exercise_order` entero no negativo (por defecto 0) en POST/PATCH. El detalle y `include_sets` ordenan por `exercise_order`, despues `set_number` y por ID en empates.
+- El detalle incluye `personal_records: [{type, exercise_id, exercise_name, set_id, weight, reps, value, previous_value}]`, con `type` en `max_weight|max_reps|max_e1rm`. Solo sesiones completadas, una mejor serie por ejercicio/tipo y comparacion con sesiones completadas anteriores (fecha, ID para desempatar); excluye warmups, incompletas y cargas no positivas. e1RM usa la regla existente de 1..12 reps. Sin baseline previo positivo o sin mejora devuelve `[]`, tambien para la primera sesion.
+- Migraciones requeridas: `Version20261019000100` (estado/identidades; sesiones antiguas completadas solo con duracion y alguna serie completada) y `Version20261019000300` (nombre independiente, segundos exactos de sesion y orden de ejercicio). La nueva migracion copia el nombre de la rutina o `Entrenamiento`, convierte minutos antiguos a segundos y asigna orden 0 a los sets existentes. Ejecutar las migraciones antes de desplegar el nuevo cierre; no modificar migraciones previas.
+- Tras desplegar entidades y migraciones, regenerar la cache del entorno (`php bin/console cache:clear --env=prod --no-debug`). Una cache antigua de metadatos puede omitir los nuevos campos al persistir aunque el controlador ya los serialice.
 
 ### Preferencias y registros auxiliares
 - `GET/PUT /v1/user/preferences`: perfil energetico y objetivos; `roles` es solo lectura. Mifflin × actividad calcula mantenimiento; `calorie_adjustment` calcula ingesta. No sumar calorias del entrenamiento de nuevo.
