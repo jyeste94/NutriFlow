@@ -68,7 +68,7 @@ Si una IA toca IDs o relaciones, no debe volver a asumir UUID binario.
 - `POST /v1/diaries/{date}/entries`
 - `DELETE /v1/diaries/entries/{id}`
 - La creacion admite `client_id` UUID estable para reintentos; el borrado repetido de una entrada ausente devuelve 204.
-- En entradas con `serving_id` y `amountGrams`, una racion accesible con nutrientes completos y cantidad positiva sigue siendo la fuente del calculo. Si esa racion carece de cantidad positiva, el cliente debe aportar nombre, gramos y los cuatro nutrientes totales: se conserva ese registro como alimento privado con una racion de los gramos indicados y multiplicador 1, sin inventar 100 g ni modificar el catalogo compartido. Se mantienen las validaciones de cantidad/snapshot, los permisos y la idempotencia por `client_id`; no requiere migracion.
+- El diario individual admite `amountGrams` o `amountMl`, mutuamente excluyentes. La cantidad debe usar la misma unidad metrica que la racion referenciada; no se convierte g/ml. Si la racion accesible tiene nutrientes pero carece de cantidad o unidad metrica verificable, el cliente debe aportar nombre, cantidad y cuatro nutrientes totales: se conserva ese registro como alimento privado con su unidad y multiplicador 1, sin inventar 100 g ni modificar el catalogo compartido. Se mantienen permisos, validaciones e idempotencia por `client_id`.
 
 ### Diet Plans
 - `GET /v1/diet-plans`
@@ -117,9 +117,11 @@ Si una IA toca IDs o relaciones, no debe volver a asumir UUID binario.
 - `GET /v1/saved-meals`, `GET /v1/saved-meals/{id}`
 - `POST /v1/saved-meals`, `PUT /v1/saved-meals/{id}`, `DELETE /v1/saved-meals/{id}`
 - Las recetas reutilizan comidas guardadas: `name`, `items`, `servings` (raciones enteras 1..100), `instructions` (preparacion, hasta 20000 caracteres), `preferredMealType`. La creacion admite `client_id` UUID idempotente.
-- Los ingredientes contienen `servingId`, `amountGrams` y nutrientes de la cantidad completa; si estan vinculados al catalogo el servidor calcula los nutrientes desde la racion accesible. Las recetas usan gramos, sin asumir equivalencia gramos/mililitros.
+- Los ingredientes contienen `servingId` opcional, `amount`, `unit` (`g` o `ml`) y nutrientes de la cantidad completa. Si estan vinculados al catalogo, cantidad y unidad deben ser compatibles con la racion accesible y el servidor calcula sus nutrientes. No se acepta el antiguo campo `amountGrams` para ingredientes de comidas guardadas ni se asume equivalencia gramos/mililitros. La respuesta incluye `baseServingAmount` cuando la referencia es reutilizable.
 - `POST /v1/diaries/{date}/saved-meals/{id}` acepta `mealType`, `servings` (raciones consumidas, tambien fraccionarias) y `client_id` UUID opcional para reintentos idempotentes; escala todos los ingredientes por consumidas / raciones de la receta. Conservar el mismo UUID hasta confirmar exito para una misma receta, fecha, comida y cantidad.
 - Migracion requerida: `Version20261019000200`, anade `saved_meals.servings` (1 para comidas existentes) e `instructions` (texto vacio para existentes). Ejecutar las migraciones antes de desplegar el frontend de recetas.
+- Migracion requerida para unidades: `Version20261021000100`, renombra `saved_meal_items.amount_grams` a `amount` y anade `unit` con `g` para los datos historicos, conservando cantidades e identidades. Aplicar migracion y regenerar cache Symfony/Doctrine antes del frontend actualizado. El rollback aborta si existen ingredientes no expresados en gramos para no perder su unidad.
+- Una referencia eliminada o con cantidad/unidad incompatibles no convierte ni bloquea el registro de la receta: se reutiliza el snapshot privado con la unidad del ingrediente. El detalle devuelve `servingId` y `baseServingAmount` nulos para impedir que la cola individual use una referencia fisicamente incompatible.
 
 ### Measurements
 - `GET /v1/measurements`

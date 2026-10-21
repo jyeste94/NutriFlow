@@ -275,15 +275,21 @@ final class DiaryApiTest extends ApiTestCase
 
     public static function unavailableServingAmounts(): array
     {
-        return ['missing amount' => [null], 'zero amount' => [0.0]];
+        return [
+            'missing gram amount' => [null, 'amountGrams', 'g'],
+            'zero gram amount' => [0.0, 'amountGrams', 'g'],
+            'missing millilitre amount' => [null, 'amountMl', 'ml'],
+            'zero millilitre amount' => [0.0, 'amountMl', 'ml'],
+        ];
     }
 
     #[DataProvider('unavailableServingAmounts')]
-    public function testPendingMeasuredSnapshotSurvivesAnUnavailableServingAmountAndRetries(?float $sourceAmount): void
+    public function testPendingMeasuredSnapshotSurvivesAnUnavailableServingAmountAndRetries(?float $sourceAmount, string $amountField, string $unit): void
     {
         $source = $this->createServingFixture('pending-yogurt');
         $source->setDescription('Ración sin peso conocido');
         $source->setAmount($sourceAmount);
+        $source->setUnit($unit === 'ml' ? 'ml' : null);
         $source->setCalories(60);
         $source->setProteins(5.8);
         $source->setCarbs(4.72);
@@ -298,7 +304,7 @@ final class DiaryApiTest extends ApiTestCase
             'multiplier' => 2.5,
             'name' => 'Yogur Griego Ligero',
             'brand' => 'Mercadona',
-            'amountGrams' => 250,
+            $amountField => 250,
             'calories' => 150,
             'proteins' => 14.5,
             'carbs' => 11.8,
@@ -318,7 +324,7 @@ final class DiaryApiTest extends ApiTestCase
         $entry = $diary['entries'][0];
         $this->assertSame($payload['client_id'], $entry['id']);
         $this->assertEquals(250, $entry['amount']);
-        $this->assertSame('g', $entry['unit']);
+        $this->assertSame($unit, $entry['unit']);
         $this->assertEquals(1, $entry['multiplier']);
         foreach (['calories' => 'totalCalories', 'proteins' => 'totalProteins', 'carbs' => 'totalCarbs', 'fats' => 'totalFats'] as $field => $total) {
             $this->assertEquals($payload[$field], $entry[$field]);
@@ -387,6 +393,106 @@ final class DiaryApiTest extends ApiTestCase
         }
         $em = static::getContainer()->get(EntityManagerInterface::class);
         $this->assertSame(1, $em->getRepository(Food::class)->count([]));
+        $this->assertSame(0, $em->getRepository(MealEntry::class)->count([]));
+    }
+
+    public function testInlineMillilitreSnapshotKeepsItsUnitNutritionAndRetryIdentity(): void
+    {
+        $headers = $this->authHeaders('inline-oil-owner');
+        $payload = [
+            'client_id' => '8c992ce1-2f43-4a67-b613-b1ad14536f6d',
+            'mealType' => 'breakfast', 'name' => 'Aceite Oliva Virgen Extra', 'brand' => 'Mercadona',
+            'amountMl' => 5, 'calories' => 40, 'proteins' => 0, 'carbs' => 0, 'fats' => 4.5,
+        ];
+        $this->client->jsonRequest('POST', '/v1/diaries/2026-10-22/entries', $payload, $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $this->assertSame($payload['client_id'], $this->jsonResponse()['entryId']);
+        $this->client->jsonRequest('POST', '/v1/diaries/2026-10-22/entries', $payload, $headers);
+        $this->assertResponseStatusCodeSame(200);
+        $this->client->request('GET', '/v1/diaries/2026-10-22', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $diary = $this->jsonResponse();
+        $this->assertCount(1, $diary['entries']);
+        $entry = $diary['entries'][0];
+        $this->assertSame($payload['client_id'], $entry['id']);
+        $this->assertEquals(5, $entry['amount']);
+        $this->assertSame('ml', $entry['unit']);
+        foreach (['calories' => 'totalCalories', 'proteins' => 'totalProteins', 'carbs' => 'totalCarbs', 'fats' => 'totalFats'] as $field => $total) {
+            $this->assertEquals($payload[$field], $entry[$field]);
+            $this->assertEquals($payload[$field], $diary[$total]);
+        }
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $stored = $em->find(MealEntry::class, $payload['client_id']);
+        $this->assertSame('inline-oil-owner', $stored->getServing()->getFood()->getUser()->getFirebaseUid());
+    }
+
+    public function testKnownMillilitreServingScalesFromItsMillilitreReference(): void
+    {
+        $source = $this->createServingFixture('known-oil-serving');
+        $source->setAmount(20);
+        $source->setUnit('ml');
+        $source->setCalories(180);
+        $source->setProteins(0);
+        $source->setCarbs(0);
+        $source->setFats(20);
+        $this->em->flush();
+        $sourceId = $source->getId()->toRfc4122();
+        $headers = $this->authHeaders('known-oil-owner');
+        $this->client->jsonRequest('POST', '/v1/diaries/2026-10-22/entries', [
+            'serving_id' => $sourceId, 'mealType' => 'breakfast', 'amountMl' => 5, 'multiplier' => 99,
+            'name' => 'Ignored client snapshot', 'calories' => 999, 'proteins' => 999, 'carbs' => 999, 'fats' => 999,
+        ], $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $this->client->request('GET', '/v1/diaries/2026-10-22', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $entry = $this->jsonResponse()['entries'][0];
+        $this->assertSame($sourceId, $entry['serving']['id']);
+        $this->assertEquals(5, $entry['amount']);
+        $this->assertSame('ml', $entry['unit']);
+        $this->assertEquals(0.25, $entry['multiplier']);
+        $this->assertEquals(45, $entry['calories']);
+        $this->assertEquals(5, $entry['fats']);
+    }
+
+    public function testIndividualDiaryRejectsCrossUnitAmountsWithoutWriting(): void
+    {
+        $sourceIds = [];
+        foreach (['g', 'ml'] as $unit) {
+            $source = $this->createServingFixture('diary-unit-mismatch-' . $unit);
+            $source->setAmount(100);
+            $source->setUnit($unit);
+            $sourceIds[$unit] = $source->getId()->toRfc4122();
+        }
+        $this->em->flush();
+        $headers = $this->authHeaders('diary-unit-mismatch');
+        foreach (['g' => 'amountMl', 'ml' => 'amountGrams'] as $unit => $amountField) {
+            $this->client->jsonRequest('POST', '/v1/diaries/2026-10-22/entries', [
+                'serving_id' => $sourceIds[$unit], 'mealType' => 'breakfast', $amountField => 5,
+                'name' => 'Do not convert', 'calories' => 40, 'proteins' => 0, 'carbs' => 0, 'fats' => 4.5,
+            ], $headers);
+            $this->assertResponseStatusCodeSame(400);
+        }
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $this->assertSame(2, $em->getRepository(Food::class)->count([]));
+        $this->assertSame(0, $em->getRepository(MealEntry::class)->count([]));
+    }
+
+    public function testInlineMillilitreValidationRejectsConflictingOrInvalidAmountsWithoutWriting(): void
+    {
+        $headers = $this->authHeaders('invalid-inline-millilitres');
+        $payload = [
+            'mealType' => 'breakfast', 'name' => 'Aceite Oliva Virgen Extra', 'amountMl' => 5,
+            'calories' => 40, 'proteins' => 0, 'carbs' => 0, 'fats' => 4.5,
+        ];
+        foreach ([
+            ['amountGrams' => 5], ['amountMl' => 0], ['amountMl' => -1], ['amountMl' => 10001],
+            ['amountMl' => null], ['amountMl' => 'NaN'], ['amountMl' => 'INF'], ['proteins' => null],
+        ] as $invalidFields) {
+            $this->client->jsonRequest('POST', '/v1/diaries/2026-10-22/entries', array_replace($payload, $invalidFields), $headers);
+            $this->assertResponseStatusCodeSame(400);
+        }
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $this->assertSame(0, $em->getRepository(Food::class)->count([]));
         $this->assertSame(0, $em->getRepository(MealEntry::class)->count([]));
     }
 

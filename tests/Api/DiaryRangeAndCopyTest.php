@@ -132,7 +132,8 @@ final class DiaryRangeAndCopyTest extends ApiTestCase
             'items' => [
                 [
                     'name' => 'Pechuga de pollo',
-                    'amountGrams' => 200,
+                    'amount' => 200,
+                    'unit' => 'g',
                     'calories' => 240,
                     'proteins' => 46,
                     'carbs' => 0,
@@ -140,7 +141,8 @@ final class DiaryRangeAndCopyTest extends ApiTestCase
                 ],
                 [
                     'name' => 'Arroz blanco',
-                    'amountGrams' => 150,
+                    'amount' => 150,
+                    'unit' => 'g',
                     'calories' => 195,
                     'proteins' => 4,
                     'carbs' => 42,

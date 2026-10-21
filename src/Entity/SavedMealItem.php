@@ -31,7 +31,10 @@ class SavedMealItem
     private ?string $brand = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private string $amountGrams = '0.00';
+    private string $amount = '0.00';
+
+    #[ORM\Column(length: 2, options: ['default' => 'g'])]
+    private string $unit = 'g';
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     private string $calories = '0.00';
@@ -97,15 +100,42 @@ class SavedMealItem
         return $this;
     }
 
-    public function getAmountGrams(): float
+    public function getAmount(): float
     {
-        return (float) $this->amountGrams;
+        return (float) $this->amount;
     }
 
-    public function setAmountGrams(float $amountGrams): static
+    public function setAmount(float $amount): static
     {
-        $this->amountGrams = number_format($amountGrams, 2, '.', '');
+        $this->amount = number_format($amount, 2, '.', '');
         return $this;
+    }
+
+    public function getUnit(): string
+    {
+        return $this->unit;
+    }
+
+    public function setUnit(string $unit): static
+    {
+        $this->unit = $unit;
+        return $this;
+    }
+
+    public static function normalizeServingUnit(?string $unit): ?string
+    {
+        return match (strtolower(trim((string) $unit))) {
+            'g', 'gram', 'grams', 'gramo', 'gramos' => 'g',
+            'ml', 'milliliter', 'milliliters', 'millilitre', 'millilitres', 'mililitro', 'mililitros' => 'ml',
+            default => null,
+        };
+    }
+
+    public function hasCompatibleServing(): bool
+    {
+        return $this->serving !== null
+            && $this->serving->getAmount() > 0
+            && self::normalizeServingUnit($this->serving->getUnit()) === $this->unit;
     }
 
     public function getCalories(): float

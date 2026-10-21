@@ -6,6 +6,7 @@ use App\Entity\Food;
 use App\Entity\MealDiary;
 use App\Entity\MealEntry;
 use App\Entity\SavedMeal;
+use App\Entity\SavedMealItem;
 use App\Entity\Serving;
 use App\Entity\User;
 use Doctrine\DBAL\LockMode;
@@ -303,11 +304,11 @@ class DiaryController extends AbstractController
         }
         $portionRatio = $requestedServings / $savedMeal->getServings();
         foreach ($savedMeal->getItems() as $item) {
-            if ($item->getServing() && ($item->getServing()->getAmount() <= 0 || !$item->getServing()->getFood()?->isAccessibleBy($user))) {
+            if ($item->getServing() && !$item->getServing()->getFood()?->isAccessibleBy($user)) {
                 return $this->json(['error' => 'Saved meal contains an unavailable serving'], 400);
             }
             $linkedServing = $item->getServing();
-            if ($linkedServing && in_array(null, [$linkedServing->getCalories(), $linkedServing->getProteins(), $linkedServing->getCarbs(), $linkedServing->getFats()], true)) {
+            if ($item->hasCompatibleServing() && in_array(null, [$linkedServing->getCalories(), $linkedServing->getProteins(), $linkedServing->getCarbs(), $linkedServing->getFats()], true)) {
                 return $this->json(['error' => 'Saved meal contains incomplete nutrition'], 400);
             }
         }
@@ -327,7 +328,8 @@ class DiaryController extends AbstractController
                 if (!$existing) continue;
                 if ($existing->getDiary()?->getUser() !== $user || $existing->getDiary()?->getDate()?->format('Y-m-d') !== $diaryDate->format('Y-m-d')
                     || $existing->getMealType() !== $mealType
-                    || abs($existing->getMultiplier() * $existing->getServing()->getAmount() - $item->getAmountGrams() * $portionRatio) > 0.01) {
+                    || SavedMealItem::normalizeServingUnit($existing->getServing()?->getUnit()) !== $item->getUnit()
+                    || abs($existing->getMultiplier() * $existing->getServing()->getAmount() - $item->getAmount() * $portionRatio) > 0.01) {
                     return $this->json(['error' => 'client_id is already in use'], 409);
                 }
                 $existingIds[(string) $entryId] = true;
@@ -350,9 +352,9 @@ class DiaryController extends AbstractController
         foreach ($savedMeal->getItems() as $item) {
             $entryId = $clientId !== null ? Uuid::v5(Uuid::fromString($clientId), (string) $item->getId()) : null;
             if ($entryId !== null && isset($existingIds[(string) $entryId])) continue;
-            $serving = $item->getServing();
+            $serving = $item->hasCompatibleServing() ? $item->getServing() : null;
 
-            // If item has no serving reference, create a custom food and serving on the fly
+            // Preserve the saved snapshot when its reference is missing or no longer uses a compatible metric amount.
             if (!$serving) {
                 $customFood = new Food();
                 $customFood->setUser($user);
@@ -365,13 +367,13 @@ class DiaryController extends AbstractController
 
                 $serving = new Serving();
                 $serving->setFood($customFood);
-                $serving->setDescription($item->getAmountGrams() > 0 ? $item->getAmountGrams() . 'g' : '1 ración');
+                $serving->setDescription($item->getAmount() . $item->getUnit());
                 $serving->setCalories($item->getCalories());
                 $serving->setProteins($item->getProteins());
                 $serving->setCarbs($item->getCarbs());
                 $serving->setFats($item->getFats());
-                $serving->setAmount($item->getAmountGrams() > 0 ? $item->getAmountGrams() : 100);
-                $serving->setUnit('g');
+                $serving->setAmount($item->getAmount());
+                $serving->setUnit($item->getUnit());
 
                 $customFood->addServing($serving);
                 $this->em->persist($customFood);
@@ -381,7 +383,7 @@ class DiaryController extends AbstractController
             $entry = new MealEntry($entryId);
             $entry->setServing($serving);
             $entry->setMealType($mealType);
-            $entry->setMultiplier($item->getAmountGrams() / $serving->getAmount() * $portionRatio);
+            $entry->setMultiplier($item->getAmount() / $serving->getAmount() * $portionRatio);
 
             $diary->addEntry($entry);
             $this->em->persist($entry);
@@ -433,6 +435,9 @@ class DiaryController extends AbstractController
         if ($clientId !== null && (!is_string($clientId) || !Uuid::isValid($clientId))) {
             return $this->json(['error' => 'client_id must be a UUID'], 400);
         }
+        if (array_key_exists('amountGrams', $data) && array_key_exists('amountMl', $data)) {
+            return $this->json(['error' => 'Provide only one of amountGrams or amountMl'], 400);
+        }
 
         return $this->em->wrapInTransaction(function () use ($user, $data, $diaryDate, $clientId): JsonResponse {
         // Serialize an account's creates, including retries following a lost HTTP response.
@@ -458,6 +463,15 @@ class DiaryController extends AbstractController
         if ($multiplier === false || $multiplier <= 0 || $multiplier > 100) {
             return $this->json(['error' => 'multiplier must be greater than 0 and less than or equal to 100'], 400);
         }
+        $amountField = array_key_exists('amountMl', $data) ? 'amountMl' : 'amountGrams';
+        $amountUnit = $amountField === 'amountMl' ? 'ml' : 'g';
+        $amount = null;
+        if (array_key_exists($amountField, $data)) {
+            $amount = filter_var($data[$amountField], FILTER_VALIDATE_FLOAT);
+            if ($amount === false || !is_finite($amount) || $amount <= 0 || $amount > 10000) {
+                return $this->json(['error' => 'Invalid amount or serving amount'], 400);
+            }
+        }
 
         $serving = null;
 
@@ -473,18 +487,18 @@ class DiaryController extends AbstractController
             if (in_array(null, [$serving->getCalories(), $serving->getProteins(), $serving->getCarbs(), $serving->getFats()], true)) {
                 return $this->json(['error' => 'Serving nutrition is incomplete'], 400);
             }
-            if (array_key_exists('amountGrams', $data)) {
-                $amount = filter_var($data['amountGrams'], FILTER_VALIDATE_FLOAT);
-                if ($amount === false || !is_finite($amount) || $amount <= 0 || $amount > 10000) {
-                    return $this->json(['error' => 'Invalid amount or serving amount'], 400);
+            if ($amount !== null) {
+                $servingUnit = SavedMealItem::normalizeServingUnit($serving->getUnit());
+                if ($servingUnit !== null && $servingUnit !== $amountUnit) {
+                    return $this->json(['error' => 'Amount and serving must use the same metric unit'], 400);
                 }
-                if ($serving->getAmount() > 0) {
+                if ($serving->getAmount() > 0 && $servingUnit === $amountUnit) {
                     $multiplier = $amount / $serving->getAmount();
                     if ($multiplier > 100) {
                         return $this->json(['error' => 'multiplier must not exceed 100'], 400);
                     }
                 } else {
-                    // An unweighed catalog portion cannot express grams; preserve the supplied measured snapshot privately.
+                    // An unknown metric portion cannot express this amount; preserve the supplied measured snapshot privately.
                     $serving = null;
                 }
             }
@@ -497,13 +511,13 @@ class DiaryController extends AbstractController
                 return $this->json(['error' => 'Food name cannot be empty'], 400);
             }
 
-            foreach (['calories', 'proteins', 'carbs', 'fats', 'amountGrams'] as $field) {
+            foreach (['calories', 'proteins', 'carbs', 'fats', $amountField] as $field) {
                 if (!isset($data[$field])) {
                     return $this->json(['error' => "$field is required"], 400);
                 }
                 $value = filter_var($data[$field], FILTER_VALIDATE_FLOAT);
-                if ($value === false || !is_finite($value) || $value < 0 || ($field === 'amountGrams' && $value == 0)) {
-                    return $this->json(['error' => "$field must be " . ($field === 'amountGrams' ? 'positive' : 'non-negative') . ' and finite'], 400);
+                if ($value === false || !is_finite($value) || $value < 0 || ($field === $amountField && $value == 0)) {
+                    return $this->json(['error' => "$field must be " . ($field === $amountField ? 'positive' : 'non-negative') . ' and finite'], 400);
                 }
             }
 
@@ -511,7 +525,6 @@ class DiaryController extends AbstractController
             $proteins = (float) ($data['proteins'] ?? 0);
             $carbs = (float) ($data['carbs'] ?? 0);
             $fats = (float) ($data['fats'] ?? 0);
-            $amountGrams = (float) ($data['amountGrams'] ?? 100);
 
             $customFood = new Food();
             $customFood->setUser($user);
@@ -524,13 +537,13 @@ class DiaryController extends AbstractController
 
             $serving = new Serving();
             $serving->setFood($customFood);
-            $serving->setDescription($amountGrams > 0 ? $amountGrams . 'g' : '1 ración');
+            $serving->setDescription($amount . $amountUnit);
             $serving->setCalories($calories);
             $serving->setProteins($proteins);
             $serving->setCarbs($carbs);
             $serving->setFats($fats);
-            $serving->setAmount($amountGrams > 0 ? $amountGrams : 100);
-            $serving->setUnit('g');
+            $serving->setAmount($amount);
+            $serving->setUnit($amountUnit);
 
             $customFood->addServing($serving);
             $this->em->persist($customFood);

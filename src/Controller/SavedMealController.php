@@ -130,14 +130,18 @@ class SavedMealController extends AbstractController
                 if (!is_array($itemData) || !is_string($itemData['name'] ?? null) || trim($itemData['name']) === '' || mb_strlen($itemData['name']) > 255) {
                     return $this->json(['error' => 'Each ingredient needs a valid name'], 400);
                 }
-                $servingId = $itemData['servingId'] ?? $itemData['serving_id'] ?? null;
+                $servingId = $itemData['servingId'] ?? null;
+                $unit = $itemData['unit'] ?? null;
+                if (!in_array($unit, ['g', 'ml'], true)) {
+                    return $this->json(['error' => 'Ingredient unit must be g or ml'], 400);
+                }
                 $values = [];
-                foreach (['amountGrams', 'calories', 'proteins', 'carbs', 'fats'] as $field) {
-                    if (($servingId === null || $servingId === '') && $field !== 'amountGrams' && !isset($itemData[$field])) {
-                        return $this->json(['error' => 'Ingredient nutrition must include ' . $field], 400);
+                foreach (['amount', 'calories', 'proteins', 'carbs', 'fats'] as $field) {
+                    if (!isset($itemData[$field]) && ($field === 'amount' || $servingId === null || $servingId === '')) {
+                        return $this->json(['error' => 'Ingredient must include ' . $field], 400);
                     }
-                    $value = filter_var($itemData[$field] ?? ($field === 'amountGrams' ? 100 : 0), FILTER_VALIDATE_FLOAT);
-                    if ($value === false || !is_finite($value) || $value < 0 || $value > 100000 || ($field === 'amountGrams' && ($value <= 0 || $value > 10000))) {
+                    $value = filter_var($itemData[$field] ?? 0, FILTER_VALIDATE_FLOAT);
+                    if ($value === false || !is_finite($value) || $value < 0 || $value > 100000 || ($field === 'amount' && ($value <= 0 || $value > 10000))) {
                         return $this->json(['error' => 'Invalid ingredient ' . $field], 400);
                     }
                     $values[$field] = (float) $value;
@@ -147,13 +151,13 @@ class SavedMealController extends AbstractController
                     if (!is_string($servingId) || !Uuid::isValid($servingId)) return $this->json(['error' => 'Invalid servingId'], 400);
                     $serving = $this->em->getRepository(Serving::class)->find($servingId);
                     if (!$serving || !$serving->getFood()?->isAccessibleBy($user)) return $this->json(['error' => 'Serving not found'], 404);
-                    if ($serving->getAmount() <= 0 || !in_array(strtolower((string) $serving->getUnit()), ['g', 'gram', 'grams'], true)) {
-                        return $this->json(['error' => 'Saved ingredients require a serving measured in grams'], 400);
+                    if ($serving->getAmount() <= 0 || SavedMealItem::normalizeServingUnit($serving->getUnit()) !== $unit) {
+                        return $this->json(['error' => 'Ingredient and serving must use the same metric unit'], 400);
                     }
                     if (in_array(null, [$serving->getCalories(), $serving->getProteins(), $serving->getCarbs(), $serving->getFats()], true)) {
                         return $this->json(['error' => 'Serving nutrition is incomplete'], 400);
                     }
-                    $ratio = $values['amountGrams'] / $serving->getAmount();
+                    $ratio = $values['amount'] / $serving->getAmount();
                     $values['calories'] = $serving->getCalories() * $ratio;
                     $values['proteins'] = $serving->getProteins() * $ratio;
                     $values['carbs'] = $serving->getCarbs() * $ratio;
@@ -162,7 +166,8 @@ class SavedMealController extends AbstractController
                 $item = new SavedMealItem();
                 $item->setName(trim($itemData['name']));
                 $item->setBrand(isset($itemData['brand']) ? (string) $itemData['brand'] : null);
-                $item->setAmountGrams($values['amountGrams']);
+                $item->setAmount($values['amount']);
+                $item->setUnit($unit);
                 $item->setCalories($values['calories']);
                 $item->setProteins($values['proteins']);
                 $item->setCarbs($values['carbs']);
@@ -192,9 +197,9 @@ class SavedMealController extends AbstractController
         foreach ($meal->getItems() as $item) {
             $items[] = [
                 'id' => $item->getId()?->toRfc4122(), 'name' => $item->getName(), 'brand' => $item->getBrand(),
-                'amountGrams' => $item->getAmountGrams(), 'calories' => $item->getCalories(), 'proteins' => $item->getProteins(),
-                'carbs' => $item->getCarbs(), 'fats' => $item->getFats(), 'servingId' => $item->getServing()?->getId()?->toRfc4122(),
-                'baseServingGrams' => $item->getServing()?->getAmount(),
+                'amount' => $item->getAmount(), 'unit' => $item->getUnit(), 'calories' => $item->getCalories(), 'proteins' => $item->getProteins(),
+                'carbs' => $item->getCarbs(), 'fats' => $item->getFats(), 'servingId' => $item->hasCompatibleServing() ? $item->getServing()->getId()?->toRfc4122() : null,
+                'baseServingAmount' => $item->hasCompatibleServing() ? $item->getServing()->getAmount() : null,
             ];
         }
         return [
