@@ -42,6 +42,99 @@ final class HevyImportApiTest extends ApiTestCase
         $this->assertSame(0, $json['exercises_created']);
     }
 
+    public function testImportResolvesOfficialEnglishSpanishAndOriginalAliasesWithoutDuplicating(): void
+    {
+        $press = $this->createExerciseFixture('Mi press de banca')
+            ->setHevyId('PRESS-BARBELL')
+            ->setNameEn('Bench Press (Barbell)')
+            ->setNameEs('Press de Banca (Barra)')
+            ->setSourceName('Barbell Bench Press')
+            ->setEquipment('Barra');
+        $id = $press->getId()->toRfc4122();
+        $this->em->flush();
+        $headers = $this->authHeaders('hevy-bilingual');
+        $csv = implode("\n", [
+            'title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_lbs,reps,distance_miles,duration_seconds,rpe',
+            '"Test","20 Feb 2024, 10:00","20 Feb 2024, 10:30","","Bench Press (Barbell)",,"",0,normal,220,5,,,',
+            '"Test","20 Feb 2024, 10:00","20 Feb 2024, 10:30","","Press de Banca (Barra)",,"",1,normal,220,5,,,',
+            '"Test","20 Feb 2024, 10:00","20 Feb 2024, 10:30","","Barbell Bench Press",,"",2,normal,220,5,,,',
+        ]);
+
+        $this->client->request('POST', '/v1/import/hevy', [], ['file' => $this->makeCsv($csv)], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(0, $this->jsonResponse()['exercises_created']);
+        $this->assertSame(3, $this->jsonResponse()['sets_imported']);
+        $this->client->request('GET', '/v1/workouts?include_sets=1', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $sets = $this->jsonResponse()[0]['sets'];
+        $this->assertCount(3, $sets);
+        $this->assertSame([$id], array_values(array_unique(array_column($sets, 'exercise_id'))));
+        $this->client->request('POST', '/v1/import/hevy', [], ['file' => $this->makeCsv($csv)], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(0, $this->jsonResponse()['sessions_created']);
+        $this->assertSame(1, $this->jsonResponse()['sessions_skipped']);
+        $this->assertSame(0, $this->jsonResponse()['exercises_created']);
+    }
+
+    public function testImportRejectsAmbiguousSpanishAliasesBeforeWritingForReadersAndAdmins(): void
+    {
+        $this->createExerciseFixture('Press de Hombros (Mancuerna)')
+            ->setHevyId('6AC96645')
+            ->setNameEn('Overhead Press (Dumbbell)')
+            ->setNameEs('Press de Hombros (Mancuerna)')
+            ->setEquipment('Mancuernas');
+        $this->createExerciseFixture('Press de Hombros (Mancuerna)')
+            ->setHevyId('878CD1D0')
+            ->setNameEn('Shoulder Press (Dumbbell)')
+            ->setNameEs('Press de Hombros (Mancuerna)')
+            ->setEquipment('Mancuernas');
+        $admin = (new User())->setFirebaseUid('hevy-ambiguous-admin')->setRoles(['ROLE_ADMIN']);
+        $this->em->persist($admin);
+        $this->em->flush();
+        $csv = implode("\n", [
+            'title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_lbs,reps,distance_miles,duration_seconds,rpe',
+            '"Test","20 Feb 2024, 10:00","20 Feb 2024, 10:30","","Overhead Press (Dumbbell)",,"",0,normal,50,5,,,',
+            '"Test","20 Feb 2024, 10:00","20 Feb 2024, 10:30","","Press de Hombros (Mancuerna)",,"",1,normal,50,5,,,',
+        ]);
+        foreach (['hevy-ambiguous-reader', 'hevy-ambiguous-admin'] as $uid) {
+            $headers = $this->authHeaders($uid);
+            $this->client->request('POST', '/v1/import/hevy', [], ['file' => $this->makeCsv($csv)], $headers);
+            $this->assertResponseStatusCodeSame(400);
+            $this->client->request('GET', '/v1/workouts', [], [], $headers);
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([], $this->jsonResponse());
+            $this->client->request('GET', '/v1/exercises', [], [], $headers);
+            $this->assertResponseIsSuccessful();
+            $this->assertCount(2, $this->jsonResponse());
+        }
+    }
+
+    public function testImportKeepsVariantsWithSharedSpanishNamesDistinctThroughEnglishNames(): void
+    {
+        $overhead = $this->createExerciseFixture('Press de Hombros (Mancuerna)')
+            ->setHevyId('6AC96645')
+            ->setNameEn('Overhead Press (Dumbbell)')
+            ->setNameEs('Press de Hombros (Mancuerna)');
+        $shoulder = $this->createExerciseFixture('Press de Hombros (Mancuerna)')
+            ->setHevyId('878CD1D0')
+            ->setNameEn('Shoulder Press (Dumbbell)')
+            ->setNameEs('Press de Hombros (Mancuerna)');
+        $ids = [$overhead->getId()->toRfc4122(), $shoulder->getId()->toRfc4122()];
+        $this->em->flush();
+        $headers = $this->authHeaders('hevy-distinct-variants');
+        $csv = implode("\n", [
+            'title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_lbs,reps,distance_miles,duration_seconds,rpe',
+            '"Test","20 Feb 2024, 10:00","20 Feb 2024, 10:30","","Overhead Press (Dumbbell)",,"",0,normal,50,5,,,',
+            '"Test","20 Feb 2024, 10:00","20 Feb 2024, 10:30","","Shoulder Press (Dumbbell)",,"",1,normal,50,5,,,',
+        ]);
+        $this->client->request('POST', '/v1/import/hevy', [], ['file' => $this->makeCsv($csv)], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(0, $this->jsonResponse()['exercises_created']);
+        $this->client->request('GET', '/v1/workouts?include_sets=1', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertEqualsCanonicalizing($ids, array_column($this->jsonResponse()[0]['sets'], 'exercise_id'));
+    }
+
     public function testImportConvertsPoundsToKg(): void
     {
         $squat = $this->createExerciseFixture('Squat');

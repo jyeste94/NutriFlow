@@ -10,6 +10,7 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Table(name: 'exercises')]
 #[ORM\Index(name: 'idx_exercises_name', columns: ['name'])]
 #[ORM\UniqueConstraint(name: 'uniq_exercises_source_id', columns: ['source_id'])]
+#[ORM\UniqueConstraint(name: 'uniq_exercises_hevy_id', columns: ['hevy_id'])]
 class Exercise
 {
     #[ORM\Id]
@@ -26,6 +27,15 @@ class Exercise
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $sourceName = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $hevyId = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $nameEn = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $nameEs = null;
 
     #[ORM\Column(length: 100)]
     private ?string $muscleGroup = null; // Chest, Back, Legs, etc.
@@ -95,6 +105,39 @@ class Exercise
     public function setSourceName(?string $sourceName): static
     {
         $this->sourceName = $sourceName;
+        return $this;
+    }
+
+    public function getHevyId(): ?string
+    {
+        return $this->hevyId;
+    }
+
+    public function setHevyId(?string $hevyId): static
+    {
+        $this->hevyId = $hevyId;
+        return $this;
+    }
+
+    public function getNameEn(): ?string
+    {
+        return $this->nameEn;
+    }
+
+    public function setNameEn(?string $nameEn): static
+    {
+        $this->nameEn = $nameEn;
+        return $this;
+    }
+
+    public function getNameEs(): ?string
+    {
+        return $this->nameEs;
+    }
+
+    public function setNameEs(?string $nameEs): static
+    {
+        $this->nameEs = $nameEs;
         return $this;
     }
 

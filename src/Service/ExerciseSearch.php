@@ -80,7 +80,7 @@ final class ExerciseSearch
 
         $connection = $this->em->getConnection();
         $qb = $connection->createQueryBuilder()->from('exercises', 'e');
-        $columns = array_map($this->foldColumn(...), ['name', 'source_name', 'equipment', 'description']);
+        $columns = array_map($this->foldColumn(...), ['name', 'name_en', 'name_es', 'source_name', 'equipment', 'description']);
 
         foreach ($tokens as $index => $token) {
             $alternatives = [$token];

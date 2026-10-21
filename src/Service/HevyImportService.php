@@ -19,7 +19,7 @@ class HevyImportService
         'distance_miles', 'duration_seconds', 'rpe',
     ];
 
-    /** @var array<string, Exercise> */
+    /** @var array<string, Exercise|null> Null marks an alias shared by distinct exercise IDs. */
     private array $exerciseCache = [];
 
     public function __construct(
@@ -55,13 +55,19 @@ class HevyImportService
         $workoutGroups = $this->groupBySession($rows);
         $this->warmExerciseCache();
         $canCreateExercises = in_array('ROLE_ADMIN', $user->getRoles(), true);
-        if (!$canCreateExercises) {
-            foreach ($rows as $row) {
-                $title = trim($row['exercise_title'] ?? '');
-                if ($title !== '' && !isset($this->exerciseCache[mb_strtolower($title)])) {
-                    $result['errors'][] = 'El CSV contiene ejercicios que no existen en el catálogo. Solicita a un administrador que los añada antes de importar.';
-                    return $result;
-                }
+        foreach ($rows as $row) {
+            $title = trim($row['exercise_title'] ?? '');
+            if ($title === '') {
+                continue;
+            }
+            $key = $this->normalizeExerciseName($title);
+            if (array_key_exists($key, $this->exerciseCache) && $this->exerciseCache[$key] === null) {
+                $result['errors'][] = 'El CSV contiene un nombre de ejercicio ambiguo. Usa un nombre oficial inequívoco que conserve la variante y el equipo.';
+                return $result;
+            }
+            if (!$canCreateExercises && !isset($this->exerciseCache[$key])) {
+                $result['errors'][] = 'El CSV contiene ejercicios que no existen en el catálogo. Solicita a un administrador que los añada antes de importar.';
+                return $result;
             }
         }
         $existingSessionDates = $this->loadExistingSessionDates($user);
@@ -226,10 +232,11 @@ class HevyImportService
 
     private function resolveExercise(string $exerciseTitle, array &$result, bool $canCreateExercises): Exercise
     {
-        $normalized = mb_strtolower($exerciseTitle);
+        $normalized = $this->normalizeExerciseName($exerciseTitle);
 
-        if (isset($this->exerciseCache[$normalized])) {
-            return $this->exerciseCache[$normalized];
+        if (array_key_exists($normalized, $this->exerciseCache)) {
+            return $this->exerciseCache[$normalized]
+                ?? throw new \LogicException('Ambiguous exercise aliases must be rejected before importing.');
         }
 
         if (!$canCreateExercises) {
@@ -263,12 +270,61 @@ class HevyImportService
         $this->exerciseCache = [];
         $exercises = $this->em->getRepository(Exercise::class)->findAll();
         foreach ($exercises as $exercise) {
-            $key = mb_strtolower($exercise->getName());
-            $this->exerciseCache[$key] = $exercise;
-            if ($exercise->getEquipment()) {
-                $this->exerciseCache[$key . ' (' . mb_strtolower($exercise->getEquipment()) . ')'] = $exercise;
+            foreach ([$exercise->getName(), $exercise->getNameEn(), $exercise->getNameEs(), $exercise->getSourceName()] as $name) {
+                if ($name === null || trim($name) === '') {
+                    continue;
+                }
+                $this->registerExerciseAlias($name, $exercise);
+                if ($exercise->getEquipment()) {
+                    foreach ($this->equipmentAliases($exercise->getEquipment()) as $equipment) {
+                        $this->registerExerciseAlias($name . ' (' . $equipment . ')', $exercise);
+                    }
+                }
             }
         }
+    }
+
+    private function registerExerciseAlias(string $name, Exercise $exercise): void
+    {
+        $key = $this->normalizeExerciseName($name);
+        if (!array_key_exists($key, $this->exerciseCache)) {
+            $this->exerciseCache[$key] = $exercise;
+        } elseif ($this->exerciseCache[$key] !== $exercise) {
+            $this->exerciseCache[$key] = null;
+        }
+    }
+
+    private function normalizeExerciseName(string $name): string
+    {
+        $name = strtr(mb_strtolower(trim($name)), [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u',
+            'ü' => 'u', 'ñ' => 'n',
+            "\u{0301}" => '', "\u{0308}" => '', "\u{0303}" => '',
+        ]);
+
+        return preg_replace('/\s+/u', ' ', $name);
+    }
+
+    /** @return list<string> */
+    private function equipmentAliases(string $equipment): array
+    {
+        foreach ([
+            ['barbell', 'barra'],
+            ['dumbbell', 'dumbbells', 'mancuerna', 'mancuernas'],
+            ['machine', 'maquina'],
+            ['cable', 'polea'],
+            ['bodyweight', 'body weight', 'peso corporal', 'none', 'sin equipo'],
+            ['kettlebell', 'pesa rusa'],
+            ['resistance band', 'resistance_band', 'banda elastica', 'bandas elasticas'],
+            ['suspension', 'trx'],
+            ['plate', 'disco'],
+        ] as $aliases) {
+            if (in_array($this->normalizeExerciseName($equipment), $aliases, true)) {
+                return $aliases;
+            }
+        }
+
+        return [$equipment];
     }
 
     /**

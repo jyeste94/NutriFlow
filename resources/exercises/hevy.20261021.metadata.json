@@ -1,0 +1,5828 @@
+{
+  "source": {
+    "provider": "Hevy",
+    "url": "https://hevy.com/_next/static/chunks/pages/_app-ab890465d0aaaaa6.js",
+    "buildId": "IH3AoRCI8DLTwLDlaMSHj",
+    "bundleSha256": "4380616391b5c38035a790088de5c2a3112c166d09694dd6b6eda36c202e0798",
+    "retrievedAt": "2026-10-21T11:49:26.896Z",
+    "termsUrl": "https://www.hevyapp.com/legal/terms-and-conditions/",
+    "scope": "Public exercise names and factual metadata only. Media, instructions and other source code excluded. Not presented as open-licensed data."
+  },
+  "expectedCount": 454,
+  "exercises": [
+    {
+      "id": "018ADC12",
+      "name_en": "Pendlay Row (Barbell)",
+      "name_es": "Remo Pendlay (Barra)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "01A35BF9",
+      "name_en": "EZ Bar Biceps Curl",
+      "name_es": "Curl con Barra EZ",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0222DB42",
+      "name_en": "Rowing Machine",
+      "name_es": "Máquina de Remo",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "022DF610",
+      "name_en": "Sit Up",
+      "name_es": "Abdominal Completo",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "023943F1",
+      "name_en": "Chin Up (Weighted)",
+      "name_es": "Dominada Supina (Con Peso Añadido)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "bodyweight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "023947AB",
+      "name_en": "HIIT",
+      "name_es": "HIIT",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "026FD047",
+      "name_en": "Side Bend (Dumbbell)",
+      "name_es": "Flexión Lateral (Mancuerna)",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0393F233",
+      "name_en": "Seated Cable Row - V Grip (Cable)",
+      "name_es": "Remo Sentado con Agarre en V (Cable)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "040BA2E3",
+      "name_en": "Jump Rope",
+      "name_es": "Salto a la cuerda",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "046E25A2",
+      "name_en": "Reverse Grip Lat Pulldown (Cable)",
+      "name_es": "Jalón al Pecho con Agarre Invertido (Cable)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0482DA98",
+      "name_en": "Leg Raise Parallel Bars",
+      "name_es": "Elevación de Piernas en Barras Paralelas",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "05293BCA",
+      "name_en": "Sumo Squat (Dumbbell)",
+      "name_es": "Sentadilla Sumo (Mancuerna)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "adductors",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "05487216",
+      "name_en": "Gorilla Row (Kettlebell)",
+      "name_es": "Remo Gorila (Pesa Rusa)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "059E835D",
+      "name_en": "Shoulder Press (Machine Plates)",
+      "name_es": "Press de Hombros (Máquina de Discos)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "062AB91A",
+      "name_en": "Seated Calf Raise",
+      "name_es": "Elevación de Gemelos Sentado",
+      "primary_muscle_group": "calves",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "06745E58",
+      "name_en": "Standing Calf Raise",
+      "name_es": "Elevación de Gemelos de Pie",
+      "primary_muscle_group": "calves",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "073032BB",
+      "name_en": "Standing Military Press (Barbell)",
+      "name_es": "Press Militar de Pie (Barra)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "07B38369",
+      "name_en": "Incline Bench Press (Dumbbell)",
+      "name_es": "Press de Banca Inclinado (Mancuerna)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "triceps",
+        "shoulders"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "07EBC4DC",
+      "name_en": "Lateral Box Jump",
+      "name_es": "Salto al Cajón Lateral",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes",
+        "calves"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "084A67CA",
+      "name_en": "Battle Ropes",
+      "name_es": "Cuerdas de Batalla",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "08590920",
+      "name_en": "Hanging Knee Raise",
+      "name_es": "Levantamiento de Rodillas en Barra",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "08A2974E",
+      "name_en": "T Bar Row",
+      "name_es": "Remo en T",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0910BD28",
+      "name_en": "Lying Neck Extension",
+      "name_es": "Extensión de Cuello Acostado",
+      "primary_muscle_group": "neck",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "091737FA",
+      "name_en": "Back Extension (Weighted Hyperextension)",
+      "name_es": "Extensión de Espalda (Hiperextensión con peso)",
+      "primary_muscle_group": "lower_back",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "bodyweight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "09C9F635",
+      "name_en": "Lying Leg Raise",
+      "name_es": "Levantamiento de Piernas Tumbado",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0B4C1902",
+      "name_en": "Bicep Curl (Suspension)",
+      "name_es": "Curl de Bíceps (Suspensión)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "suspension",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0B841777",
+      "name_en": "Shrug (Barbell)",
+      "name_es": "Encogimiento de Hombros (Barra)",
+      "primary_muscle_group": "traps",
+      "secondary_muscle_groups": [
+        "neck"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0B9B92BA",
+      "name_en": "Romanian Deadlift (Smith Machine)",
+      "name_es": "Peso Muerto Rumano (Máquina Smith)",
+      "primary_muscle_group": "hamstrings",
+      "secondary_muscle_groups": [
+        "glutes",
+        "lower_back",
+        "upper_back",
+        "lats"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0E4523F4",
+      "name_en": "Wrist Roller",
+      "name_es": "Rodillo de Antebrazos",
+      "primary_muscle_group": "forearms",
+      "secondary_muscle_groups": [
+        "shoulders"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0E608350",
+      "name_en": "Front Lever Hold",
+      "name_es": "Front Lever Sostenida",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0EB695C9",
+      "name_en": "Leg Press Horizontal (Machine)",
+      "name_es": "Press de Piernas Sentado",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0EFE8162",
+      "name_en": "Pike Pushup",
+      "name_es": "Flexión en Pica",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps",
+        "chest"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0F24286A",
+      "name_en": "Bulgarian Split Squat (Barbell)",
+      "name_es": "Sentadilla Búlgara (Barra)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "0FBF7195",
+      "name_en": "Bench Press (Smith Machine)",
+      "name_es": "Press de Banca (Máquina Smith)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "1006DF48",
+      "name_en": "Seated Palms Up Wrist Curl",
+      "name_es": "Curl de Muñeca Palmas arriba",
+      "primary_muscle_group": "forearms",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "10313AFD",
+      "name_en": "Thruster (Kettlebell)",
+      "name_es": "Thruster (Pesa Rusa)",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "10347BAC",
+      "name_en": "Triceps Dip (Weighted)",
+      "name_es": "Fondo de Tríceps (Con Peso Añadido)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [
+        "chest",
+        "shoulders"
+      ],
+      "exercise_type": "bodyweight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "108D7A14",
+      "name_en": "Nordic Hamstrings Curls",
+      "name_es": "Curls Nórdicos de Isquiotibiales",
+      "primary_muscle_group": "hamstrings",
+      "secondary_muscle_groups": [
+        "glutes"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "10D76E8F",
+      "name_en": "Clap Push Ups",
+      "name_es": "Flexiones con Palmada",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "triceps",
+        "shoulders"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "112FC6B7",
+      "name_en": "Reverse Curl (Barbell)",
+      "name_es": "Curl Invertido (Barra)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "115CC72C",
+      "name_en": "Burpee Broad Jumps",
+      "name_es": "Burpees con Salto Largo",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "11A123F3",
+      "name_en": "Seated Leg Curl (Machine)",
+      "name_es": "Curl de Pierna Sentado",
+      "primary_muscle_group": "hamstrings",
+      "secondary_muscle_groups": [
+        "calves"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "12017185",
+      "name_en": "Chest Fly (Dumbbell)",
+      "name_es": "Aperturas (Mancuerna)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "123EE239",
+      "name_en": "Zottman Curl (Dumbbell)",
+      "name_es": "Curl Zottman (Mancuerna)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "1283BBA6",
+      "name_en": "Full Squat",
+      "name_es": "Sentadilla Profunda",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "128A2381",
+      "name_en": "Step Up",
+      "name_es": "Subida al Cajón",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "150E076B",
+      "name_en": "High Knees",
+      "name_es": "Elevación de Rodillas",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "1837BA23",
+      "name_en": "Single Arm Landmine Press (Barbell)",
+      "name_es": "Landmine Press a Un Brazo (Barra)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps",
+        "chest"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "18487FA7",
+      "name_en": "Decline Bench Press (Dumbbell)",
+      "name_es": "Press de Banca en Declive (Mancuerna)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "19372ABC",
+      "name_en": "Push Up (Weighted)",
+      "name_es": "Flexiones (Con Peso Añadido)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "triceps",
+        "shoulders"
+      ],
+      "exercise_type": "bodyweight_reps",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "19A38071",
+      "name_en": "Shrug (Machine)",
+      "name_es": "Encogimiento de Hombros (Máquina)",
+      "primary_muscle_group": "traps",
+      "secondary_muscle_groups": [
+        "neck"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "1ADF8723",
+      "name_en": "Rear Kick (Machine)",
+      "name_es": "Patada trasera (máquina)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "1B2B1E7C",
+      "name_en": "Pull Up",
+      "name_es": "Dominada",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "1B89CA1B",
+      "name_en": "Renegade Row (Dumbbell)",
+      "name_es": "Remo Renegado",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "1C34A172",
+      "name_en": "Hiking",
+      "name_es": "Senderismo",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "1D4B3D6B",
+      "name_en": "Hammer Curl (Band)",
+      "name_es": "Curl Martillo (Banda)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "1DF4A847",
+      "name_en": "Seated Row (Machine)",
+      "name_es": "Remo Sentado (Máquina)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "1E42FD5F",
+      "name_en": "Hack Squat (Machine)",
+      "name_es": "Sentadilla Hack (Máquina)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "1E9A6B8E",
+      "name_en": "Preacher Curl (Machine)",
+      "name_es": "Curl predicador (máquina)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "1FF4097B",
+      "name_en": "Reverse Grip Concentration Curl",
+      "name_es": "Curl de Concentración Invertido",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "207DC636",
+      "name_en": "Frog Jumps",
+      "name_es": "Saltos de Rana",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings",
+        "calves"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "20870ED5",
+      "name_en": "Deadlift (Smith Machine)",
+      "name_es": "Peso Muerto (Máquina Smith)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps",
+        "lower_back",
+        "upper_back",
+        "lats",
+        "traps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "20C1A3CB",
+      "name_en": "Split Squat (Dumbbell)",
+      "name_es": "Sentadilla Split (Mancuerna)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "21310F5F",
+      "name_en": "Triceps Extension (Cable)",
+      "name_es": "Extensión de Tríceps (Cable)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "213AB238",
+      "name_en": "Spinning",
+      "name_es": "Spinning",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "218DA87C",
+      "name_en": "Superman",
+      "name_es": "Superman",
+      "primary_muscle_group": "lower_back",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "22578A94",
+      "name_en": "Hip Adduction (Cable)",
+      "name_es": "Aducción de Cadera (Cable)",
+      "primary_muscle_group": "adductors",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "22FEDCA4",
+      "name_en": "Lying Neck Curls",
+      "name_es": "Flexiones de Cuello Acostado",
+      "primary_muscle_group": "neck",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "234897AB",
+      "name_en": "Rope Cable Curl",
+      "name_es": "Curl con Cuerda (Cable)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "2348AB72",
+      "name_en": "Spider Curl (Barbell)",
+      "name_es": "Curl Araña (Barra)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "234BC743",
+      "name_en": "Seated Triceps Press",
+      "name_es": "Press de Tríceps Sentado (Máquina)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "238BA231",
+      "name_en": "Single Leg Standing Calf Raise",
+      "name_es": "Elevación de Gemelos a Una Pierna",
+      "primary_muscle_group": "calves",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "23A48484",
+      "name_en": "Cable Crunch",
+      "name_es": "Abdominal Corto con Cable",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "23E92538",
+      "name_en": "Bent Over Row (Dumbbell)",
+      "name_es": "Remo Inclinado (Mancuerna)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "243710DE",
+      "name_en": "Treadmill",
+      "name_es": "Cinta",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "24706DCD",
+      "name_en": "Iso-Lateral Chest Press (Machine)",
+      "name_es": "Press de Pecho Iso-Lateral (Máquina)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "24A809EF",
+      "name_en": "Skating",
+      "name_es": "Patinaje",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "286C1D0B",
+      "name_en": "Upright Row (Cable)",
+      "name_es": "Remo Vertical (Cable)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "traps",
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "28927A36",
+      "name_en": "Standing Y Raise (Cable)",
+      "name_es": "Elevación en Y de Pie (Cable)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "upper_back"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "28BB4A95",
+      "name_en": "Triceps Dip",
+      "name_es": "Fondo de Tríceps",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [
+        "chest",
+        "shoulders"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "29083183",
+      "name_en": "Chin Up",
+      "name_es": "Dominada Supina",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "291ABA92",
+      "name_en": "Hip Thrust (Smith Machine)",
+      "name_es": "Empuje de Cadera (Máquina Smith)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps",
+        "adductors"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "293483AD",
+      "name_en": "Low Cable Fly Crossovers",
+      "name_es": "Cables Cruzados Bajos",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "29472BE1",
+      "name_en": "Chest Dip (Weighted)",
+      "name_es": "Fondos (Con Peso Añadido)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "triceps",
+        "shoulders"
+      ],
+      "exercise_type": "bodyweight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "2982AA23",
+      "name_en": "Russian Twist (Weighted)",
+      "name_es": "Giro Ruso (Con Peso Añadido)",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "plate",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "2A48E443",
+      "name_en": "Straight Leg Deadlift",
+      "name_es": "Peso Muerto Piernas Estiradas",
+      "primary_muscle_group": "hamstrings",
+      "secondary_muscle_groups": [
+        "glutes",
+        "lower_back",
+        "upper_back",
+        "lats",
+        "traps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "2AF8B552",
+      "name_en": "Fire Hydrants",
+      "name_es": "Patadas Boca de Incendio",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "2B4B7310",
+      "name_en": "Romanian Deadlift (Barbell)",
+      "name_es": "Peso Muerto Rumano (Barra)",
+      "primary_muscle_group": "hamstrings",
+      "secondary_muscle_groups": [
+        "glutes",
+        "lower_back",
+        "upper_back",
+        "lats"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "2C37EC5E",
+      "name_en": "Pull Up (Assisted)",
+      "name_es": "Dominada (Asistida)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "bodyweight_assisted_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "2CFED196",
+      "name_en": "Overhead Squat",
+      "name_es": "Sentadilla de Arranque",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "2DBCA395",
+      "name_en": "Behind the Back Curl (Cable)",
+      "name_es": "Curl por detrás de la espalda (Polea)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "2EE45F81",
+      "name_en": "Single Arm Lat Pulldown",
+      "name_es": "Jalón al Pecho a Un Brazo",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "2F8D3067",
+      "name_en": "Triceps Extension (Barbell)",
+      "name_es": "Extensión de Tríceps (Barra)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "2FA77B28",
+      "name_en": "Flutter Kicks",
+      "name_es": "Aleteo de Piernas",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "3092FADD",
+      "name_en": "Triceps Extension (Machine)",
+      "name_es": "Extensión de Tríceps (Máquina)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "30E293E3",
+      "name_en": "Pendulum Squat (Machine)",
+      "name_es": "Sentadilla Péndulo (Máquina)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "30F03BF0",
+      "name_en": "Front Lever Raise",
+      "name_es": "Elevación a Front Lever",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "31436F5D",
+      "name_en": "Plank Pushup",
+      "name_es": "Flexiones en Plancha",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps",
+        "abdominals"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "31B8DA0F",
+      "name_en": "Lying Neck Curls (Weighted)",
+      "name_es": "Flexiones de Cuello Acostado (Con Peso)",
+      "primary_muscle_group": "neck",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "plate",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "32B0B590",
+      "name_en": "Jackknife Sit Up",
+      "name_es": "Abdominal Navaja",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "32C4D4A2",
+      "name_en": "Cross Body Hammer Curl",
+      "name_es": "Curl de Martillo Cruzado",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "32HKJ34K",
+      "name_en": "Walking Lunge",
+      "name_es": "Zancadas Caminando",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "3303376C",
+      "name_en": "Elliptical Trainer",
+      "name_es": "Elíptica",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "33EDD7DB",
+      "name_en": "Walking",
+      "name_es": "Caminar",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "35B51B87",
+      "name_en": "Bench Press - Close Grip (Barbell)",
+      "name_es": "Press de Banca - Agarre Cerrado (Barra)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [
+        "chest",
+        "shoulders"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "3601968B",
+      "name_en": "Bench Press (Dumbbell)",
+      "name_es": "Press de Banca (Mancuerna)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "triceps",
+        "shoulders"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "36E8F14E",
+      "name_en": "Hammer Curl (Cable)",
+      "name_es": "Curl Martillo (Cable)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "3765684D",
+      "name_en": "Triceps Extension (Dumbbell)",
+      "name_es": "Extensión de Tríceps (Mancuerna)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "37F9EDA7",
+      "name_en": "Side Bend",
+      "name_es": "Flexión Lateral",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "37FCC2BB",
+      "name_en": "Bicep Curl (Dumbbell)",
+      "name_es": "Curl de Bíceps (Mancuerna)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "38FC1AB9",
+      "name_en": "Box Squat (Barbell)",
+      "name_es": "Sentadilla al Cajón (Barra)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "392887AA",
+      "name_en": "Push Up",
+      "name_es": "Flexiones",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "triceps",
+        "shoulders"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "39C99849",
+      "name_en": "Incline Push Ups",
+      "name_es": "Flexiones Inclinadas",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "3A6FA3D1",
+      "name_en": "Incline Bench Press (Smith Machine)",
+      "name_es": "Press de Banca Inclinado (Máquina Smith)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "3BC06AD3",
+      "name_en": "21s Bicep Curl",
+      "name_es": "Curl de Bíceps 21",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "3D0C7C75",
+      "name_en": "Goblet Squat",
+      "name_es": "Sentadilla Goblet",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "3D1CDC75",
+      "name_en": "Belt Squat (Machine)",
+      "name_es": "Sentadilla con cinturón (Máquina)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "3F5F8D40",
+      "name_en": "Sumo Squat",
+      "name_es": "Sentadilla Sumo",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "adductors",
+        "hamstrings"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "3FD83744",
+      "name_en": "Single Leg Press (Machine)",
+      "name_es": "Press a Una Pierna",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "3FF6A22E",
+      "name_en": "Pistol Squat",
+      "name_es": "Sentadilla Pistol",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "40C6A9FC",
+      "name_en": "Zercher Squat",
+      "name_es": "Sentadilla Zercher",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes",
+        "biceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "4180C405",
+      "name_en": "Good Morning (Barbell)",
+      "name_es": "Buenos Días (Barra)",
+      "primary_muscle_group": "hamstrings",
+      "secondary_muscle_groups": [
+        "glutes",
+        "lower_back",
+        "upper_back",
+        "lats"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "422B08F1",
+      "name_en": "Lateral Raise (Dumbbell)",
+      "name_es": "Elevación Lateral (Mancuerna)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "425805F4",
+      "name_en": "Inverted Row",
+      "name_es": "Remo Invertido",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "4288G454",
+      "name_en": "Kettlebell Halo",
+      "name_es": "Halo con pesa rusa",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "traps",
+        "upper_back"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "43573BB8",
+      "name_en": "Air Bike",
+      "name_es": "Bicicleta de Aire",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "4377A52A",
+      "name_en": "Stair Machine",
+      "name_es": "Máquina Escaladora",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "machine",
+      "is_archived": true,
+      "full_bodyweight": false
+    },
+    {
+      "id": "4377A52B",
+      "name_en": "Stair Machine (Floors)",
+      "name_es": "Máquina Escaladora",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "floors_duration",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "4377A52C",
+      "name_en": "Stair Machine (Steps)",
+      "name_es": "Máquina Escaladora",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "steps_duration",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "473CF5B8",
+      "name_en": "Lat Pulldown (Machine)",
+      "name_es": "Jalón al Pecho (Máquina)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "47B036EF",
+      "name_en": "Front Raise (Band)",
+      "name_es": "Elevación Frontal (Banda)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "47B9DF13",
+      "name_en": "Calf Extension (Machine)",
+      "name_es": "Extensión de Pantorrilla (Máquina)",
+      "primary_muscle_group": "calves",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "487B3755",
+      "name_en": "Single Leg Hip Thrust",
+      "name_es": "Empuje de Cadera a Una Pierna",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "49C922A1",
+      "name_en": "Glute Bridge (Barbell)",
+      "name_es": "Puente de Glúteos (Barra)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "adductors",
+        "quadriceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "4B4BF8C2",
+      "name_en": "Triceps Dip (Assisted)",
+      "name_es": "Fondo de Tríceps (Asistido)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [
+        "chest",
+        "shoulders"
+      ],
+      "exercise_type": "bodyweight_assisted_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "4C6721B9",
+      "name_en": "Overhead Dumbbell Lunge",
+      "name_es": "Zancada con Mancuerna Sobre la Cabeza",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes",
+        "shoulders",
+        "triceps",
+        "upper_back"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "4E239ED8",
+      "name_en": "Kettlebell Curl",
+      "name_es": "Curl con Pesa Rusa",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "4E5257DE",
+      "name_en": "Lat Pulldown - Close Grip (Cable)",
+      "name_es": "Jalón al Pecho - Agarre Cerrado (Cable)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "4F5866F8",
+      "name_en": "Back Extension (Hyperextension)",
+      "name_es": "Extensión de Espalda (Hiperextensión)",
+      "primary_muscle_group": "lower_back",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "4F942934",
+      "name_en": "Preacher Curl (Barbell)",
+      "name_es": "Curl predicador (barra)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "502FCE31",
+      "name_en": "Shoulder Taps",
+      "name_es": "Toques de Hombro en Plancha",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "chest",
+        "triceps"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "5046D0A9",
+      "name_en": "Front Squat",
+      "name_es": "Sentadilla Frontal",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "50C613D0",
+      "name_en": "Farmers Walk",
+      "name_es": "Paseo del Granjero",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "short_distance_weight",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "50C613D9",
+      "name_en": "Farmers Walk (Distance Duration)",
+      "name_es": "Paseo del Granjero",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "other",
+      "is_archived": true,
+      "full_bodyweight": false
+    },
+    {
+      "id": "50DFDFAB",
+      "name_en": "Incline Bench Press (Barbell)",
+      "name_es": "Press de Banca Inclinado (Barra)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "triceps",
+        "shoulders"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "5122E7D9",
+      "name_en": "Seated Dip Machine",
+      "name_es": "Máquina para Fondos Sentado",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [
+        "chest",
+        "shoulders"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "51A0EDAA",
+      "name_en": "Ring Dips",
+      "name_es": "Fondos en Anillas",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "527DA061",
+      "name_en": "Stretching",
+      "name_es": "Estiramiento",
+      "primary_muscle_group": "other",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "542F3CD5",
+      "name_en": "Push Press",
+      "name_es": "Empuje de Fuerza",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps",
+        "quadriceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "54E60954",
+      "name_en": "Overhead Plate Raise",
+      "name_es": "Elevación de disco por encima de la cabeza",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "traps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "plate",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "552AB030",
+      "name_en": "Single Arm Triceps Pushdown (Cable)",
+      "name_es": "Extensión de Tríceps a un Brazo (Cable)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "55BA475A",
+      "name_en": "Kettlebell Around the World",
+      "name_es": "Alrededor del Mundo (Pesa Rusa)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "traps",
+        "chest",
+        "abdominals"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "55E6546F",
+      "name_en": "Bent Over Row (Barbell)",
+      "name_es": "Remo Inclinado (Barra)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "56092DD1",
+      "name_en": "Box Jump",
+      "name_es": "Salto al Cajón",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes",
+        "calves"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "567FB505",
+      "name_en": "Heel Taps",
+      "name_es": "Abdominales Toque al Talón",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "56808FD2",
+      "name_en": "Pull Up (Band)",
+      "name_es": "Dominada (Banda)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "bodyweight_assisted_reps",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "582ADA23",
+      "name_en": "Overhead Curl (Cable)",
+      "name_es": "Curl Sobre Cabeza (Cable)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "594450D2",
+      "name_en": "Bicycle Crunch Raised Legs",
+      "name_es": "Abdominales Bicicleta Piernas Levantadas",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "5BFF35BA",
+      "name_en": "Assisted Pistol Squats",
+      "name_es": "Sentadilla Pistol Asistida",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "5CC07A1F",
+      "name_en": "Jumping Lunge",
+      "name_es": "Zancada con Salto",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes",
+        "calves"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "5D99A2FA",
+      "name_en": "Ski Erg",
+      "name_es": "Máquina de Esquí",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "5DA40761",
+      "name_en": "Single Leg Standing Calf Raise (Dumbbell)",
+      "name_es": "Elevación de Gemelos a Una Pierna (Mancuerna)",
+      "primary_muscle_group": "calves",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "5E0DDACE",
+      "name_en": "Aerobics",
+      "name_es": "Aeróbic",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "5E10D0E6",
+      "name_en": "Sumo Squat (Kettlebell)",
+      "name_es": "Sentadilla Sumo (Pesa Rusa)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "adductors",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "5E1A7777",
+      "name_en": "Lunge",
+      "name_es": "Zancada",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "5F09F0FC",
+      "name_en": "Ring Pull Up",
+      "name_es": "Dominada en anillas",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "5F4E6DD3",
+      "name_en": "Deadlift (Dumbbell)",
+      "name_es": "Peso Muerto (Mancuerna)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps",
+        "lower_back",
+        "upper_back",
+        "lats",
+        "traps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "5F8903BF",
+      "name_en": "Kettlebell Turkish Get Up",
+      "name_es": "Levantamiento Turco con Pesa Rusa",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6120CAAB",
+      "name_en": "Standing Leg Curls",
+      "name_es": "Curls de Piernas de Pie",
+      "primary_muscle_group": "hamstrings",
+      "secondary_muscle_groups": [
+        "calves"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6127A3AD",
+      "name_en": "Triceps Kickback (Dumbbell)",
+      "name_es": "Patada de Tríceps (Mancuerna)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6182EE83",
+      "name_en": "Triceps Extension (Suspension)",
+      "name_es": "Extensión Tríceps (Suspensión)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "suspension",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "629AE73D",
+      "name_en": "Single Leg Extensions",
+      "name_es": "Extensiones a Una Pierna",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6433CD93",
+      "name_en": "Kettlebell Shoulder Press",
+      "name_es": "Press de Hombros con Pesa Rusa",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "651F844C",
+      "name_en": "Cable Fly Crossovers",
+      "name_es": "Cables Cruzados",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "652FEA39",
+      "name_en": "Clean Pull",
+      "name_es": "Tirón de Cargada",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6575F52D",
+      "name_en": "Diamond Push Up",
+      "name_es": "Flexiones Diamante",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [
+        "chest",
+        "shoulders"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6622E5A0",
+      "name_en": "Sumo Squat (Barbell)",
+      "name_es": "Sentadilla Sumo (Barra)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes",
+        "adductors"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "67280085",
+      "name_en": "Pullover (Dumbbell)",
+      "name_es": "Pullover (Mancuerna)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "chest",
+        "upper_back",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "68B83EE0",
+      "name_en": "Glute Ham Raise",
+      "name_es": "Elevación de glúteos y femorales",
+      "primary_muscle_group": "hamstrings",
+      "secondary_muscle_groups": [
+        "glutes"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "68CE0B9B",
+      "name_en": "Hip Thrust (Machine)",
+      "name_es": "Empuje de Cadera (Máquina)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps",
+        "adductors"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "68F8A292",
+      "name_en": "Skullcrusher (Dumbbell)",
+      "name_es": "Press Francés (Mancuerna)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6A6C31A5",
+      "name_en": "Lat Pulldown (Cable)",
+      "name_es": "Jalón al Pecho (Cable)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6A8D3193",
+      "name_en": "Chest Supported T Bar Row",
+      "name_es": "Remo en T con Apoyo de Pecho",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6AC96645",
+      "name_en": "Overhead Press (Dumbbell)",
+      "name_es": "Press de Hombros (Mancuerna)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6B4C797E",
+      "name_en": "Seated Chest Flys (Cable)",
+      "name_es": "Aperturas de Pecho Sentado (Cable)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6BE68B62",
+      "name_en": "V Up",
+      "name_es": "Abdominales en V",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6D54A050",
+      "name_en": "L-Sit Hold",
+      "name_es": "L-Sit Sostenido",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6DA40660",
+      "name_en": "Standing Calf Raise (Dumbbell)",
+      "name_es": "Elevación de Gemelos de Pie (Mancuerna)",
+      "primary_muscle_group": "calves",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6E6EE645",
+      "name_en": "Lunge (Barbell)",
+      "name_es": "Zancada (Barra)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "6FCD7755",
+      "name_en": "Chest Dip",
+      "name_es": "Fondos",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "70D4EBBF",
+      "name_en": "Jump Squat",
+      "name_es": "Sentadilla con Salto",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes",
+        "calves"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "720B0D70",
+      "name_en": "Chest Fly (Suspension)",
+      "name_es": "Aperturas de pecho (Suspensión)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "suspension",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "72297E8C",
+      "name_en": "Waiter Curl (Dumbbell)",
+      "name_es": "Curl de camarero (mancuerna)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "724CDE60",
+      "name_en": "Concentration Curl",
+      "name_es": "Curls de Concentración",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "72880C57",
+      "name_en": "Vertical Traction (Machine)",
+      "name_es": "Tracción vertical (máquina)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "729237D1",
+      "name_en": "Pull Up (Weighted)",
+      "name_es": "Dominada (Con Peso Añadido)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "bodyweight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "72CFFAD5",
+      "name_en": "Romanian Deadlift (Dumbbell)",
+      "name_es": "Peso Muerto Rumano (Mancuerna)",
+      "primary_muscle_group": "hamstrings",
+      "secondary_muscle_groups": [
+        "glutes",
+        "lower_back",
+        "upper_back",
+        "lats"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "74103F24",
+      "name_en": "JM Press (Barbell)",
+      "name_es": "Press JM (Barra)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [
+        "chest",
+        "shoulders"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "742E5BD5",
+      "name_en": "Shrug (Smith Machine)",
+      "name_es": "Encogimiento de Hombros (Máquina Smith)",
+      "primary_muscle_group": "traps",
+      "secondary_muscle_groups": [
+        "neck"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "756EE329",
+      "name_en": "Floor Press (Dumbbell)",
+      "name_es": "Press en el Suelo (Mancuerna)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "7593855D",
+      "name_en": "Suitcase Carry (Dumbbell)",
+      "name_es": "Paseo del Maletín (Mancuerna)",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "short_distance_weight",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "75A4F6C4",
+      "name_en": "Leg Extension (Machine)",
+      "name_es": "Extensión de Pierna",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "75BAC5C3",
+      "name_en": "Toe Touch",
+      "name_es": "Abdominales Toque de Pies",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "7757171F",
+      "name_en": "Sled Push",
+      "name_es": "Empuje de Trineo",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "78683336",
+      "name_en": "Chest Fly (Machine)",
+      "name_es": "Aperturas (Máquina)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "7952B5CD",
+      "name_en": "Reverse Crunch",
+      "name_es": "Crunch Inverso",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "796E8E2C",
+      "name_en": "Front Raise (Suspension)",
+      "name_es": "Elevación Frontal (Suspensión)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "suspension",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "797F0782",
+      "name_en": "Upright Row (Dumbbell)",
+      "name_es": "Remo Vertical (Mancuerna)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "traps",
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "79D0BB3A",
+      "name_en": "Bench Press (Barbell)",
+      "name_es": "Press de Banca (Barra)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "triceps",
+        "shoulders"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "79EF4E4F",
+      "name_en": "Warm Up",
+      "name_es": "Calentamiento",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "7AB9A362",
+      "name_en": "Upright Row (Barbell)",
+      "name_es": "Remo Vertical (Barra)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "traps",
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "7B8D84E8",
+      "name_en": "Overhead Press (Barbell)",
+      "name_es": "Press de Hombros (Barra)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps",
+        "abdominals"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "7C0028C3",
+      "name_en": "Reverse Hyperextension",
+      "name_es": "Hiperextensión Inversa",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "lower_back"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "7C50F118",
+      "name_en": "Wide Pull Up",
+      "name_es": "Dominada Abierta",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "7D1BD41D",
+      "name_en": "Sled Pull",
+      "name_es": "Arrastre de Trineo",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "short_distance_weight",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "7DA843A3",
+      "name_en": "Downward Dog",
+      "name_es": "Postura del Perro Boca Abajo",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "7E3BC8B6",
+      "name_en": "Hammer Curl (Dumbbell)",
+      "name_es": "Curl Martillo (Mancuerna)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "7E93E23F",
+      "name_en": "Seal Row (Dumbbell)",
+      "name_es": "Remo Seal (Mancuerna)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "7EB3F7C3",
+      "name_en": "Chest Press (Machine)",
+      "name_es": "Press de Pecho (Máquina)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "7FD2EC3E",
+      "name_en": "Recumbent Bike",
+      "name_es": "Bicicleta Reclinada",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "818BA121",
+      "name_en": "Reverse Lunge (Barbell)",
+      "name_es": "Zancada Invertida (Barra)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "8293E554",
+      "name_en": "Front Raise (Dumbbell)",
+      "name_es": "Elevación Frontal (Mancuerna)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "8347DFD1",
+      "name_en": "Single Arm Tricep Extension (Dumbbell)",
+      "name_es": "Extensión de Tríceps de un Brazo (Mancuerna)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "8372BBCC",
+      "name_en": "Single Arm Cable Crossover",
+      "name_es": "Cables Cruzados de Un Solo Brazo",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "84325755",
+      "name_en": "Skiing",
+      "name_es": "Esquí",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "84A77566",
+      "name_en": "Press Under",
+      "name_es": "Press Bajo la Barra",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "867AC3B6",
+      "name_en": "Feet Up Bench Press (Barbell)",
+      "name_es": "Press de banca con pies elevados (barra)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "86B00DDE",
+      "name_en": "Burpee Over the Bar",
+      "name_es": "Burpee Sobre la Barra",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "875F585F",
+      "name_en": "Skullcrusher (Barbell)",
+      "name_es": "Press Francés (Barra)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "878CD1D0",
+      "name_en": "Shoulder Press (Dumbbell)",
+      "name_es": "Press de Hombros (Mancuerna)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "89304423",
+      "name_en": "Kettlebell Snatch",
+      "name_es": "Arrancada con Pesa Rusa",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "8A2E6481",
+      "name_en": "Low Row (Suspension)",
+      "name_es": "Remo Bajo (Suspensión)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "suspension",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "8B5BED30",
+      "name_en": "Reverse Grip Triceps Pushdown",
+      "name_es": "Jalón de Tríceps con Agarre Invertido",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "8BAB2735",
+      "name_en": "Seated Incline Curl (Dumbbell)",
+      "name_es": "Curl de Bíceps Inclinado (Mancuerna)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "8BEBFED6",
+      "name_en": "Hip Adduction (Machine)",
+      "name_es": "Aducción de Cadera (Máquina)",
+      "primary_muscle_group": "adductors",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "8C331CD8",
+      "name_en": "Cable Pull Through",
+      "name_es": "Tirón con Polea Entre Piernas",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "lower_back"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "8C9D2928",
+      "name_en": "Yoga",
+      "name_es": "Yoga",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "90427D4A",
+      "name_en": "Spider Curl (Dumbbell)",
+      "name_es": "Curl Araña (Mancuerna)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "90B04F96",
+      "name_en": "Handstand Push Up",
+      "name_es": "Flexiones Verticales",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "chest",
+        "triceps"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "90E506D5",
+      "name_en": "Thruster (Barbell)",
+      "name_es": "Thruster (Barra)",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "911A58D3",
+      "name_en": "Snowboarding",
+      "name_es": "Snowboard",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "91237BDD",
+      "name_en": "Calf Press (Machine)",
+      "name_es": "Press de Pantorrilla (Máquina)",
+      "primary_muscle_group": "calves",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "914F3A96",
+      "name_en": "Chest Supported Incline Row (Dumbbell)",
+      "name_es": "Remo Inclinado con Apoyo de Pecho (Mancuerna)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "91AF29E0",
+      "name_en": "Seated Overhead Press (Barbell)",
+      "name_es": "Press de Hombros Sentado (Barra)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "91FAFBA3",
+      "name_en": "Iso-Lateral Low Row",
+      "name_es": "Remo Bajo Iso-Lateral",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9202CC23",
+      "name_en": "Seated Wrist Extension (Barbell)",
+      "name_es": "Extensión de Muñeca Sentado (Barra)",
+      "primary_muscle_group": "forearms",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9237BA12",
+      "name_en": "Sit Up (Weighted)",
+      "name_es": "Abdominal Completo (Con Peso Añadido)",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "bodyweight_reps",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9237BAD1",
+      "name_en": "Seated Shoulder Press (Machine)",
+      "name_es": "Press de Hombros Sentado (Máquina)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "923874CA",
+      "name_en": "Landmine 180",
+      "name_es": "Rotación landmine de 180 grados",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "chest",
+        "upper_back",
+        "traps",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9264ADA1",
+      "name_en": "Reverse Fly Single Arm (Cable)",
+      "name_es": "Vuelos Posteriores a Un Brazo (Cable)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "upper_back"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9273BA17",
+      "name_en": "Rope Straight Arm Pulldown",
+      "name_es": "Jalón con cuerda de brazos rectos",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9283ABD5",
+      "name_en": "Plate Curl",
+      "name_es": "Curl con disco",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "plate",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9283BABA",
+      "name_en": "Sprints",
+      "name_es": "Sprints",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "92B8C7E1",
+      "name_en": "Hip Thrust",
+      "name_es": "Empuje de Caderas",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "92D858EA",
+      "name_en": "Cable Twist (Down to up)",
+      "name_es": "Giro con cable (de abajo hacia arriba)",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "93472AC1",
+      "name_en": "Single Leg Romanian Deadlift (Barbell)",
+      "name_es": "Peso Muerto Rumano a Una Pierna (Barra)",
+      "primary_muscle_group": "hamstrings",
+      "secondary_muscle_groups": [
+        "glutes",
+        "lower_back",
+        "upper_back",
+        "lats"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "937292AB",
+      "name_en": "Single Leg Romanian Deadlift (Dumbbell)",
+      "name_es": "Peso Muerto Rumano a Una Pierna (Mancuerna)",
+      "primary_muscle_group": "hamstrings",
+      "secondary_muscle_groups": [
+        "glutes",
+        "lower_back"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9372FFAA",
+      "name_en": "Seated Lateral Raise (Dumbbell)",
+      "name_es": "Elevación Lateral Sentado (Mancuerna)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9373FSD1",
+      "name_en": "Plate Squeeze (Svend Press)",
+      "name_es": "Apretón con disco (Svend Press)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "plate",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "93A552C6",
+      "name_en": "Triceps Pushdown",
+      "name_es": "Jalón de Tríceps en Polea",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "942BAD12",
+      "name_en": "Pinwheel Curl (Dumbbell)",
+      "name_es": "Curl pinwheel (mancuerna)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "947DAC23",
+      "name_en": "Push Up - Close Grip",
+      "name_es": "Flexiones (Agarre Cerrado)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "triceps",
+        "shoulders"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "94B7239B",
+      "name_en": "Triceps Rope Pushdown",
+      "name_es": "Jalón de tríceps con cuerda",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "95F2E076",
+      "name_en": "Seated Wrist Curl (Barbell)",
+      "name_es": "Curl de Muñeca Sentado (Barra)",
+      "primary_muscle_group": "forearms",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9694DA61",
+      "name_en": "Squat (Bodyweight)",
+      "name_es": "Sentadilla (Peso Corporal)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "970ADF87",
+      "name_en": "Hollow Rock",
+      "name_es": "Hollow Rock",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "98237BA2",
+      "name_en": "Knee Raise Parallel Bars",
+      "name_es": "Rodillas al Pecho en Barras Paralelas",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "982734D4",
+      "name_en": "Plate Press",
+      "name_es": "Press con Disco",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "plate",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "983274DD",
+      "name_en": "Landmine Squat and Press",
+      "name_es": "Sentadilla y Press Landmine",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "987234AB",
+      "name_en": "Glute Kickback on Floor",
+      "name_es": "Patada de Burro",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "991833C2",
+      "name_en": "Jumping Jack",
+      "name_es": "Saltos de Tijera",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9930DF71",
+      "name_en": "Seated Overhead Press (Dumbbell)",
+      "name_es": "Press de Hombros Sentado (Mancuerna)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "99507114",
+      "name_en": "Deadlift (Band)",
+      "name_es": "Peso Muerto (Banda)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps",
+        "lower_back",
+        "upper_back",
+        "lats",
+        "traps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "99B49684",
+      "name_en": "Reverse Plank",
+      "name_es": "Plancha Inversa",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "99C1F2AD",
+      "name_en": "Bench Press (Cable)",
+      "name_es": "Press de Banca (Cable)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "99D5F10E",
+      "name_en": "Ab Wheel",
+      "name_es": "Rueda Abdominal",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9B13BA4B",
+      "name_en": "Kettlebell High Pull",
+      "name_es": "Tirón Alto con Pesa Rusa",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [
+        "traps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9DCE2D64",
+      "name_en": "Butterfly (Pec Deck)",
+      "name_es": "Mariposa (Pec Deck)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9E09CEC3",
+      "name_en": "Clean and Jerk",
+      "name_es": "Cargada y Envión",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9F48F858",
+      "name_en": "Reverse Curl (Cable)",
+      "name_es": "Curl Invertido (Cable)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "9F9C164B",
+      "name_en": "Muscle Up",
+      "name_es": "Muscle Up",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "A01BE509",
+      "name_en": "Elbow to Knee",
+      "name_es": "Rodillas a Codos",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A05C064D",
+      "name_en": "Back Extension (Machine)",
+      "name_es": "Extensión de Espalda (Máquina)",
+      "primary_muscle_group": "lower_back",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A0D8FA1B",
+      "name_en": "Boxing",
+      "name_es": "Boxeo",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A127DA73",
+      "name_en": "Kettlebell Goblet Squat",
+      "name_es": "Sentadilla Goblet con Pesa Rusa",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A1F47ACC",
+      "name_en": "Wall Ball",
+      "name_es": "Lanzamientos de Balón",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A2D838BD",
+      "name_en": "Cable Twist (Up to down)",
+      "name_es": "Giro con cable (de arriba hacia abajo)",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A351AED7",
+      "name_en": "Decline Chest Fly (Dumbbell)",
+      "name_es": "Apertura Declinada (Mancuerna)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A41C7261",
+      "name_en": "Bicycle Crunch",
+      "name_es": "Abdominal Bicicleta",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A57D38D5",
+      "name_en": "Floor Triceps Dip",
+      "name_es": "Fondos de Tríceps en Suelo",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [
+        "shoulders"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A5AC6449",
+      "name_en": "Bicep Curl (Barbell)",
+      "name_es": "Curl de Bíceps (Barra)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A69FF221",
+      "name_en": "Arnold Press (Dumbbell)",
+      "name_es": "Arnold Press (Mancuerna)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A733CC5B",
+      "name_en": "Walking Lunge (Dumbbell)",
+      "name_es": "Zancadas Caminando (Mancuerna)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "short_distance_weight",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A8814C06",
+      "name_en": "Squat Row",
+      "name_es": "Sentadilla con Remo",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "A91838C0",
+      "name_en": "Kipping Pull Up",
+      "name_es": "Dominadas con Kipping",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "AA1EB7D8",
+      "name_en": "Iso-Lateral Row (Machine)",
+      "name_es": "Remo Iso-Lateral",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "AA52E8D2",
+      "name_en": "Standing Calf Raise (Smith)",
+      "name_es": "Elevación de Gemelos de Pie (Máquina Smith)",
+      "primary_muscle_group": "calves",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "ABB00838",
+      "name_en": "Clean",
+      "name_es": "Cargada",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "ABEC557F",
+      "name_en": "Shrug (Dumbbell)",
+      "name_es": "Encogimiento de Hombros (Mancuerna)",
+      "primary_muscle_group": "traps",
+      "secondary_muscle_groups": [
+        "neck"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "AC1BB830",
+      "name_en": "Running",
+      "name_es": "Correr",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "AC5A4C58",
+      "name_en": "Hack Squat",
+      "name_es": "Sentadilla Hack",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "ACB2751D",
+      "name_en": "Standing Cable Glute Kickbacks",
+      "name_es": "Patada de Glúteo con Cable",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "ADA8623C",
+      "name_en": "Bicep Curl (Cable)",
+      "name_es": "Curl de Bíceps (Cable)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "AEA56BDC",
+      "name_en": "Ring Push Up",
+      "name_es": "Flexión en anillas",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "AF328E3D",
+      "name_en": "Bicep Curl (Machine)",
+      "name_es": "Curl de Bíceps (Máquina)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "AFC29472",
+      "name_en": "Dragon Flag",
+      "name_es": "Dragon Flag",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B05C2C29",
+      "name_en": "Single Leg Standing Calf Raise (Machine)",
+      "name_es": "Elevación de Gemelos a Una Pierna (Máquina)",
+      "primary_muscle_group": "calves",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B09A1304",
+      "name_en": "Overhead Press (Smith Machine)",
+      "name_es": "Press de Hombros (Máquina Smith)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B123DD01",
+      "name_en": "Pullover (Machine)",
+      "name_es": "Pullover (Máquina)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "chest",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B140095E",
+      "name_en": "One Arm Push Up",
+      "name_es": "Flexión a Una Mano",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B2398CD1",
+      "name_en": "Decline Crunch (Weighted)",
+      "name_es": "Abdominal Corto en Banco Declinado (Con Peso Añadido)",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "bodyweight_reps",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B31EB524",
+      "name_en": "Wide-Elbow Triceps Press (Dumbbell)",
+      "name_es": "Press de tríceps con codos abiertos (Mancuerna)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [
+        "chest",
+        "shoulders"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B33B526E",
+      "name_en": "Single Arm Curl (Cable)",
+      "name_es": "Curl a un Brazo (Cable)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B3B1D947",
+      "name_en": "Bear Crawl",
+      "name_es": "Marcha del Oso",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B4F2FF72",
+      "name_en": "Ab Scissors",
+      "name_es": "Abdominales Tijera",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B537D09F",
+      "name_en": "Lunge (Dumbbell)",
+      "name_es": "Zancada (Mancuerna)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B567DD46",
+      "name_en": "Reverse Curl (Dumbbell)",
+      "name_es": "Curl Invertido (Mancuerna)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B582299E",
+      "name_en": "Chest Supported Reverse Fly (Dumbbell)",
+      "name_es": "Vuelos Posteriores con Apoyo de Pecho (Mancuerna)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "upper_back"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B5D3A742",
+      "name_en": "Bulgarian Split Squat (Dumbbell)",
+      "name_es": "Sentadilla Búlgara (Mancuerna)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B5EFBF9C",
+      "name_en": "Overhead Triceps Extension (Cable)",
+      "name_es": "Extensión de tríceps por encima de la cabeza (cable)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B60A678F",
+      "name_en": "Swimming",
+      "name_es": "Natación",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B7192800",
+      "name_en": "Dragonfly",
+      "name_es": "Dragonfly",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B74A95BB",
+      "name_en": "Kneeling Push Up",
+      "name_es": "Flexiones de Rodillas",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "triceps",
+        "shoulders"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B8127AD1",
+      "name_en": "Lying Leg Curl (Machine)",
+      "name_es": "Curl de Piernas Acostado (Máquina)",
+      "primary_muscle_group": "hamstrings",
+      "secondary_muscle_groups": [
+        "calves"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B82D6418",
+      "name_en": "Squat (Suspension)",
+      "name_es": "Sentadilla (Suspensión)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "suspension",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B923B230",
+      "name_en": "Deadlift (Trap bar)",
+      "name_es": "Peso Muerto (Barra Trap)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps",
+        "lower_back",
+        "upper_back",
+        "lats",
+        "traps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B9380898",
+      "name_en": "Dead Hang",
+      "name_es": "Colgado en Barra",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "forearms"
+      ],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "B94E35E1",
+      "name_en": "Toes to Bar",
+      "name_es": "Pies a la Barra",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BA3DE542",
+      "name_en": "Jump Shrug",
+      "name_es": "Encogimiento de Hombros con Salto",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BB792A36",
+      "name_en": "Burpee",
+      "name_es": "Burpee",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BB83BDDE",
+      "name_en": "Russian Twist (Bodyweight)",
+      "name_es": "Giro Ruso (Peso Corporal)",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BC10A922",
+      "name_en": "Decline Crunch",
+      "name_es": "Abdominal Corto en Banco Declinado",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BC3492DA",
+      "name_en": "Iso-Lateral High Row (Machine)",
+      "name_es": "Remo Alto Iso-Lateral",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BD0AD077",
+      "name_en": "Bird Dog",
+      "name_es": "Bird Dog",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "shoulders"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BD4E7E53",
+      "name_en": "Hang Clean",
+      "name_es": "Cargada Colgante",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BD5935CF",
+      "name_en": "Lying Knee Raise",
+      "name_es": "Levantamiento de Rodillas Tumbado",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BD86EFD5",
+      "name_en": "Front Raise (Barbell)",
+      "name_es": "Elevación Frontal (Barra)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BE289E45",
+      "name_en": "Lateral Raise (Cable)",
+      "name_es": "Elevación Lateral (Cable)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BE3615CF",
+      "name_en": "Handstand Hold",
+      "name_es": "Equilibrio Invertido",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BE640BA0",
+      "name_en": "Face Pull",
+      "name_es": "Tirón a la Cara",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "biceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BE89C631",
+      "name_en": "Hex Press (Dumbbell)",
+      "name_es": "Press Hexagonal (Mancuerna)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "BF6ECE89",
+      "name_en": "Dumbbell Step Up",
+      "name_es": "Subida al Cajón (Mancuerna)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C01F58D1",
+      "name_en": "Seated Incline Hammer Curl (Dumbbell)",
+      "name_es": "Curl Martillo Inclinado Sentado (Mancuerna)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C10A5AC9",
+      "name_en": "Spiderman",
+      "name_es": "Spiderman",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C284D923",
+      "name_en": "Reverse Lunge",
+      "name_es": "Zancada Invertida",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C315DC2A",
+      "name_en": "Rear Delt Reverse Fly (Cable)",
+      "name_es": "Vuelos Posteriores (Cable)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "upper_back"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C3BCABB3",
+      "name_en": "Seated Cable Row - Bar Wide Grip",
+      "name_es": "Remo Sentado con Cable - Agarre Abierto",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "traps",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C43825EA",
+      "name_en": "Decline Push Up",
+      "name_es": "Flexión Declinada",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C469EA70",
+      "name_en": "Hip Abduction (Cable)",
+      "name_es": "Abducción de Cadera (Cable)",
+      "primary_muscle_group": "abductors",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C6272009",
+      "name_en": "Deadlift (Barbell)",
+      "name_es": "Peso Muerto (Barra)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps",
+        "lower_back",
+        "upper_back",
+        "lats",
+        "traps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C628D768",
+      "name_en": "Power Clean",
+      "name_es": "Cargada de Potencia",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C6C9B8A0",
+      "name_en": "Plank",
+      "name_es": "Plancha",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C732C341",
+      "name_en": "Meadows Rows (Barbell)",
+      "name_es": "Remo Meadows (Barra)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C7973E0E",
+      "name_en": "Leg Press (Machine)",
+      "name_es": "Press de Piernas",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C7AE420A",
+      "name_en": "Scapular Pull Ups",
+      "name_es": "Dominadas Escapulares",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "forearms"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "C8706C80",
+      "name_en": "Wall Sit",
+      "name_es": "Sentadilla en Pared",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "abdominals"
+      ],
+      "exercise_type": "duration",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "C9CCB878",
+      "name_en": "High Knee Skips",
+      "name_es": "Skipping con Rodillas Altas",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "CBA02382",
+      "name_en": "Glute Kickback (Machine)",
+      "name_es": "Patada de Glúteo (Máquina)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "CBC0D834",
+      "name_en": "Single Leg Glute Bridge",
+      "name_es": "Puente de Glúteos con Una Pierna",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "CC016611",
+      "name_en": "Clamshell",
+      "name_es": "Almeja",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "CC35A01F",
+      "name_en": "Squat (Machine)",
+      "name_es": "Sentadilla (Máquina)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "CC55119B",
+      "name_en": "Cable Core Pallof Press",
+      "name_es": "Press Pallof con cable",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [
+        "chest",
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "CD6DC8E5",
+      "name_en": "Bench Dip",
+      "name_es": "Fondos en Banco",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "chest"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "CDA23948",
+      "name_en": "Glute Bridge",
+      "name_es": "Puente de Glúteos",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "CDC472B1",
+      "name_en": "Triceps Pressdown",
+      "name_es": "Extensión de tríceps en polea",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "CE1054CE",
+      "name_en": "Pause Squat (Barbell)",
+      "name_es": "Sentadilla con Pausa (Barra)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D04AC939",
+      "name_en": "Squat (Barbell)",
+      "name_es": "Sentadilla (Barra)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D0C4A899",
+      "name_en": "Single Arm Cable Row",
+      "name_es": "Remo a Un Brazo (Cable)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D1CD146F",
+      "name_en": "Single Leg Hip Thrust (Dumbbell)",
+      "name_es": "Empuje de Cadera a Una Pierna (Mancuerna)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D20D7BBE",
+      "name_en": "Sumo Deadlift",
+      "name_es": "Peso Muerto Sumo",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps",
+        "adductors",
+        "lower_back",
+        "upper_back",
+        "lats",
+        "traps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D2387AB1",
+      "name_en": "Straight Arm Lat Pulldown (Cable)",
+      "name_es": "Jalón de dorsales con brazos rectos (polea)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D23C609B",
+      "name_en": "Chin Up (Assisted)",
+      "name_es": "Dominada Supina (Asistida)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "bodyweight_assisted_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "D2FE7B2E",
+      "name_en": "Lat Pulldown (Band)",
+      "name_es": "Jalón al Pecho (Banda)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D3095577",
+      "name_en": "Clean and Press",
+      "name_es": "Cargada y Press",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D39EC9EB",
+      "name_en": "Curtsy Lunge (Dumbbell)",
+      "name_es": "Zancada Curtsy (Mancuerna)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings",
+        "adductors"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D3E2AB55",
+      "name_en": "Incline Chest Fly (Dumbbell)",
+      "name_es": "Aperturas Inclinadas (Mancuerna)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D410F649",
+      "name_en": "Jack Knife (Suspension)",
+      "name_es": "Jack Knife (Suspensión)",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "suspension",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D4A2FE7E",
+      "name_en": "Around The World",
+      "name_es": "Alrededor del Mundo",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "shoulders",
+        "lats"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D53F2886",
+      "name_en": "Floor Press (Barbell)",
+      "name_es": "Press de Suelo (Barra)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D57C2EC7",
+      "name_en": "Hip Thrust (Barbell)",
+      "name_es": "Empuje de Caderas (Barra)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps",
+        "adductors"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D5D0354D",
+      "name_en": "Lateral Raise (Machine)",
+      "name_es": "Elevación Lateral (Máquina)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D6A73CF2",
+      "name_en": "Lying Neck Extension (Weighted)",
+      "name_es": "Extensión de Cuello Acostado (Con Peso)",
+      "primary_muscle_group": "neck",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "plate",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D731CCA8",
+      "name_en": "Lateral Squat",
+      "name_es": "Sentadilla Lateral",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes",
+        "abductors"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D7D7FCCE",
+      "name_en": "Landmine Row",
+      "name_es": "Remo Landmine (Barra)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D8281C62",
+      "name_en": "Rear Delt Reverse Fly (Machine)",
+      "name_es": "Vuelos Posteriores (Máquina)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "upper_back"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D82EA543",
+      "name_en": "Kneeling Pulldown (band)",
+      "name_es": "Jalón de Rodillas (banda)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D8460FA6",
+      "name_en": "Reverse Wrist Curl (Dumbbell)",
+      "name_es": "Curl de Muñeca Invertido (Mancuerna)",
+      "primary_muscle_group": "forearms",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D8911FC4",
+      "name_en": "Dead Bug",
+      "name_es": "Dead Bug",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D8F7F851",
+      "name_en": "Cycling",
+      "name_es": "Bicicleta",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "distance_duration",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D928C232",
+      "name_en": "Crunch (Weighted)",
+      "name_es": "Abdominal Corto (Con Peso Añadido)",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "bodyweight_reps",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "D950429E",
+      "name_en": "Drag Curl",
+      "name_es": "Curl de Arrastre",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DA0F0470",
+      "name_en": "Decline Bench Press (Barbell)",
+      "name_es": "Press de Banca en Declive (Barra)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DA5430FC",
+      "name_en": "Hip Thrust (Dumbbell)",
+      "name_es": "Empuje de Cadera (Mancuerna)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "quadriceps",
+        "adductors"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DBB91A3C",
+      "name_en": "Front Raise (Cable)",
+      "name_es": "Elevación Frontal (Cable)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DBE341AA",
+      "name_en": "Oblique Crunch",
+      "name_es": "Abdominales Cortos Oblicuos",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DBF9273A",
+      "name_en": "Plate Front Raise",
+      "name_es": "Elevación Frontal con Disco",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "plate",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DC59D143",
+      "name_en": "Lateral Leg Raises",
+      "name_es": "Elevaciones Laterales de Pierna",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "abductors"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DCF3B31B",
+      "name_en": "Crunch",
+      "name_es": "Abdominal Corto",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DCFF3E9F",
+      "name_en": "Squat (Dumbbell)",
+      "name_es": "Sentadilla (Mancuerna)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DDB29047",
+      "name_en": "Behind the Back Wrist Curl (Barbell)",
+      "name_es": "Curl de Muñeca por Detrás de la Espalda (Barra)",
+      "primary_muscle_group": "forearms",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DDB7C19F",
+      "name_en": "Chest Fly (Band)",
+      "name_es": "Aperturas (Banda)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DDCC3821",
+      "name_en": "Squat (Smith Machine)",
+      "name_es": "Sentadilla (Máquina Smith)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DE68C825",
+      "name_en": "Single Arm Lateral Raise (Cable)",
+      "name_es": "Elevación Lateral a un Brazo (Cable)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DF200976",
+      "name_en": "Lateral Raise (Band)",
+      "name_es": "Elevación Lateral (Banda)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "DF3BDB9C",
+      "name_en": "Seal Row (Barbell)",
+      "name_es": "Remo Seal (Barra)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "E05C2C38",
+      "name_en": "Standing Calf Raise (Machine)",
+      "name_es": "Elevación de Gemelos de Pie (Máquina)",
+      "primary_muscle_group": "calves",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "E22F9358",
+      "name_en": "Power Snatch",
+      "name_es": "Arrancada de Potencia",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "E23F1F2B",
+      "name_en": "Climbing",
+      "name_es": "Escalada",
+      "primary_muscle_group": "cardio",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "E3EDA509",
+      "name_en": "Side Plank",
+      "name_es": "Plancha Lateral",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "E51CCBE5",
+      "name_en": "Single Leg Standing Calf Raise (Barbell)",
+      "name_es": "Elevación de Gemelos a Una Pierna (Barra)",
+      "primary_muscle_group": "calves",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "E53CCBE5",
+      "name_en": "Standing Calf Raise (Barbell)",
+      "name_es": "Elevación de Gemelos de Pie (Barra)",
+      "primary_muscle_group": "calves",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "E5988A0A",
+      "name_en": "Rear Delt Reverse Fly (Dumbbell)",
+      "name_es": "Vuelos Posteriores (Mancuerna)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "upper_back"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "E644F828",
+      "name_en": "Bench Press - Wide Grip (Barbell)",
+      "name_es": "Press de Banca - Agarre Abierto (Barra)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "E764B907",
+      "name_en": "Split Jerk",
+      "name_es": "Envión en Tijera",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "E8D86EE8",
+      "name_en": "Band Pullaparts",
+      "name_es": "Aperturas con banda",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "upper_back"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "E9E4089F",
+      "name_en": "Chest Dip (Assisted)",
+      "name_es": "Fondos (Asistidos)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "triceps",
+        "shoulders"
+      ],
+      "exercise_type": "bodyweight_assisted_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "EA820646",
+      "name_en": "Bent Over Row (Band)",
+      "name_es": "Remo Inclinado (Banda)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "EAC7D9C5",
+      "name_en": "Chest Press (Band)",
+      "name_es": "Press de Pecho (Banda)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "EB43ADD4",
+      "name_en": "Crunch (Machine)",
+      "name_es": "Abdominal Corto (Máquina)",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "EB813C91",
+      "name_en": "Bent Over Row (Smith Machine)",
+      "name_es": "Remo Inclinado (Máquina Smith)",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "EC02979E",
+      "name_en": "Lateral Band Walks",
+      "name_es": "Caminata Lateral con Banda Elástica",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "abductors"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "EC2510CD",
+      "name_en": "Pilates",
+      "name_es": "Pilates",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "duration",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "EC3B69A3",
+      "name_en": "Triceps Kickback (Cable)",
+      "name_es": "Patada de Tríceps (Cable)",
+      "primary_muscle_group": "triceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "EE2938D1",
+      "name_en": "Sternum Pull up (Gironda)",
+      "name_es": "Dominada Perfecta (Gironda)",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": true
+    },
+    {
+      "id": "F1258206",
+      "name_en": "Squat (Band)",
+      "name_es": "Sentadilla (Banda)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "resistance_band",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F1D60854",
+      "name_en": "Seated Cable Row - Bar Grip",
+      "name_es": "Remo Sentado con Cable - Agarre Recto",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "lats",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F1E57334",
+      "name_en": "Dumbbell Row",
+      "name_es": "Remo con Mancuerna",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F21D5693",
+      "name_en": "Chest Supported Y Raise (Dumbbell)",
+      "name_es": "Elevación en Y con Soporte en el Pecho (Mancuerna)",
+      "primary_muscle_group": "shoulders",
+      "secondary_muscle_groups": [
+        "upper_back"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F2A37357",
+      "name_en": "Lateral Lunge",
+      "name_es": "Zancada Lateral",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes",
+        "abductors"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F2FCE72D",
+      "name_en": "Box Squat",
+      "name_es": "Sentadilla al Cajón",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": true,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F30A4F01",
+      "name_en": "Walking Lunge (Sandbag)",
+      "name_es": "Zancadas Caminando (Saco de Arena)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercise_type": "short_distance_weight",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F3717B0E",
+      "name_en": "Dumbbell Snatch",
+      "name_es": "Arrancada con Mancuerna",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F49E31D6",
+      "name_en": "Mountain Climber",
+      "name_es": "Escaladores",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F4B4C6EE",
+      "name_en": "Hip Abduction (Machine)",
+      "name_es": "Abducción de Cadera (Máquina)",
+      "primary_muscle_group": "abductors",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F4E77594",
+      "name_en": "Hang Snatch",
+      "name_es": "Arrancada Colgante",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F51D9080",
+      "name_en": "Ball Slams",
+      "name_es": "Golpes con Balón Medicinal",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "other",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F5DEF1EB",
+      "name_en": "Sissy Squat (Weighted)",
+      "name_es": "Sentadilla Sissy (Con Peso)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F60BDDF8",
+      "name_en": "Negative Pull Up",
+      "name_es": "Dominada Negativa",
+      "primary_muscle_group": "lats",
+      "secondary_muscle_groups": [
+        "upper_back",
+        "biceps",
+        "forearms"
+      ],
+      "exercise_type": "bodyweight_reps",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F6948F17",
+      "name_en": "Frog Pumps (Dumbbell)",
+      "name_es": "Frog Pumps (Mancuerna)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F72FA239",
+      "name_en": "Dumbbell Squeeze Press",
+      "name_es": "Press de apretón con mancuernas",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F8356514",
+      "name_en": "Hanging Leg Raise",
+      "name_es": "Levantamiento de Piernas en Barra",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [
+        "forearms"
+      ],
+      "exercise_type": "reps_only",
+      "equipment": "none",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F8A0FCCA",
+      "name_en": "Kettlebell Swing",
+      "name_es": "Swing con Pesa Rusa",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "F99C211D",
+      "name_en": "Kettlebell Clean",
+      "name_es": "Cargada con Pesa Rusa",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "kettlebell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "FA5D0DE1",
+      "name_en": "Deadlift High Pull",
+      "name_es": "Peso Muerto con Tirón Alto",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "FAB6EB2F",
+      "name_en": "Preacher Curl (Dumbbell)",
+      "name_es": "Curl predicador (mancuerna)",
+      "primary_muscle_group": "biceps",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "FAF31231",
+      "name_en": "Decline Bench Press (Machine)",
+      "name_es": "Press de Banca en Declive (Máquina)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "FB09C938",
+      "name_en": "Snatch",
+      "name_es": "Arrancada",
+      "primary_muscle_group": "full_body",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "FBB62888",
+      "name_en": "Torso Rotation",
+      "name_es": "Rotación de Torso",
+      "primary_muscle_group": "abdominals",
+      "secondary_muscle_groups": [],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "FBEE8279",
+      "name_en": "Partial Glute Bridge (Barbell)",
+      "name_es": "Puente parcial de glúteos (con barra)",
+      "primary_muscle_group": "glutes",
+      "secondary_muscle_groups": [
+        "hamstrings",
+        "adductors"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "FBF92739",
+      "name_en": "Incline Chest Press (Machine)",
+      "name_es": "Press de Pecho Inclinado (Máquina)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "FE389074",
+      "name_en": "Rack Pull",
+      "name_es": "Peso Muerto Parcial desde el Rack",
+      "primary_muscle_group": "upper_back",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings",
+        "lower_back",
+        "lats",
+        "traps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "barbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "FFABC123",
+      "name_en": "Shrug (Cable)",
+      "name_es": "Encogimiento de Hombros (Cable)",
+      "primary_muscle_group": "traps",
+      "secondary_muscle_groups": [
+        "neck"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "FFC106CB",
+      "name_en": "Decline Bench Press (Smith Machine)",
+      "name_es": "Press de Banca en Declive (Máquina Smith)",
+      "primary_muscle_group": "chest",
+      "secondary_muscle_groups": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "machine",
+      "is_archived": false,
+      "full_bodyweight": false
+    },
+    {
+      "id": "FFDA283B",
+      "name_en": "Reverse Lunge (Dumbbell)",
+      "name_es": "Zancada Invertida (Mancuerna)",
+      "primary_muscle_group": "quadriceps",
+      "secondary_muscle_groups": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercise_type": "weight_reps",
+      "equipment": "dumbbell",
+      "is_archived": false,
+      "full_bodyweight": false
+    }
+  ]
+}

@@ -57,6 +57,9 @@ class ExerciseController extends AbstractController
             return [
                 'id' => $exercise->getId()->toRfc4122(),
                 'name' => $exercise->getName(),
+                'hevyId' => $exercise->getHevyId(),
+                'nameEn' => $exercise->getNameEn(),
+                'nameEs' => $exercise->getNameEs(),
                 'muscleGroup' => $exercise->getMuscleGroup(),
                 'equipment' => $exercise->getEquipment(),
                 'description' => $exercise->getDescription(),
@@ -98,6 +101,9 @@ class ExerciseController extends AbstractController
             return [
                 'id' => $exercise->getId()->toRfc4122(),
                 'name' => $exercise->getName(),
+                'hevyId' => $exercise->getHevyId(),
+                'nameEn' => $exercise->getNameEn(),
+                'nameEs' => $exercise->getNameEs(),
                 'muscleGroup' => $exercise->getMuscleGroup(),
                 'equipment' => $exercise->getEquipment(),
                 'description' => $exercise->getDescription(),
@@ -126,7 +132,7 @@ class ExerciseController extends AbstractController
         }
 
         $row = $em->getConnection()->fetchAssociative(
-            'SELECT id, name, muscle_group, equipment, description, image_url, gif_url, video_url, tracking_type FROM exercises WHERE id = ?',
+            'SELECT id, name, hevy_id, name_en, name_es, muscle_group, equipment, description, image_url, gif_url, video_url, tracking_type FROM exercises WHERE id = ?',
             [$id]
         );
 
@@ -140,6 +146,9 @@ class ExerciseController extends AbstractController
         return $this->json([
             'id' => $row['id'],
             'name' => $row['name'],
+            'hevyId' => $row['hevy_id'],
+            'nameEn' => $row['name_en'],
+            'nameEs' => $row['name_es'],
             'muscleGroup' => $row['muscle_group'],
             'equipment' => $row['equipment'],
             'description' => $row['description'],
@@ -184,6 +193,9 @@ class ExerciseController extends AbstractController
         return $this->json([
             'id' => $exercise->getId()->toRfc4122(),
             'name' => $exercise->getName(),
+            'hevyId' => $exercise->getHevyId(),
+            'nameEn' => $exercise->getNameEn(),
+            'nameEs' => $exercise->getNameEs(),
             'muscleGroup' => $exercise->getMuscleGroup(),
             'equipment' => $exercise->getEquipment(),
             'description' => $exercise->getDescription(),
@@ -232,6 +244,9 @@ class ExerciseController extends AbstractController
         return $this->json([
             'id' => $exercise->getId()->toRfc4122(),
             'name' => $exercise->getName(),
+            'hevyId' => $exercise->getHevyId(),
+            'nameEn' => $exercise->getNameEn(),
+            'nameEs' => $exercise->getNameEs(),
             'muscleGroup' => $exercise->getMuscleGroup(),
             'equipment' => $exercise->getEquipment(),
             'description' => $exercise->getDescription(),

@@ -54,6 +54,67 @@ final class ExerciseApiTest extends ApiTestCase
         $this->assertArrayHasKey('thumbnailUrl', $detail);
     }
 
+    public function testOfficialBilingualNamesResolveToTheSameSpanishDefaultExercise(): void
+    {
+        $exercise = $this->createExerciseFixture('Sentadilla Zercher (Barra)')
+            ->setHevyId('ZERCHER')
+            ->setNameEn('Zercher Squat (Barbell)')
+            ->setNameEs('Sentadilla Zercher (Barra)');
+        $admin = (new User())->setFirebaseUid('bilingual-admin')->setRoles(['ROLE_ADMIN']);
+        $this->em->persist($admin);
+        $this->em->flush();
+        $id = $exercise->getId()->toRfc4122();
+        $headers = $this->authHeaders('exercise-official-names');
+
+        foreach ([
+            '/v1/exercises',
+            '/v1/exercises/' . $id,
+            '/v1/exercises/search?' . http_build_query(['q' => 'Zercher Squat (Barbell)']),
+            '/v1/exercises/search?' . http_build_query(['q' => 'Sentadilla Zercher (Barra)']),
+        ] as $endpoint) {
+            $this->client->request('GET', $endpoint, [], [], $headers);
+            $this->assertResponseIsSuccessful();
+            $data = $this->jsonResponse();
+            $row = $endpoint === '/v1/exercises/' . $id ? $data : $data[0];
+            $this->assertSame($id, $row['id']);
+            $this->assertSame('Sentadilla Zercher (Barra)', $row['name']);
+            $this->assertSame('ZERCHER', $row['hevyId']);
+            $this->assertSame('Zercher Squat (Barbell)', $row['nameEn']);
+            $this->assertSame('Sentadilla Zercher (Barra)', $row['nameEs']);
+        }
+
+        // A custom label must not make either official name unsearchable.
+        $this->client->request('PUT', '/v1/exercises/' . $id, [], [], $this->authHeaders('bilingual-admin'), json_encode(['name' => 'Mi ejercicio']));
+        $this->assertResponseIsSuccessful();
+        $updated = $this->jsonResponse();
+        $this->assertSame('Mi ejercicio', $updated['name']);
+        $this->assertSame('ZERCHER', $updated['hevyId']);
+        $this->assertSame('Zercher Squat (Barbell)', $updated['nameEn']);
+        $this->assertSame('Sentadilla Zercher (Barra)', $updated['nameEs']);
+        foreach (['Zercher Squat', 'Sentadilla Zercher'] as $query) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $headers);
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([$id], array_column($this->jsonResponse(), 'id'));
+        }
+    }
+
+    public function testSearchTreatsWildcardsInOfficialNamesLiterally(): void
+    {
+        $literal = $this->createExerciseFixture('Etiqueta local')
+            ->setNameEn('Official_100%!')
+            ->setNameEs('Oficial_100%!');
+        $this->createExerciseFixture('Otra etiqueta')
+            ->setNameEn('OfficialX100X')
+            ->setNameEs('OficialX100X');
+        $this->em->flush();
+
+        foreach (['Official_', 'Oficial_', '100%', '%', '!'] as $query) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-official-literal'));
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([$literal->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'));
+        }
+    }
+
     public function testCatalogAndSearchCanPageBeyondFiftyWithStableDuplicateNameOrdering(): void
     {
         $expectedIds = [];
@@ -233,6 +294,12 @@ final class ExerciseApiTest extends ApiTestCase
         $this->assertResponseStatusCodeSame(201);
         $data = $this->jsonResponse();
         $this->assertSame('Sentadilla Hack', $data['name']);
+        $this->assertArrayHasKey('hevyId', $data);
+        $this->assertArrayHasKey('nameEn', $data);
+        $this->assertArrayHasKey('nameEs', $data);
+        $this->assertNull($data['hevyId']);
+        $this->assertNull($data['nameEn']);
+        $this->assertNull($data['nameEs']);
         $this->assertSame('https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hack_Squat/0.jpg', $data['imageUrl']);
         $this->assertSame('https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hack_Squat/0.jpg', $data['thumbnailUrl']);
     }

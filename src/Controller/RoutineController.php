@@ -86,6 +86,9 @@ class RoutineController extends AbstractController
                     'exercise' => [
                         'id' => $re->getExercise()->getId()->toRfc4122(),
                         'name' => $re->getExercise()->getName(),
+                        'hevyId' => $re->getExercise()->getHevyId(),
+                        'nameEn' => $re->getExercise()->getNameEn(),
+                        'nameEs' => $re->getExercise()->getNameEs(),
                         'muscleGroup' => $re->getExercise()->getMuscleGroup(),
                         'equipment' => $re->getExercise()->getEquipment(),
                         'imageUrl' => $re->getExercise()->getImageUrl(),
@@ -149,6 +152,9 @@ class RoutineController extends AbstractController
                 'exercise' => [
                     'id' => $exercise->getId()->toRfc4122(),
                     'name' => $exercise->getName(),
+                    'hevyId' => $exercise->getHevyId(),
+                    'nameEn' => $exercise->getNameEn(),
+                    'nameEs' => $exercise->getNameEs(),
                     'muscleGroup' => $exercise->getMuscleGroup(),
                     'equipment' => $exercise->getEquipment(),
                     'description' => $exercise->getDescription(),
