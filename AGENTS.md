@@ -68,6 +68,7 @@ Si una IA toca IDs o relaciones, no debe volver a asumir UUID binario.
 - `POST /v1/diaries/{date}/entries`
 - `DELETE /v1/diaries/entries/{id}`
 - La creacion admite `client_id` UUID estable para reintentos; el borrado repetido de una entrada ausente devuelve 204.
+- En entradas con `serving_id` y `amountGrams`, una racion accesible con nutrientes completos y cantidad positiva sigue siendo la fuente del calculo. Si esa racion carece de cantidad positiva, el cliente debe aportar nombre, gramos y los cuatro nutrientes totales: se conserva ese registro como alimento privado con una racion de los gramos indicados y multiplicador 1, sin inventar 100 g ni modificar el catalogo compartido. Se mantienen las validaciones de cantidad/snapshot, los permisos y la idempotencia por `client_id`; no requiere migracion.
 
 ### Diet Plans
 - `GET /v1/diet-plans`

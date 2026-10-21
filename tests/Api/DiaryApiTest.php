@@ -2,6 +2,12 @@
 
 namespace App\Tests\Api;
 
+use App\Entity\Food;
+use App\Entity\MealEntry;
+use App\Entity\Serving;
+use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+
 final class DiaryApiTest extends ApiTestCase
 {
     public function testGetDiaryReturnsCreatedEntriesAndTotals(): void
@@ -265,6 +271,123 @@ final class DiaryApiTest extends ApiTestCase
         $this->assertResponseStatusCodeSame(409);
         $this->client->jsonRequest('POST', '/v1/diaries/2026-10-20/entries', $payload, $headers);
         $this->assertResponseStatusCodeSame(409);
+    }
+
+    public static function unavailableServingAmounts(): array
+    {
+        return ['missing amount' => [null], 'zero amount' => [0.0]];
+    }
+
+    #[DataProvider('unavailableServingAmounts')]
+    public function testPendingMeasuredSnapshotSurvivesAnUnavailableServingAmountAndRetries(?float $sourceAmount): void
+    {
+        $source = $this->createServingFixture('pending-yogurt');
+        $source->setDescription('Ración sin peso conocido');
+        $source->setAmount($sourceAmount);
+        $source->setCalories(60);
+        $source->setProteins(5.8);
+        $source->setCarbs(4.72);
+        $source->setFats(2);
+        $this->em->flush();
+        $sourceId = $source->getId()->toRfc4122();
+        $headers = $this->authHeaders('diary-yogurt-recovery');
+        $payload = [
+            'client_id' => 'c5473fe4-ce80-40ef-94d8-0849a5931b8d',
+            'serving_id' => $sourceId,
+            'mealType' => 'breakfast',
+            'multiplier' => 2.5,
+            'name' => 'Yogur Griego Ligero',
+            'brand' => 'Mercadona',
+            'amountGrams' => 250,
+            'calories' => 150,
+            'proteins' => 14.5,
+            'carbs' => 11.8,
+            'fats' => 5,
+        ];
+
+        $this->client->jsonRequest('POST', '/v1/diaries/2026-10-20/entries', $payload, $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $this->assertSame($payload['client_id'], $this->jsonResponse()['entryId']);
+        $this->client->jsonRequest('POST', '/v1/diaries/2026-10-20/entries', $payload, $headers);
+        $this->assertResponseStatusCodeSame(200);
+        $this->assertSame($payload['client_id'], $this->jsonResponse()['entryId']);
+        $this->client->request('GET', '/v1/diaries/2026-10-20', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $diary = $this->jsonResponse();
+        $this->assertCount(1, $diary['entries']);
+        $entry = $diary['entries'][0];
+        $this->assertSame($payload['client_id'], $entry['id']);
+        $this->assertEquals(250, $entry['amount']);
+        $this->assertSame('g', $entry['unit']);
+        $this->assertEquals(1, $entry['multiplier']);
+        foreach (['calories' => 'totalCalories', 'proteins' => 'totalProteins', 'carbs' => 'totalCarbs', 'fats' => 'totalFats'] as $field => $total) {
+            $this->assertEquals($payload[$field], $entry[$field]);
+            $this->assertEquals($payload[$field], $diary[$total]);
+        }
+        $this->assertSame($payload['name'], $entry['food']['name']);
+        $this->assertSame($payload['brand'], $entry['food']['brand']);
+
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $stored = $em->find(MealEntry::class, $payload['client_id']);
+        $this->assertSame('diary-yogurt-recovery', $stored->getServing()->getFood()->getUser()->getFirebaseUid());
+        $this->assertNotSame($sourceId, $stored->getServing()->getId()->toRfc4122());
+        $this->assertSame($sourceAmount, $em->find(Serving::class, $sourceId)->getAmount());
+        $this->assertEquals(60, $em->find(Serving::class, $sourceId)->getCalories());
+        $this->assertSame(2, $em->getRepository(Food::class)->count([]));
+    }
+
+    public function testKnownServingKeepsItsQuantityAndNutritionInsteadOfTheClientSnapshot(): void
+    {
+        $source = $this->createServingFixture('known-serving');
+        $source->setAmount(125);
+        $source->setUnit('g');
+        $source->setCalories(80);
+        $source->setProteins(7);
+        $source->setCarbs(9);
+        $source->setFats(2);
+        $this->em->flush();
+        $sourceId = $source->getId()->toRfc4122();
+        $headers = $this->authHeaders('known-serving-diary');
+        $this->client->jsonRequest('POST', '/v1/diaries/2026-10-20/entries', [
+            'serving_id' => $sourceId, 'mealType' => 'breakfast', 'multiplier' => 2.5,
+            'name' => 'Client snapshot', 'amountGrams' => 250,
+            'calories' => 150, 'proteins' => 14.5, 'carbs' => 11.8, 'fats' => 5,
+        ], $headers);
+        $this->assertResponseStatusCodeSame(201);
+        $this->client->request('GET', '/v1/diaries/2026-10-20', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $entry = $this->jsonResponse()['entries'][0];
+        $this->assertSame($sourceId, $entry['serving']['id']);
+        $this->assertEquals(2, $entry['multiplier']);
+        $this->assertEquals(250, $entry['amount']);
+        $this->assertEquals(160, $entry['calories']);
+        $this->assertEquals(14, $entry['proteins']);
+        $this->assertEquals(18, $entry['carbs']);
+        $this->assertEquals(4, $entry['fats']);
+    }
+
+    public function testUnweighedServingCannotSaveAnIncompleteOrInvalidMeasuredSnapshot(): void
+    {
+        $source = $this->createServingFixture('unweighed-serving');
+        $headers = $this->authHeaders('invalid-snapshot-diary');
+        $payload = [
+            'serving_id' => $source->getId()->toRfc4122(), 'mealType' => 'breakfast',
+            'name' => 'Yogur', 'amountGrams' => 250,
+            'calories' => 150, 'proteins' => 14.5, 'carbs' => 11.8, 'fats' => 5,
+        ];
+        foreach ([
+            ['name' => ''],
+            ['proteins' => null],
+            ['carbs' => -1],
+            ['amountGrams' => 0],
+            ['amountGrams' => 10001],
+        ] as $invalidFields) {
+            $this->client->jsonRequest('POST', '/v1/diaries/2026-10-20/entries', array_replace($payload, $invalidFields), $headers);
+            $this->assertResponseStatusCodeSame(400);
+        }
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $this->assertSame(1, $em->getRepository(Food::class)->count([]));
+        $this->assertSame(0, $em->getRepository(MealEntry::class)->count([]));
     }
 
 }

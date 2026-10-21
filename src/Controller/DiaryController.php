@@ -475,16 +475,23 @@ class DiaryController extends AbstractController
             }
             if (array_key_exists('amountGrams', $data)) {
                 $amount = filter_var($data['amountGrams'], FILTER_VALIDATE_FLOAT);
-                if ($amount === false || !is_finite($amount) || $amount <= 0 || $amount > 10000 || $serving->getAmount() <= 0) {
+                if ($amount === false || !is_finite($amount) || $amount <= 0 || $amount > 10000) {
                     return $this->json(['error' => 'Invalid amount or serving amount'], 400);
                 }
-                $multiplier = $amount / $serving->getAmount();
-                if ($multiplier > 100) {
-                    return $this->json(['error' => 'multiplier must not exceed 100'], 400);
+                if ($serving->getAmount() > 0) {
+                    $multiplier = $amount / $serving->getAmount();
+                    if ($multiplier > 100) {
+                        return $this->json(['error' => 'multiplier must not exceed 100'], 400);
+                    }
+                } else {
+                    // An unweighed catalog portion cannot express grams; preserve the supplied measured snapshot privately.
+                    $serving = null;
                 }
             }
-        } elseif (!empty($data['name']) && isset($data['calories'])) {
-            // Case 2: Inline custom food entry
+        }
+
+        if ($serving === null && !empty($data['name']) && isset($data['calories'])) {
+            // Inline entries and measured snapshots use their own portion, not an assumed catalog weight.
             $foodName = trim((string) $data['name']);
             if ($foodName === '') {
                 return $this->json(['error' => 'Food name cannot be empty'], 400);
@@ -529,7 +536,7 @@ class DiaryController extends AbstractController
             $this->em->persist($customFood);
             $this->em->persist($serving);
             $multiplier = 1.0;
-        } else {
+        } elseif ($serving === null) {
             return $this->json(['error' => 'Missing required fields: serving_id (or name + calories), mealType'], 400);
         }
 
