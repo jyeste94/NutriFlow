@@ -189,7 +189,6 @@ final class ExerciseApiTest extends ApiTestCase
             ['press inclinado mancuernas', [$incline]],
             ['mancuernas declinado press', [$decline]],
             ['barra banca press', [$barbell]],
-            ['pecho press mancuernas', [$spanish]],
         ];
         foreach ($cases as [$query, $expected]) {
             $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-bilingual'));
@@ -201,6 +200,32 @@ final class ExerciseApiTest extends ApiTestCase
             );
             $this->assertSame((string) count($expected), $this->client->getResponse()->headers->get('X-Total-Count'));
         }
+    }
+
+    public function testDumbbellAbbreviationFindsInclineVariantsWithoutSubstringOrBarbellMatches(): void
+    {
+        $incline = $this->createExerciseFixture('Press de Banca Inclinado (Mancuerna)')
+            ->setNameEn('Incline Bench Press (Dumbbell)')->setEquipment('Mancuernas');
+        $hammer = $this->createExerciseFixture('Hammer Grip Incline DB Bench Press')->setEquipment(null);
+        $this->createExerciseFixture('Press de Banca Inclinado (Barra)')->setEquipment('Barra Larga');
+        $headband = $this->createExerciseFixture('Headband Neck Extension')->setEquipment('Ninguno');
+        $this->createExerciseFixture('Deadbug')->setEquipment('Ninguno');
+        $this->em->flush();
+        $headers = $this->authHeaders('exercise-db-search');
+
+        foreach (['Press inclinado DB', 'DB incline press', 'press inclinado mancuernas', 'db'] as $query) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $headers);
+            $this->assertResponseIsSuccessful();
+            $this->assertEqualsCanonicalizing(
+                [$incline->getId()->toRfc4122(), $hammer->getId()->toRfc4122()],
+                array_column($this->jsonResponse(), 'id'),
+                $query,
+            );
+        }
+
+        $this->client->request('GET', '/v1/exercises/search?q=headband', [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame([$headband->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'));
     }
 
     public function testSearchExpandsMovementVocabularyInEitherLanguageAndTokenOrder(): void
@@ -220,6 +245,266 @@ final class ExerciseApiTest extends ApiTestCase
             $this->assertResponseIsSuccessful();
             $this->assertSame([$expected->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'), $query);
         }
+    }
+
+    public function testBenchPressShorthandIncludesCatalogNamesWithoutTheWordBench(): void
+    {
+        $flat = $this->createExerciseFixture('Dumbbell Bench Press')->setEquipment('dumbbell');
+        $incline = $this->createExerciseFixture('Incline Dumbbell Press')->setEquipment('dumbbell');
+        $official = $this->createExerciseFixture('Press de Banca Inclinado (Mancuerna)')
+            ->setHevyId('07B38369')->setNameEn('Incline Bench Press (Dumbbell)')
+            ->setNameEs('Press de Banca Inclinado (Mancuerna)')->setEquipment('dumbbell');
+        $hammer = $this->createExerciseFixture('Hammer Grip Incline DB Bench Press')->setEquipment(null);
+        $this->createExerciseFixture('Shoulder Press (Dumbbell)')->setEquipment('dumbbell');
+        $this->createExerciseFixture('Arnold Dumbbell Press')->setEquipment('dumbbell')
+            ->setDescription('An alternative to a dumbbell bench press.');
+        $this->createExerciseFixture('Dumbbell Floor Press')->setEquipment('dumbbell');
+        $this->createExerciseFixture('Incline Bench Press (Barbell)')->setEquipment('barbell');
+        $this->em->flush();
+
+        foreach (['press banca mancuernas', 'DB bench press'] as $query) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-bench-compound'));
+            $this->assertResponseIsSuccessful();
+            $this->assertEqualsCanonicalizing(
+                array_map(fn (Exercise $exercise) => $exercise->getId()->toRfc4122(), [$flat, $incline, $official, $hammer]),
+                array_column($this->jsonResponse(), 'id'),
+                $query,
+            );
+        }
+    }
+
+    public function testRearFlyColloquialismsPreserveEquipmentAndExcludeChestFly(): void
+    {
+        $machine = $this->createExerciseFixture('Vuelos Posteriores (Máquina)')
+            ->setHevyId('D8281C62')->setNameEn('Rear Delt Reverse Fly (Machine)')
+            ->setNameEs('Vuelos Posteriores (Máquina)')->setEquipment('machine');
+        // Hevy deliberately labels this cable variant's metadata as "machine".
+        $cable = $this->createExerciseFixture('Vuelos Posteriores (Cable)')
+            ->setHevyId('C315DC2A')->setNameEn('Rear Delt Reverse Fly (Cable)')->setEquipment('machine');
+        $dumbbell = $this->createExerciseFixture('Vuelos Posteriores (Mancuerna)')
+            ->setHevyId('E5988A0A')->setNameEn('Rear Delt Reverse Fly (Dumbbell)')->setEquipment('dumbbell');
+        $this->createExerciseFixture('Chest Fly (Machine)')->setEquipment('machine')
+            ->setDescription('Unlike a rear delt reverse fly, this works the chest.');
+        $this->createExerciseFixture('Barbell Rear Delt Row')->setEquipment('barbell');
+        $this->em->flush();
+        $headers = $this->authHeaders('exercise-rear-fly');
+
+        foreach (['pajaros maquina', 'pájaros en máquina', 'rear delt reverse fly machine', 'aperturas posteriores maquina'] as $query) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $headers);
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([$machine->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'));
+            $this->assertSame('D8281C62', $this->jsonResponse()[0]['hevyId']);
+        }
+        foreach ([
+            ['pajaros cable', $cable],
+            ['pajaros DB', $dumbbell],
+        ] as [$query, $expected]) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $headers);
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([$expected->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'));
+        }
+    }
+
+    public function testCatalogGroundedCompoundAliasesDoNotBroadenOtherMovements(): void
+    {
+        $pulldown = $this->createExerciseFixture('Wide-Grip Lat Pulldown')->setEquipment('cable');
+        $this->createExerciseFixture('Triceps Pushdown')->setEquipment('cable');
+        $this->createExerciseFixture('Chest Press')->setDescription('Finish with a lat pulldown.');
+        $shoulder = $this->createExerciseFixture('Press de Hombros (Mancuerna)')
+            ->setNameEn('Shoulder Press (Dumbbell)')->setEquipment('dumbbell');
+        $curl = $this->createExerciseFixture('Curl de Piernas Acostado (Máquina)')
+            ->setNameEn('Lying Leg Curl (Machine)')->setEquipment('machine');
+        $this->createExerciseFixture('Hamstring Stretch');
+        $lateral = $this->createExerciseFixture('Elevación Lateral (Cable)')
+            ->setNameEn('Lateral Raise (Cable)')->setEquipment('machine');
+        $skull = $this->createExerciseFixture('EZ-Bar Skullcrusher')->setEquipment('e-z curl bar');
+        $this->em->flush();
+
+        foreach ([
+            ['Jalón al pecho', $pulldown],
+            ['lat pull-down', $pulldown],
+            ['press militar DB', $shoulder],
+            ['curl femoral tumbado', $curl],
+            ['curl isquios', $curl],
+            ['curl isquiotibiales', $curl],
+            ['laterales polea', $lateral],
+            ['press francés', $skull],
+        ] as [$query, $expected]) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-compound-aliases'));
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([$expected->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'), $query);
+        }
+    }
+
+    public function testRankedSearchPrefersCanonicalNamesAndPagesWithoutLosingDistinctIds(): void
+    {
+        $regular = $this->createExerciseFixture('Incline Dumbbell Press')->setEquipment('dumbbell');
+        $duplicate = $this->createExerciseFixture('Incline Dumbbell Press')->setEquipment('dumbbell');
+        $official = $this->createExerciseFixture('Press de Banca Inclinado (Mancuerna)')
+            ->setNameEn('Incline Bench Press (Dumbbell)')->setEquipment('dumbbell');
+        $hammer = $this->createExerciseFixture('Hammer Grip Incline DB Bench Press')->setEquipment('dumbbell');
+        $this->em->flush();
+        $expected = [$regular->getId()->toRfc4122(), $duplicate->getId()->toRfc4122()];
+        sort($expected, SORT_STRING);
+        array_push($expected, $official->getId()->toRfc4122(), $hammer->getId()->toRfc4122());
+        $headers = $this->authHeaders('exercise-ranking');
+
+        foreach (['Press inclinado DB', 'DB incline press'] as $query) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query, 'limit' => 20]), [], [], $headers);
+            $this->assertResponseIsSuccessful();
+            $this->assertSame($expected, array_column($this->jsonResponse(), 'id'));
+            $pagedIds = [];
+            for ($page = 1; $page <= 2; ++$page) {
+                $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query, 'limit' => 2, 'page' => $page]), [], [], $headers);
+                $this->assertResponseIsSuccessful();
+                $this->assertSame('4', $this->client->getResponse()->headers->get('X-Total-Count'));
+                array_push($pagedIds, ...array_column($this->jsonResponse(), 'id'));
+            }
+            $this->assertSame($expected, $pagedIds);
+            $this->assertCount(4, array_unique($pagedIds));
+        }
+        $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => 'incline DB bench press']), [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(array_slice($expected, 0, 4), array_column($this->jsonResponse(), 'id'));
+        $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => 'Incline Bench Press (Dumbbell)']), [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame($official->getId()->toRfc4122(), $this->jsonResponse()[0]['id']);
+        $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => 'hammer grip incline db press']), [], [], $headers);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame([$hammer->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'));
+    }
+
+    public function testEquipmentAbbreviationsAreBoundedNameTokens(): void
+    {
+        $db = $this->createExerciseFixture('Incline Press (DB)')->setEquipment(null);
+        $bb = $this->createExerciseFixture('BB-Shoulder Press')->setEquipment(null);
+        $kb = $this->createExerciseFixture('KB Swing')->setEquipment(null);
+        $this->createExerciseFixture('Headband Neck Extension')->setEquipment(null);
+        $this->createExerciseFixture('Deadbug')->setEquipment(null);
+        $this->createExerciseFixture('Rubber Band Pull Apart')->setEquipment(null);
+        $this->createExerciseFixture('Kickback')->setEquipment(null);
+        $this->em->flush();
+        foreach ([['db', $db], ['bb', $bb], ['kb', $kb]] as [$query, $expected]) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-abbreviation-boundaries'));
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([$expected->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'));
+        }
+    }
+
+    public function testExplicitEquipmentAndAngleCannotComeFromAlternativeInstructions(): void
+    {
+        $incline = $this->createExerciseFixture('Incline Dumbbell Press')->setEquipment('dumbbell');
+        $this->createExerciseFixture('Incline Barbell Bench Press')->setEquipment('barbell')
+            ->setDescription('You can substitute dumbbells for the barbell.');
+        $this->createExerciseFixture('Incline Bench Press (Smith Machine)')->setEquipment('machine')
+            ->setDescription('An alternative to incline dumbbell press.');
+        $this->createExerciseFixture('Dumbbell Bench Press')->setEquipment('dumbbell')
+            ->setDescription('Can also be performed on an incline bench.');
+        $romanian = $this->createExerciseFixture('Romanian Deadlift (Dumbbell)')->setEquipment('dumbbell');
+        $this->createExerciseFixture('Romanian Deadlift (Barbell)')->setEquipment('barbell')
+            ->setDescription('Dumbbells can be used as an alternative.');
+        $rear = $this->createExerciseFixture('Rear Delt Reverse Fly (Dumbbell)')->setEquipment('dumbbell');
+        $this->createExerciseFixture('Rear Delt Reverse Fly (Machine)')->setEquipment('machine')
+            ->setDescription('Compare with a dumbbell reverse fly.');
+        $military = $this->createExerciseFixture('Machine Shoulder (Military) Press')->setEquipment('machine');
+        $this->em->flush();
+
+        foreach ([
+            ['press inclinado DB', $incline],
+            ['peso muerto rumano DB', $romanian],
+            ['pajaros mancuernas', $rear],
+            ['Machine Shoulder (Military) Press', $military],
+        ] as [$query, $expected]) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-identity-qualifiers'));
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([$expected->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'), $query);
+        }
+    }
+
+    public function testNamedMovementsExcludeInstructionMentionsAndWordFragments(): void
+    {
+        $press = $this->createExerciseFixture('Incline Dumbbell Press')->setEquipment('dumbbell')
+            ->setDescription('Keep the shoulders stable while pressing.');
+        $shoulder = $this->createExerciseFixture('Shoulder Press (Dumbbell)')->setEquipment('dumbbell')
+            ->setDescription('This shoulder press is not a chest press.');
+        $this->createExerciseFixture('Incline Dumbbell Curl')->setEquipment('dumbbell')
+            ->setDescription('Press the arm against the incline bench, then curl.');
+        $thrust = $this->createExerciseFixture('Barbell Hip Thrust')->setEquipment('barbell');
+        $this->createExerciseFixture('Power Clean')->setEquipment('barbell')
+            ->setDescription('Thrust the hips and press the bar upward.');
+        $row = $this->createExerciseFixture('Bent Over Barbell Row')->setEquipment('barbell');
+        $this->createExerciseFixture('Backward Medicine Ball Throw')->setEquipment('medicine ball');
+        $this->em->flush();
+
+        foreach ([
+            ['press inclinado DB', $press], ['hip thrust barra', $thrust], ['remo', $row],
+            ['press hombros DB', $shoulder], ['shoulder press DB', $shoulder], ['chest press DB', $press],
+        ] as [$query, $expected]) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-named-movements'));
+            $this->assertResponseIsSuccessful();
+            $this->assertSame([$expected->getId()->toRfc4122()], array_column($this->jsonResponse(), 'id'));
+        }
+    }
+
+    public function testColloquialRearFlySearchRetainsOriginalAndCustomNames(): void
+    {
+        $original = $this->createExerciseFixture('Reverse Machine Flyes')->setEquipment('machine');
+        $custom = $this->createExerciseFixture('Pájaros en máquina')->setEquipment('Máquina');
+        $this->createExerciseFixture('Chest Fly (Machine)')->setEquipment('machine');
+        $this->em->flush();
+
+        $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => 'pajaros maquina']), [], [], $this->authHeaders('exercise-original-alias'));
+        $this->assertResponseIsSuccessful();
+        $this->assertEqualsCanonicalizing(
+            [$original->getId()->toRfc4122(), $custom->getId()->toRfc4122()],
+            array_column($this->jsonResponse(), 'id'),
+        );
+    }
+
+    public function testEquipmentAliasesRetainSpecializedBarsAndCustomKettlebellLabels(): void
+    {
+        $ez = $this->createExerciseFixture('Curl con Barra EZ')->setNameEn('EZ Bar Biceps Curl')->setEquipment('barbell');
+        $customEz = $this->createExerciseFixture('Mi curl')->setEquipment('Barra Z');
+        $this->createExerciseFixture('Bicep Curl (Barbell)')->setEquipment('barbell')
+            ->setDescription('Can also be performed using an EZ bar.');
+        $this->createExerciseFixture('Squeeze Barbell Curl')->setEquipment('barbell');
+        $carry = $this->createExerciseFixture('Mi paseo')->setEquipment('Pesas rusas');
+        $this->createExerciseFixture('Barbell Carry')->setEquipment('barbell')
+            ->setDescription('Kettlebells can also be used.');
+        $this->em->flush();
+
+        foreach ([
+            ['curl barra z', [$ez, $customEz]], ['EZ curl', [$ez, $customEz]],
+            ['curl barra EZ', [$ez, $customEz]], ['KB', [$carry]], ['pesas rusas', [$carry]],
+        ] as [$query, $expected]) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-specialized-equipment'));
+            $this->assertResponseIsSuccessful();
+            $this->assertEqualsCanonicalizing(
+                array_map(fn (Exercise $exercise) => $exercise->getId()->toRfc4122(), $expected),
+                array_column($this->jsonResponse(), 'id'),
+                $query,
+            );
+        }
+    }
+
+    public function testOfficialCableWordsRefineBroadMetadataWithoutChangingStoredEquipment(): void
+    {
+        $cable = $this->createExerciseFixture('Tirón entre piernas')
+            ->setNameEn('Cable Pull Through')->setNameEs('Tirón con polea entre piernas')->setEquipment('machine');
+        $machine = $this->createExerciseFixture('Cableless Fly')->setNameEn('Cableless Fly')->setEquipment('machine');
+        $this->em->flush();
+
+        foreach ([
+            ['cable pull through', [$cable]], ['pull through maquina', []], ['cableless maquina', [$machine]],
+        ] as [$query, $expected]) {
+            $this->client->request('GET', '/v1/exercises/search?' . http_build_query(['q' => $query]), [], [], $this->authHeaders('exercise-official-equipment-words'));
+            $this->assertResponseIsSuccessful();
+            $this->assertSame(
+                array_map(fn (Exercise $exercise) => $exercise->getId()->toRfc4122(), $expected),
+                array_column($this->jsonResponse(), 'id'),
+            );
+        }
+        $this->assertSame('machine', $cable->getEquipment());
     }
 
     public function testSearchTreatsSqlWildcardsAndEscapeCharactersLiterally(): void
