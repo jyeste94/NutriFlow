@@ -84,12 +84,12 @@ abstract class ApiTestCase extends WebTestCase
         return $exercise;
     }
 
-    protected function createServingFixture(string $externalId = 'food-ext-1'): Serving
+    protected function createServingFixture(string $externalId = 'food-ext-1', string $name = 'Test Food', ?string $brand = 'Test Brand'): Serving
     {
         $food = new Food();
         $food->setExternalId($externalId);
-        $food->setName('Test Food');
-        $food->setBrand('Test Brand');
+        $food->setName($name);
+        $food->setBrand($brand);
         $food->setLastFetchedAt(new \DateTimeImmutable('now'));
         $food->setUpdatedAt(new \DateTimeImmutable('now'));
 

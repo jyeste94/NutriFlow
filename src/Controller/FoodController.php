@@ -107,9 +107,9 @@ class FoodController extends AbstractController
     }
 
     #[Route('/recent', name: 'recent', methods: ['GET'])]
-    /// <summary>Lists recently used foods still accessible to the current account.</summary>
-    /// <param name="request">Result limit.</param>
-    /// <returns>Accessible recent foods.</returns>
+    /// <summary>Lists recently used foods contextualized by meal type and deduplicated per food.</summary>
+    /// <param name="request">Result limit and optional mealType/meal_type filter.</param>
+    /// <returns>Accessible recent foods with habitual quantity.</returns>
     public function getRecentFoods(Request $request): JsonResponse
     {
         $user = $this->getUser();
@@ -118,40 +118,100 @@ class FoodController extends AbstractController
         }
 
         $limit = max(1, min(50, $request->query->getInt('limit', 20)));
+        $types = $this->resolveMealTypes($request->query->get('mealType') ?? $request->query->get('meal_type'));
 
         $qb = $this->em->createQueryBuilder();
-        $results = $qb->select('s', 'MAX(e.createdAt) AS HIDDEN maxCreated')
-            ->from(Serving::class, 's')
+        $qb->select('f.id AS foodId', 'MAX(d.date) AS maxDate', 'MAX(e.createdAt) AS maxCreated')
+            ->from(MealEntry::class, 'e')
+            ->join('e.serving', 's')
             ->join('s.food', 'f')
-            ->join(MealEntry::class, 'e', 'WITH', 'e.serving = s')
             ->join('e.diary', 'd')
             ->where('d.user = :user')
             ->setParameter('user', $user)
-            ->groupBy('s.id')
-            ->orderBy('maxCreated', 'DESC')
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+            ->groupBy('f.id')
+            ->orderBy('maxDate', 'DESC')
+            ->addOrderBy('maxCreated', 'DESC')
+            ->setMaxResults($limit);
+
+        if ($types !== null) {
+            $qb->andWhere('e.mealType IN (:mealTypes)')
+                ->setParameter('mealTypes', $types);
+        }
+
+        $rows = $qb->getQuery()->getScalarResult();
+        if (empty($rows)) {
+            return $this->json([]);
+        }
+
+        $foodIds = array_values(array_filter(array_map(
+            static fn (array $row): string => (string) ($row['foodId'] ?? $row['foodId_0'] ?? $row['id'] ?? ''),
+            $rows
+        )));
+
+        if (empty($foodIds)) {
+            return $this->json([]);
+        }
+
+        $entriesQb = $this->em->createQueryBuilder()
+            ->select('e', 's', 'f', 'd')
+            ->from(MealEntry::class, 'e')
+            ->join('e.serving', 's')
+            ->join('s.food', 'f')
+            ->join('e.diary', 'd')
+            ->where('d.user = :user')
+            ->andWhere('f.id IN (:foodIds)')
+            ->setParameter('user', $user)
+            ->setParameter('foodIds', $foodIds)
+            ->orderBy('d.date', 'DESC')
+            ->addOrderBy('e.createdAt', 'DESC')
+            ->addOrderBy('e.id', 'DESC');
+
+        if ($types !== null) {
+            $entriesQb->andWhere('e.mealType IN (:mealTypes)')
+                ->setParameter('mealTypes', $types);
+        }
+
+        /** @var MealEntry[] $entries */
+        $entries = $entriesQb->getQuery()->getResult();
+        $latestPerFood = [];
+        foreach ($entries as $entry) {
+            $food = $entry->getServing()?->getFood();
+            if (!$food) continue;
+            $fid = $food->getId()?->toRfc4122();
+            if ($fid && !isset($latestPerFood[$fid])) {
+                $latestPerFood[$fid] = $entry;
+            }
+        }
 
         $foods = [];
-        /** @var Serving $serving */
-        foreach ($results as $serving) {
-            $food = $serving->getFood();
+        foreach ($foodIds as $fid) {
+            if (!isset($latestPerFood[$fid])) continue;
+            /** @var MealEntry $entry */
+            $entry = $latestPerFood[$fid];
+            $serving = $entry->getServing();
+            $food = $serving?->getFood();
             if (!$food || !$food->isAccessibleBy($user)) continue;
+
             $calories = $serving->getCalories();
             $hasInfo = $calories !== null;
+            $baseAmount = $serving->getAmount() ?: 100;
+            $lastUsedGrams = round($entry->getMultiplier() * $baseAmount, 1);
+
             $foods[] = [
                 'id' => $food->getId()?->toRfc4122(),
                 'name' => $food->getName(),
                 'brand' => $food->getBrand(),
                 'servingId' => $serving->getId()?->toRfc4122(),
-                'baseServingGrams' => $serving->getAmount() ?: 100,
-                'unit' => $serving->getUnit(),
+                'baseServingGrams' => $baseAmount,
+                'unit' => $serving->getUnit() ?: 'g',
                 'calories' => $hasInfo ? (float) $calories : null,
                 'proteins' => $serving->getProteins(),
                 'carbs' => $serving->getCarbs(),
                 'fats' => $serving->getFats(),
                 'hasNutritionInfo' => $hasInfo,
+                'lastUsedGrams' => $lastUsedGrams,
+                'lastUsedAt' => $entry->getCreatedAt()?->format('c') ?? $entry->getDiary()?->getDate()?->format('Y-m-d'),
+                'mealType' => $entry->getMealType(),
             ];
         }
 
@@ -159,9 +219,9 @@ class FoodController extends AbstractController
     }
 
     #[Route('/frequent', name: 'frequent', methods: ['GET'])]
-    /// <summary>Lists frequently used foods still accessible to the current account.</summary>
-    /// <param name="request">Result limit.</param>
-    /// <returns>Accessible frequent foods.</returns>
+    /// <summary>Lists frequently used foods contextualized by meal type.</summary>
+    /// <param name="request">Result limit and optional mealType/meal_type filter.</param>
+    /// <returns>Accessible frequent foods with habitual quantity.</returns>
     public function getFrequentFoods(Request $request): JsonResponse
     {
         $user = $this->getUser();
@@ -170,44 +230,127 @@ class FoodController extends AbstractController
         }
 
         $limit = max(1, min(50, $request->query->getInt('limit', 15)));
+        $types = $this->resolveMealTypes($request->query->get('mealType') ?? $request->query->get('meal_type'));
 
         $qb = $this->em->createQueryBuilder();
-        $results = $qb->select('s', 'COUNT(e.id) AS HIDDEN entryCount')
-            ->from(Serving::class, 's')
+        $qb->select('f.id AS foodId', 'COUNT(e.id) AS entryCount', 'MAX(d.date) AS maxDate', 'MAX(e.createdAt) AS maxCreated')
+            ->from(MealEntry::class, 'e')
+            ->join('e.serving', 's')
             ->join('s.food', 'f')
-            ->join(MealEntry::class, 'e', 'WITH', 'e.serving = s')
             ->join('e.diary', 'd')
             ->where('d.user = :user')
             ->setParameter('user', $user)
-            ->groupBy('s.id')
+            ->groupBy('f.id')
             ->orderBy('entryCount', 'DESC')
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+            ->addOrderBy('maxDate', 'DESC')
+            ->addOrderBy('maxCreated', 'DESC')
+            ->setMaxResults($limit);
+
+        if ($types !== null) {
+            $qb->andWhere('e.mealType IN (:mealTypes)')
+                ->setParameter('mealTypes', $types);
+        }
+
+        $rows = $qb->getQuery()->getScalarResult();
+        if (empty($rows)) {
+            return $this->json([]);
+        }
+
+        $foodIds = array_values(array_filter(array_map(
+            static fn (array $row): string => (string) ($row['foodId'] ?? $row['foodId_0'] ?? $row['id'] ?? ''),
+            $rows
+        )));
+
+        if (empty($foodIds)) {
+            return $this->json([]);
+        }
+
+        $entriesQb = $this->em->createQueryBuilder()
+            ->select('e', 's', 'f', 'd')
+            ->from(MealEntry::class, 'e')
+            ->join('e.serving', 's')
+            ->join('s.food', 'f')
+            ->join('e.diary', 'd')
+            ->where('d.user = :user')
+            ->andWhere('f.id IN (:foodIds)')
+            ->setParameter('user', $user)
+            ->setParameter('foodIds', $foodIds)
+            ->orderBy('d.date', 'DESC')
+            ->addOrderBy('e.createdAt', 'DESC')
+            ->addOrderBy('e.id', 'DESC');
+
+        if ($types !== null) {
+            $entriesQb->andWhere('e.mealType IN (:mealTypes)')
+                ->setParameter('mealTypes', $types);
+        }
+
+        /** @var MealEntry[] $entries */
+        $entries = $entriesQb->getQuery()->getResult();
+        $latestPerFood = [];
+        foreach ($entries as $entry) {
+            $food = $entry->getServing()?->getFood();
+            if (!$food) continue;
+            $fid = $food->getId()?->toRfc4122();
+            if ($fid && !isset($latestPerFood[$fid])) {
+                $latestPerFood[$fid] = $entry;
+            }
+        }
 
         $foods = [];
-        /** @var Serving $serving */
-        foreach ($results as $serving) {
-            $food = $serving->getFood();
+        foreach ($foodIds as $fid) {
+            if (!isset($latestPerFood[$fid])) continue;
+            /** @var MealEntry $entry */
+            $entry = $latestPerFood[$fid];
+            $serving = $entry->getServing();
+            $food = $serving?->getFood();
             if (!$food || !$food->isAccessibleBy($user)) continue;
+
             $calories = $serving->getCalories();
             $hasInfo = $calories !== null;
+            $baseAmount = $serving->getAmount() ?: 100;
+            $lastUsedGrams = round($entry->getMultiplier() * $baseAmount, 1);
+
             $foods[] = [
                 'id' => $food->getId()?->toRfc4122(),
                 'name' => $food->getName(),
                 'brand' => $food->getBrand(),
                 'servingId' => $serving->getId()?->toRfc4122(),
-                'baseServingGrams' => $serving->getAmount() ?: 100,
-                'unit' => $serving->getUnit(),
+                'baseServingGrams' => $baseAmount,
+                'unit' => $serving->getUnit() ?: 'g',
                 'calories' => $hasInfo ? (float) $calories : null,
                 'proteins' => $serving->getProteins(),
                 'carbs' => $serving->getCarbs(),
                 'fats' => $serving->getFats(),
                 'hasNutritionInfo' => $hasInfo,
+                'lastUsedGrams' => $lastUsedGrams,
+                'lastUsedAt' => $entry->getCreatedAt()?->format('c') ?? $entry->getDiary()?->getDate()?->format('Y-m-d'),
+                'mealType' => $entry->getMealType(),
             ];
         }
 
         return $this->json($foods);
+    }
+
+    private function resolveMealTypes(?string $mealType): ?array
+    {
+        if ($mealType === null || trim($mealType) === '' || strtolower(trim($mealType)) === 'all') {
+            return null;
+        }
+
+        $norm = strtolower(trim($mealType));
+        $aliasMap = [
+            'breakfast' => ['breakfast', 'desayuno'],
+            'desayuno' => ['breakfast', 'desayuno'],
+            'lunch' => ['lunch', 'almuerzo', 'comida'],
+            'comida' => ['lunch', 'almuerzo', 'comida'],
+            'almuerzo' => ['lunch', 'almuerzo', 'comida'],
+            'snack' => ['snack', 'merienda'],
+            'merienda' => ['snack', 'merienda'],
+            'dinner' => ['dinner', 'cena'],
+            'cena' => ['dinner', 'cena'],
+        ];
+
+        return $aliasMap[$norm] ?? [$norm];
     }
 
     #[Route('/favorites', name: 'favorites', methods: ['GET'])]
