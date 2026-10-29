@@ -46,13 +46,27 @@ class FoodController extends AbstractController
     #[Route('/barcode/{barcode}', name: 'barcode', methods: ['GET'])]
     public function barcode(string $barcode, OpenFoodFactsService $provider): JsonResponse
     {
+        $barcode = trim($barcode);
+        if (!preg_match('/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/D', $barcode)) {
+            return $this->json(['error' => 'Introduce un código de barras de 8, 12, 13 o 14 cifras.'], 400);
+        }
+
+        $user = $this->getUser();
+        if ($user) {
+            $externalId = 'custom_off_' . $user->getId()->toRfc4122() . '_' . $barcode;
+            $existing = $this->em->getRepository(Food::class)->findOneBy(['externalId' => $externalId, 'user' => $user]);
+            if ($existing) {
+                return $this->json($this->foodService->getFoodDetails($existing->getId()->toRfc4122(), $user));
+            }
+        }
+
         try {
             $product = $provider->lookup($barcode);
         } catch (HttpExceptionInterface $error) {
             return $this->json(['error' => $error->getMessage()], $error->getStatusCode());
         }
         return $product === null
-            ? $this->json(['error' => 'No encontramos este código en Open Food Facts.', 'status' => 'not_found'], 404)
+            ? $this->json(['error' => 'No encontramos este producto en el catálogo de códigos de barras.', 'status' => 'not_found', 'barcode' => $barcode], 404)
             : $this->json($product);
     }
 
